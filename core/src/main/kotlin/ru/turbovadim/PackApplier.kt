@@ -32,7 +32,7 @@ class PackApplier : Listener {
         }
 
         fun getPackURL(): String {
-            return "https://github.com/Turbovadim/Origins-Reborn-Enhanced/raw/main/OriginsPack.zip"
+            return "https://github.com/Endera-Org/Origins-Reborn-Enhanced/raw/refs/heads/master/OriginsPack.zip"
 //            val ver: Array<String?> =
 //                getVersion(player)!!.split("-".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
 //            return when (ver[ver.size - 1]) {
