@@ -1,9 +1,14 @@
 package ru.turbovadim.config
 
 import kotlinx.serialization.Serializable
+import org.endera.enderalib.utils.configuration.Comment
 
 @Serializable
 data class CharactersConfig(
+    @Comment("""
+        Used to determine how wide characters are, to use the correct amount of negative space when building the GUI.
+        Only edit this if you know what you are doing!
+    """)
     val characterWidths: Map<Int, String>,
 )
 
