@@ -1,0 +1,46 @@
+name: Origins-Reborn-Enhanced
+version: ${version}
+main: ru.turbovadim.OriginsRebornEnhanced
+description: Paper plugin inspired by the Origins mod by Apace
+api-version: '1.18'
+author: cometcake575
+depend:
+  - EnderaLib
+softdepend:
+  - Geyser-Spigot
+  - AuthMe
+  - PlaceholderAPI
+  - ViaVersion
+  - Skript
+  - WorldEdit
+  - WorldGuard
+
+permissions:
+  originsreborn.default:
+    default: true
+    description: Default permissions for Origins-Reborn
+  originsreborn.exchange:
+    default: op
+    description: Use /origin exchange to swap origins with another player
+  originsreborn.costbypass:
+    default: false
+    description: Bypass cost of origin swapping
+  originsreborn.admin:
+    default: op
+    description: Use admin commands for Origins-Reborn
+    children:
+      - originsreborn.flight
+      - originsreborn.exchange
+  originsreborn.flight:
+    default: op
+    description: Use /fly
+
+commands:
+  origin:
+    permission: originsreborn.default
+    description: Modify origins
+    usage: /<command>
+  fly:
+    permission: originsreborn.flight
+    description: Toggle flight
+    usage: /<command>

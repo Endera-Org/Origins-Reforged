@@ -1,0 +1,17 @@
+# Used to determine how wide characters are, to use the correct amount of negative space when building the GUI.
+# Only edit this if you know what you are doing!
+character-widths:
+  2: "!,.:;i|'"
+  3: "`l"
+  4: " ()*I[]t{}\""
+  5: "<>fk"
+  6: "#$%&+-/0123456789=?ABCDEFGHJKLMNOPQRSTUVWXYZ^_abcdeghjmnopqrsuvwxyz\\"
+  7: "@~"
+
+# Not yet complete, please ignore!
+disabled:
+  # Force unicode font for all characters
+  force-unicode-font: false
+
+  # Language file to use - default is en_us
+  language: "en_us"

@@ -1,0 +1,170 @@
+# Worlds used for some abilities
+worlds:
+  # Overworld dimension
+  world: "world"
+  # Nether dimension
+  world_nether: "world_nether"
+  # End dimension
+  world_the_end: "world_the_end"
+  # Worlds to disable origins in
+  disabled-worlds:
+    - "example_world"
+
+# Runs commands when the player switches to an origin
+# Origins should be formatted as they are in the file names, but without the extension, e.g. "human"
+# %player% is replaced with the player's username and %uuid% is replaced with their UUID
+# Use "default" for commands that should be run regardless of origin
+commands-on-origin:
+  # Example configuration for a command on origin switch
+  example:
+    - "example %player%"
+    - "example %uuid%"
+
+# A list of WorldGuard regions in which to prevent the use of certain abilities, use 'all' for all abilities
+prevent-abilities-in:
+  # Example region in which the water breathing ability is disabled
+  no_water_breathing:
+    - origins:water_breathing
+  # Example region where all abilities are disabled
+  no_abilities:
+    - all
+
+# Configuration for cooldowns
+cooldowns:
+  # Disables every cooldown
+  # To modify specific cooldowns, edit the cooldown-config.yml file
+  disable-all-cooldowns: false
+  # Use the actionbar to show cooldown icons
+  # You may want to disable this if using another plugin that requires the actionbar
+  show-cooldown-icons: true
+
+# Miscellaneous settings
+misc-settings:
+  # Disable all flight-related features. This does not hide the abilities themselves, they must be removed from the .yml files in the ~/plugins/Origins-Reborn/origins/ folder
+  disable-flight-stuff: false
+
+# The /origin swap command, allowing players to switch origin at will
+swap-command:
+  # Enable the swap command
+  enabled: true
+  # Permission required for origin swap command
+  permission: originsreborn.admin
+  # Reset player data like inventory and spawn point when switching origins using the /origin swap command
+  reset-player: false
+  # Charge players using Vault to switch their origins
+  vault:
+    # Enable charging players with Vault
+    enabled: false
+    # Permission to bypass the cost of the swap command
+    bypass-permission: originsreborn.costbypass
+    # Default cost of switching origin, if it hasn't been overriden in the origin file
+    default-cost: 1000
+    # Allows the player to switch back to origins for free if they already had the origin before
+    permanent-purchases: false
+    # Currency symbol for the economy
+    currency-symbol: "$"
+
+# Settings for origin selection
+origin-selection:
+  # The amount of time (in ticks, a tick is a 20th of a second) to wait between a player joining and when the GUI should open
+  delay-before-required: 0
+  # Priorities for different origin 'layers' to be selected in, higher priority layers are selected first.
+  layer-orders:
+    origin: 1
+  # Default origin, automatically gives players this origin rather than opening the GUI when the player has no origin
+  # Should be the name of the origin file without the ending, e.g. for 'origin_name.json' the value should be 'origin_name'
+  # Disabled if set to an invalid name such as "NONE"
+  default-origin:
+    origin: "NONE"
+  # OFF - you can take damage with the origin selection GUI open
+  # ON - you cannot take damage with the origin selection GUI open
+  # INITIAL - you cannot take damage if you do not have an origin (and therefore cannot close the screen)
+  invulnerable-mode: OFF
+  # Automatically teleport players to the world spawn when first selecting an origin
+  auto-spawn-teleport: true
+  # Randomise origins instead of letting players pick
+  randomise:
+    origin: false
+  # Allows players to choose a new origin when they die
+  # If randomise is enabled this will reroll their origin to something random
+  death-origin-change: false
+  # Amount to scroll per scroll button click
+  scroll-amount: 1
+  # Allows the player to pick a 'Random' option
+  random-option:
+    # Enable the random option choice - does nothing if randomise is enabled
+    enabled: true
+    # Origins to exclude from random options
+    exclude:
+      - human
+  # Prefixes and suffixes for the selection screen title
+  # This is an advanced setting - only use it if you know how
+  screen-title:
+    # Prefix of GUI title
+    prefix: ""
+    # Background, between Origins-Reborn background and things like text
+    background: ""
+    # Suffix of GUI title
+    suffix: ""
+
+# Settings for the Orb of Origin
+orb-of-origin:
+  # Reset player data like inventory and spawn point when switching origins using the Orb of Origin
+  reset-player: false
+  # Consume the Orb of Origin upon use
+  consume: true
+  # Enable recipe for crafting the Orb of Origin
+  enable-recipe: false
+  # Randomise origin instead of opening the selector upon using the orb
+  random:
+    origin: false
+  # Crafting recipe for the Orb of Origin
+  recipe:
+    - [minecraft:air, minecraft:diamond, minecraft:air]
+    - [minecraft:diamond, minecraft:nether_star, minecraft:diamond]
+    - [minecraft:air, minecraft:diamond, minecraft:air]
+
+# Settings for the resource pack
+# You can change this to merge with other packs or disable it to put the pack elsewhere.
+resource-pack:
+  # Whether to enable the resource pack
+  # If this is set to false you should send the pack to players either in server.properties or in another plugin
+  # You can find the packs for each version on the GitHub at https://github.com/cometcake575/Origins-Reborn/tree/main/packs/
+  enabled: true
+
+# Miscellaneous display options
+display:
+  # Enable prefixes in tab and on display names with the names of origins
+  enable-prefixes: false
+
+# Restrictions placed on origin selection
+# These are designed for use with addon plugins that add many new origins
+# If you run out of origins that fit the restrictions you may experience issues
+restrictions:
+  # Rule for reusing origins
+  # "NONE" allows origins to be reused
+  # "PERPLAYER" means individual players can only use an origin once
+  # "ALL" means no players can use an origin again after one has selected it
+  reusing-origins: "NONE"
+  # Prevent players from having the same origins as other players
+  # This is locked on if reusing-origins is set to ALL
+  prevent-same-origins: false
+
+# Configure plugin messages
+# Create an issue on the Origins-Reborn GitHub if you'd like to add a configuration option for a message
+messages:
+  # Player used /origin swap and does not have permission
+  no-swap-command-permissions: "§cYou don't have permission to do this!"
+
+# Settings for using GeyserMC
+geyser:
+  # The delay in ticks to wait before showing a new Bedrock player the selection GUI
+  join-form-delay: 20
+
+# Extra settings for abilities
+extra-settings:
+  # Required sleep height for origins with the Fresh Air ability
+  fresh-air-required-sleep-height: 86
+
+# Config version - do not touch this!
+config-version: 2.4.2
