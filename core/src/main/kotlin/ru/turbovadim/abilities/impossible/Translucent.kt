@@ -3,7 +3,7 @@ package ru.turbovadim.abilities.impossible
 import net.kyori.adventure.key.Key
 import ru.turbovadim.OriginSwapper
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.abilities.VisibleAbility
+import ru.turbovadim.abilities.types.VisibleAbility
 
 class Translucent : VisibleAbility {
     // Currently thought to be impossible without having unintended effects on 1.20.6

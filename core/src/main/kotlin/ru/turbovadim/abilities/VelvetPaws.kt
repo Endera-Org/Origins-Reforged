@@ -8,7 +8,8 @@ import org.bukkit.event.Listener
 import org.bukkit.event.world.GenericGameEvent
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.abilities.Ability.AbilityRunner
+import ru.turbovadim.abilities.types.Ability.AbilityRunner
+import ru.turbovadim.abilities.types.VisibleAbility
 
 class VelvetPaws : VisibleAbility, Listener {
     override fun getKey(): Key {

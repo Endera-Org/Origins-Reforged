@@ -8,6 +8,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerItemConsumeEvent
 import ru.turbovadim.OriginSwapper
 import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
+import ru.turbovadim.abilities.types.Ability
 
 class AirFromPotions : Ability, Listener {
     override fun getKey(): Key {

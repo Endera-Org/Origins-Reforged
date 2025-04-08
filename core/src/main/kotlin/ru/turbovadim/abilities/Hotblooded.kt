@@ -7,7 +7,8 @@ import org.bukkit.event.entity.EntityPotionEffectEvent
 import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.abilities.Ability.AbilityRunner
+import ru.turbovadim.abilities.types.Ability.AbilityRunner
+import ru.turbovadim.abilities.types.VisibleAbility
 
 class Hotblooded : VisibleAbility, Listener {
 

@@ -8,6 +8,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
 import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
 import ru.turbovadim.abilities.Phantomize.PhantomizeToggleEvent
+import ru.turbovadim.abilities.types.DependantAbility
 
 class PhantomizeOverlay : DependantAbility, Listener {
 

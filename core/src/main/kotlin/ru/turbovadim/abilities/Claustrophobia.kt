@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull
 import ru.turbovadim.OriginSwapper
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginsRebornEnhanced
+import ru.turbovadim.abilities.types.VisibleAbility
 
 class Claustrophobia : VisibleAbility, Listener {
     private val stacks: MutableMap<Player, Int> = mutableMapOf()

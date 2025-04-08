@@ -1,4 +1,4 @@
-package ru.turbovadim.abilities
+package ru.turbovadim.abilities.types
 
 import org.bukkit.World
 

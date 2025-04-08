@@ -16,7 +16,8 @@ import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
 import ru.turbovadim.SavedPotionEffect
 import ru.turbovadim.ShortcutUtils.infiniteDuration
 import ru.turbovadim.ShortcutUtils.isInfinite
-import ru.turbovadim.abilities.Ability.AbilityRunner
+import ru.turbovadim.abilities.types.Ability.AbilityRunner
+import ru.turbovadim.abilities.types.VisibleAbility
 
 class SwimSpeed : Listener, VisibleAbility {
     var storedEffects = HashMap<Player, SavedPotionEffect>()

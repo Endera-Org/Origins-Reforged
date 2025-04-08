@@ -6,6 +6,8 @@ import org.bukkit.attribute.AttributeModifier
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
+import ru.turbovadim.abilities.types.AttributeModifierAbility
+import ru.turbovadim.abilities.types.VisibleAbility
 
 class NineLives : AttributeModifierAbility, VisibleAbility {
     override fun getKey(): Key {

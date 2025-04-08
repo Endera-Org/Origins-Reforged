@@ -14,7 +14,8 @@ import org.bukkit.inventory.ItemStack
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.ShortcutUtils.giveItemWithDrops
-import ru.turbovadim.abilities.Ability.AbilityRunner
+import ru.turbovadim.abilities.types.Ability.AbilityRunner
+import ru.turbovadim.abilities.types.VisibleAbility
 import ru.turbovadim.events.PlayerSwapOriginEvent
 
 class LightArmor : VisibleAbility, Listener {

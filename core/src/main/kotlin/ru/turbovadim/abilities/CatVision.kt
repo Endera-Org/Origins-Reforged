@@ -21,6 +21,7 @@ import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
 import ru.turbovadim.SavedPotionEffect
 import ru.turbovadim.ShortcutUtils.infiniteDuration
 import ru.turbovadim.ShortcutUtils.isInfinite
+import ru.turbovadim.abilities.types.VisibleAbility
 
 open class CatVision : VisibleAbility, Listener {
     val storedEffects = mutableMapOf<Player, SavedPotionEffect>()

@@ -4,6 +4,7 @@ import net.kyori.adventure.key.Key
 import org.bukkit.event.Listener
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
+import ru.turbovadim.abilities.types.VisibleAbility
 
 class MoreKineticDamage : VisibleAbility, Listener {
     override fun getKey(): Key {

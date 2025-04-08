@@ -6,7 +6,7 @@ import com.sk89q.worldguard.WorldGuard
 import com.sk89q.worldguard.protection.flags.StringFlag
 import com.sk89q.worldguard.protection.regions.RegionContainer
 import org.bukkit.Location
-import ru.turbovadim.abilities.Ability
+import ru.turbovadim.abilities.types.Ability
 
 object WorldGuardHook {
     private var rc: RegionContainer? = null

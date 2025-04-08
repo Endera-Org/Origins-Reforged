@@ -20,8 +20,12 @@ import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
 import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
-import ru.turbovadim.abilities.Ability.AbilityRunner
-import ru.turbovadim.abilities.BreakSpeedModifierAbility.BlockMiningContext
+import ru.turbovadim.abilities.types.Ability.AbilityRunner
+import ru.turbovadim.abilities.types.BreakSpeedModifierAbility
+import ru.turbovadim.abilities.types.BreakSpeedModifierAbility.BlockMiningContext
+import ru.turbovadim.abilities.types.DependantAbility
+import ru.turbovadim.abilities.types.FlightAllowingAbility
+import ru.turbovadim.abilities.types.VisibleAbility
 import java.util.function.Predicate
 
 class Phasing : DependantAbility, VisibleAbility, FlightAllowingAbility, BreakSpeedModifierAbility, Listener {

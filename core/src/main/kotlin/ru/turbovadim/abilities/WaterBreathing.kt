@@ -21,7 +21,8 @@ import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
 import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
-import ru.turbovadim.abilities.Ability.AbilityRunner
+import ru.turbovadim.abilities.types.Ability.AbilityRunner
+import ru.turbovadim.abilities.types.VisibleAbility
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min

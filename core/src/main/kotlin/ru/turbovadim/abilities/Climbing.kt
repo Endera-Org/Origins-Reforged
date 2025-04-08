@@ -22,6 +22,8 @@ import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
 import ru.turbovadim.OriginsRebornEnhanced.Companion.bukkitDispatcher
 import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
+import ru.turbovadim.abilities.types.FlightAllowingAbility
+import ru.turbovadim.abilities.types.VisibleAbility
 import java.lang.Boolean
 import java.time.Instant
 import kotlin.Float

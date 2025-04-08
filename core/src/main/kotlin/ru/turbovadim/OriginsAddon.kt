@@ -3,7 +3,7 @@ package ru.turbovadim
 import net.kyori.adventure.key.Key
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
-import ru.turbovadim.abilities.Ability
+import ru.turbovadim.abilities.types.Ability
 import ru.turbovadim.abilities.AbilityRegister
 import ru.turbovadim.abilities.custom.ToggleableAbility
 import ru.turbovadim.events.PlayerSwapOriginEvent

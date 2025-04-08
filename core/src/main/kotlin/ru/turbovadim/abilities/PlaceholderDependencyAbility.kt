@@ -2,6 +2,7 @@ package ru.turbovadim.abilities
 
 import net.kyori.adventure.key.Key
 import org.bukkit.entity.Player
+import ru.turbovadim.abilities.types.DependencyAbility
 
 class PlaceholderDependencyAbility : DependencyAbility {
     override fun getKey(): Key {

@@ -16,6 +16,12 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.OriginsRebornEnhanced
+import ru.turbovadim.abilities.types.Ability
+import ru.turbovadim.abilities.types.AttributeModifierAbility
+import ru.turbovadim.abilities.types.DependencyAbility
+import ru.turbovadim.abilities.types.FlightAllowingAbility
+import ru.turbovadim.abilities.types.MultiAbility
+import ru.turbovadim.abilities.types.VisibilityChangingAbility
 import ru.turbovadim.commands.FlightToggleCommand
 import ru.turbovadim.cooldowns.CooldownAbility
 import ru.turbovadim.packetsenders.NMSInvoker
@@ -84,41 +90,6 @@ object AbilityRegister {
         abilityMap[ability.getKey()] = ability
     }
 
-//    @Deprecated("Testing abilities is now contained in the Ability interface")
-//    fun runForAbility(entity: Entity?, key: Key, runnable: Runnable) {
-//        runForAbility(entity, key, runnable, Runnable { })
-//    }
-//
-//    @Deprecated("Testing abilities is now contained in the Ability interface")
-//    fun hasAbility(player: Player, key: Key): Boolean {
-//        return hasAbility(player, key, false)
-//    }
-//
-//    @Deprecated("Testing abilities is now contained in the Ability interface")
-//    fun hasAbility(player: Player, key: Key, ignoreOverrides: Boolean): Boolean {
-//        if (!abilityMap.containsKey(key)) return false
-//        return abilityMap[key]!!.hasAbility(player)
-//    }
-//
-//    @Deprecated("Testing abilities is now contained in the Ability interface")
-//    fun runForAbility(entity: Entity?, key: Key, runnable: Runnable, other: Runnable) {
-//        if (entity == null) return
-//        val worldId = entity.world.name
-//        if (OriginsReborn.mainConfig.worlds.disabledWorlds.contains(worldId)) return
-//        if (entity is Player) {
-//            if (hasAbility(entity, key)) {
-//                runnable.run()
-//                return
-//            }
-//        }
-//        other.run()
-//    }
-//
-//    @Deprecated("Testing abilities is now contained in the Ability interface")
-//    fun runWithoutAbility(entity: Entity?, key: Key, runnable: Runnable) {
-//        runForAbility(entity, key, Runnable { }, runnable)
-//    }
-
     fun canFly(player: Player, disabledWorld: Boolean): Boolean {
         if (player.gameMode == GameMode.CREATIVE || player.gameMode == GameMode.SPECTATOR || FlightToggleCommand.canFly(player))
             return true
@@ -152,7 +123,7 @@ object AbilityRegister {
         if (inDisabledWorld) return
 
         var flyingFallDamage: TriState = TriState.FALSE
-        var speed = -1f // Using -1 as an indicator of missing ability
+        var speed = -1f
 
         for (ability in abilityMap.values) {
             if (ability !is FlightAllowingAbility) continue
@@ -174,7 +145,7 @@ object AbilityRegister {
         var data: Byte = 0
 
         if (target.fireTicks > 0) {
-            data = (data.toInt() or 0x01).toByte()
+            data = (0 or 0x01).toByte()
         }
         if (target.isGlowing) {
             data = (data.toInt() or 0x40).toByte()
@@ -199,11 +170,9 @@ object AbilityRegister {
             val inventory = target.inventory
             for (slot in EquipmentSlot.entries) {
                 try {
-                    val item: ItemStack? = inventory.getItem(slot)
-                    if (item != null) {
-                        player.sendEquipmentChange(target, slot, item)
-                    }
-                } catch (ignored: IllegalArgumentException) {
+                    val item = inventory.getItem(slot)
+                    player.sendEquipmentChange(target, slot, item)
+                } catch (_: IllegalArgumentException) {
                     // If the slot is not supported, skip it
                 }
             }

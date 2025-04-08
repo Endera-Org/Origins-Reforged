@@ -4,7 +4,7 @@ import net.kyori.adventure.key.Key
 import org.bukkit.event.Listener
 import ru.turbovadim.OriginSwapper
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.abilities.VisibleAbility
+import ru.turbovadim.abilities.types.VisibleAbility
 
 class LikeAir : VisibleAbility, Listener {
     // Currently thought to be impossible on 1.20.6

@@ -13,7 +13,8 @@ import org.bukkit.util.Vector
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
-import ru.turbovadim.abilities.Ability.AbilityRunner
+import ru.turbovadim.abilities.types.Ability.AbilityRunner
+import ru.turbovadim.abilities.types.VisibleAbility
 import ru.turbovadim.cooldowns.CooldownAbility
 import ru.turbovadim.cooldowns.Cooldowns.CooldownInfo
 import ru.turbovadim.events.PlayerLeftClickEvent

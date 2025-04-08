@@ -6,6 +6,10 @@ import org.bukkit.attribute.AttributeModifier
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
+import ru.turbovadim.abilities.types.Ability
+import ru.turbovadim.abilities.types.AttributeModifierAbility
+import ru.turbovadim.abilities.types.MultiAbility
+import ru.turbovadim.abilities.types.VisibleAbility
 
 class ExtraReach : VisibleAbility, MultiAbility {
     override fun getKey(): Key {

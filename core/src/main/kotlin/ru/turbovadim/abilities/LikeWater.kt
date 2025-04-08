@@ -15,6 +15,8 @@ import org.endera.enderalib.utils.async.ioDispatcher
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.OriginsRebornEnhanced.Companion.bukkitDispatcher
+import ru.turbovadim.abilities.types.FlightAllowingAbility
+import ru.turbovadim.abilities.types.VisibleAbility
 
 class LikeWater : VisibleAbility, FlightAllowingAbility, Listener {
     override fun getKey(): Key {

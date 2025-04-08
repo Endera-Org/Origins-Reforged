@@ -10,7 +10,9 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.abilities.DependantAbility.DependencyType
+import ru.turbovadim.abilities.types.DependantAbility
+import ru.turbovadim.abilities.types.DependantAbility.DependencyType
+import ru.turbovadim.abilities.types.VisibleAbility
 
 open class BurnInDaylight : VisibleAbility, DependantAbility, Listener {
 

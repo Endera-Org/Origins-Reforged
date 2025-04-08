@@ -1,4 +1,4 @@
-package ru.turbovadim.abilities
+package ru.turbovadim.abilities.types
 
 import net.kyori.adventure.util.TriState
 import org.bukkit.entity.Player

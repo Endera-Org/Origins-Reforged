@@ -22,6 +22,7 @@ import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.OriginsRebornEnhanced
 import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
 import ru.turbovadim.ShortcutUtils.isBedrockPlayer
+import ru.turbovadim.abilities.types.VisibleAbility
 import ru.turbovadim.database.ShulkerInventoryManager
 import ru.turbovadim.events.PlayerLeftClickEvent
 

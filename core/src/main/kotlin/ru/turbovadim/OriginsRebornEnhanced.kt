@@ -7,9 +7,10 @@ import org.endera.enderalib.utils.async.BukkitDispatcher
 import org.endera.enderalib.utils.configuration.ConfigurationManager
 import org.endera.enderalib.utils.configuration.MultiConfigurationManager
 import ru.turbovadim.abilities.*
-import ru.turbovadim.abilities.BreakSpeedModifierAbility.BreakSpeedModifierAbilityListener
-import ru.turbovadim.abilities.ParticleAbility.ParticleAbilityListener
+import ru.turbovadim.abilities.types.BreakSpeedModifierAbility.BreakSpeedModifierAbilityListener
+import ru.turbovadim.abilities.types.ParticleAbility.ParticleAbilityListener
 import ru.turbovadim.abilities.custom.ToggleableAbilities
+import ru.turbovadim.abilities.types.Ability
 import ru.turbovadim.commands.FlightToggleCommand
 import ru.turbovadim.commands.OriginCommand
 import ru.turbovadim.config.*

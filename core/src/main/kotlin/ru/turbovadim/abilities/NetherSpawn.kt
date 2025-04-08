@@ -6,6 +6,8 @@ import org.bukkit.World
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.OriginsRebornEnhanced
+import ru.turbovadim.abilities.types.DefaultSpawnAbility
+import ru.turbovadim.abilities.types.VisibleAbility
 
 class NetherSpawn : DefaultSpawnAbility, VisibleAbility {
     override fun getKey(): Key {

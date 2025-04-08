@@ -2,6 +2,7 @@ package ru.turbovadim.abilities
 
 import net.kyori.adventure.key.Key
 import org.bukkit.Particle
+import ru.turbovadim.abilities.types.ParticleAbility
 
 class FlameParticles : ParticleAbility {
     override fun getKey(): Key {

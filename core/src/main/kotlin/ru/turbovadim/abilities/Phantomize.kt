@@ -9,6 +9,7 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.HandlerList
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerEvent
+import ru.turbovadim.abilities.types.DependencyAbility
 import ru.turbovadim.events.PlayerLeftClickEvent
 import java.util.*
 

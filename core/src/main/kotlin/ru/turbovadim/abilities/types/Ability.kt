@@ -1,4 +1,4 @@
-package ru.turbovadim.abilities
+package ru.turbovadim.abilities.types
 
 import com.sk89q.worldedit.bukkit.BukkitAdapter
 import com.sk89q.worldguard.WorldGuard

@@ -38,9 +38,9 @@ import ru.turbovadim.OriginsRebornEnhanced.Companion.bukkitDispatcher
 import ru.turbovadim.OriginsRebornEnhanced.Companion.getCooldowns
 import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
 import ru.turbovadim.abilities.AbilityRegister
-import ru.turbovadim.abilities.AttributeModifierAbility
-import ru.turbovadim.abilities.DefaultSpawnAbility
-import ru.turbovadim.abilities.VisibleAbility
+import ru.turbovadim.abilities.types.AttributeModifierAbility
+import ru.turbovadim.abilities.types.DefaultSpawnAbility
+import ru.turbovadim.abilities.types.VisibleAbility
 import ru.turbovadim.commands.OriginCommand
 import ru.turbovadim.database.DatabaseManager
 import ru.turbovadim.events.PlayerSwapOriginEvent
@@ -415,8 +415,8 @@ class OriginSwapper : Listener {
             if (size > 0) rawLines.add(LineComponent())
             for (visibleAbility in visibleAbilities) {
                 count++
-                rawLines.addAll(visibleAbility.usedTitle)
-                rawLines.addAll(visibleAbility.usedDescription)
+                rawLines.addAll(visibleAbility.title)
+                rawLines.addAll(visibleAbility.description)
                 if (count < size) rawLines.add(LineComponent())
             }
         }

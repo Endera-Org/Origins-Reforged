@@ -4,6 +4,9 @@ import net.kyori.adventure.key.Key
 import org.bukkit.entity.Player
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
+import ru.turbovadim.abilities.types.DependantAbility
+import ru.turbovadim.abilities.types.VisibilityChangingAbility
+import ru.turbovadim.abilities.types.VisibleAbility
 
 class Invisibility : DependantAbility, VisibleAbility, VisibilityChangingAbility {
 

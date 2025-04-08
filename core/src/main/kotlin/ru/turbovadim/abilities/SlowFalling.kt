@@ -14,7 +14,8 @@ import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.OriginsRebornEnhanced
 import ru.turbovadim.ShortcutUtils.infiniteDuration
-import ru.turbovadim.abilities.Ability.AsyncAbilityRunner
+import ru.turbovadim.abilities.types.Ability.AsyncAbilityRunner
+import ru.turbovadim.abilities.types.VisibleAbility
 
 class SlowFalling : VisibleAbility, Listener {
 

@@ -7,7 +7,8 @@ import org.bukkit.entity.Trident
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageByEntityEvent
-import ru.turbovadim.abilities.Ability.AbilityRunner
+import ru.turbovadim.abilities.types.Ability
+import ru.turbovadim.abilities.types.Ability.AbilityRunner
 
 class Aquatic : Ability, Listener {
     override fun getKey(): Key {

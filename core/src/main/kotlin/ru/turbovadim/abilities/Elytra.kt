@@ -9,7 +9,9 @@ import org.bukkit.event.entity.EntityToggleGlideEvent
 import org.bukkit.event.player.PlayerToggleFlightEvent
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.abilities.Ability.AbilityRunner
+import ru.turbovadim.abilities.types.Ability.AbilityRunner
+import ru.turbovadim.abilities.types.FlightAllowingAbility
+import ru.turbovadim.abilities.types.VisibleAbility
 import ru.turbovadim.commands.FlightToggleCommand
 
 class Elytra : VisibleAbility, FlightAllowingAbility, Listener {

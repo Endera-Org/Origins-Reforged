@@ -8,7 +8,8 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.abilities.Ability.AbilityRunner
+import ru.turbovadim.abilities.types.Ability.AbilityRunner
+import ru.turbovadim.abilities.types.VisibleAbility
 
 class Unwieldy : VisibleAbility, Listener {
 

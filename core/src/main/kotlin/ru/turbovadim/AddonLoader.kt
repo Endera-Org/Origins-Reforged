@@ -108,20 +108,16 @@ object AddonLoader {
     @JvmField
     val abilityOverrideChecks: MutableList<KeyStateGetter?> = ArrayList<KeyStateGetter?>()
 
-    private val languageData: MutableMap<String?, String?> = HashMap<String?, String?>()
 
     @JvmStatic
-    fun getTextFor(key: String?, fallback: String) = languageData[key] ?: fallback
+    fun getTextFor(key: String?, fallback: String) = fallback
 
-    @JvmStatic
-    fun getTextFor(key: String?) = languageData[key]
 
 
     @JvmStatic
     fun reloadAddons() {
         origins.clear()
         originNameMap.clear()
-        languageData.clear()
         originFiles.clear()
         for (addon in registeredAddons) {
             loadOriginsFor(addon)
@@ -143,7 +139,6 @@ object AddonLoader {
     @Throws(IOException::class)
     private fun extractFile(zipIn: ZipInputStream, filePath: String) {
         val outFile = File(filePath)
-        // Создаём родительские директории, если их ещё нет
         outFile.parentFile.mkdirs()
         BufferedOutputStream(FileOutputStream(outFile)).use { bos ->
             val bytesIn = ByteArray(BUFFER_SIZE)

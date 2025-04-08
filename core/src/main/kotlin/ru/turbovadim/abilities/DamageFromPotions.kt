@@ -6,7 +6,8 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerItemConsumeEvent
 import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
-import ru.turbovadim.abilities.Ability.AbilityRunner
+import ru.turbovadim.abilities.types.Ability
+import ru.turbovadim.abilities.types.Ability.AbilityRunner
 
 class DamageFromPotions : Ability, Listener {
     override fun getKey(): Key {

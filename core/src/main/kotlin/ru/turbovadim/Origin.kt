@@ -8,10 +8,10 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.scoreboard.Scoreboard
 import org.bukkit.scoreboard.Team
-import ru.turbovadim.abilities.Ability
+import ru.turbovadim.abilities.types.Ability
 import ru.turbovadim.abilities.AbilityRegister
-import ru.turbovadim.abilities.MultiAbility
-import ru.turbovadim.abilities.VisibleAbility
+import ru.turbovadim.abilities.types.MultiAbility
+import ru.turbovadim.abilities.types.VisibleAbility
 import ru.turbovadim.database.DatabaseManager
 import java.util.*
 

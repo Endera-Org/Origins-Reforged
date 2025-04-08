@@ -5,7 +5,7 @@ import org.bukkit.entity.Player
 import ru.turbovadim.OriginsRebornEnhanced
 import ru.turbovadim.OriginsRebornEnhanced.Companion.getCooldowns
 import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
-import ru.turbovadim.abilities.Ability
+import ru.turbovadim.abilities.types.Ability
 import ru.turbovadim.cooldowns.Cooldowns.CooldownInfo
 
 @JvmDefaultWithCompatibility
