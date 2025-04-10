@@ -17,7 +17,6 @@ import org.endera.enderalib.utils.async.ioDispatcher
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.OriginsRebornEnhanced
-import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
 import ru.turbovadim.SavedPotionEffect
 import ru.turbovadim.ShortcutUtils.infiniteDuration
 import ru.turbovadim.ShortcutUtils.isInfinite
@@ -31,7 +30,7 @@ open class CatVision : VisibleAbility, Listener {
         CoroutineScope(ioDispatcher).launch {
             for (player in Bukkit.getOnlinePlayers().toList()) {
                 runForAbilityAsync(player) { player ->
-                    if (!NMSInvoker.isUnderWater(player)) {
+                    if (player.isUnderWater) {
                         val currentEffect = withContext(OriginsRebornEnhanced.bukkitDispatcher) {
                             player.getPotionEffect(PotionEffectType.NIGHT_VISION)
                         }
@@ -46,7 +45,7 @@ open class CatVision : VisibleAbility, Listener {
                                 }
                             }
                         }
-                        withContext(OriginsRebornEnhanced.bukkitDispatcher) {
+                        launch(OriginsRebornEnhanced.bukkitDispatcher) {
                             player.addPotionEffect(
                                 PotionEffect(
                                     PotionEffectType.NIGHT_VISION,
@@ -59,7 +58,7 @@ open class CatVision : VisibleAbility, Listener {
                             )
                         }
                     } else {
-                        withContext(OriginsRebornEnhanced.bukkitDispatcher) {
+                        launch(OriginsRebornEnhanced.bukkitDispatcher) {
                             player.getPotionEffect(PotionEffectType.NIGHT_VISION)?.let { effect ->
                                 if (isInfinite(effect)) {
                                     player.removePotionEffect(PotionEffectType.NIGHT_VISION)

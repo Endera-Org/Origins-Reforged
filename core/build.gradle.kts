@@ -37,12 +37,6 @@ dependencies {
     compileOnly("com.github.retrooper:packetevents-spigot:2.7.0")
 
     compileOnly(project(":version"))
-    compileOnly(project(":1.18.2"))
-    compileOnly(project(":1.19"))
-    compileOnly(project(":1.19.1"))
-    compileOnly(project(":1.19.2"))
-    compileOnly(project(":1.19.3"))
-    compileOnly(project(":1.19.4"))
     compileOnly(project(":1.20"))
     compileOnly(project(":1.20.1"))
     compileOnly(project(":1.20.2"))

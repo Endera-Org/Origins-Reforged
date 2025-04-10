@@ -4,7 +4,6 @@ import com.destroystokyo.paper.event.player.PlayerJumpEvent
 import com.destroystokyo.paper.event.server.ServerTickEndEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.util.TriState
 import org.bukkit.Bukkit
@@ -19,7 +18,6 @@ import org.endera.enderalib.utils.async.ioDispatcher
 import ru.turbovadim.OriginSwapper
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
 import ru.turbovadim.OriginsRebornEnhanced.Companion.bukkitDispatcher
 import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
 import ru.turbovadim.abilities.types.FlightAllowingAbility
@@ -37,13 +35,13 @@ class Climbing : FlightAllowingAbility, Listener, VisibleAbility {
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent?) {
         CoroutineScope(ioDispatcher).launch {
-            for (p in Bukkit.getOnlinePlayers().toList()) {
+            Bukkit.getOnlinePlayers().toList().forEach { p ->
                 runForAbilityAsync(p) { player ->
                     val baseBlock = player.location.block
                     var hasSolid = false
                     var hasSolidAbove = false
 
-                    withContext(bukkitDispatcher) {
+                    launch(bukkitDispatcher) {
                         for (face in cardinals) {
                             hasSolid = baseBlock.getRelative(face).isSolid
                             hasSolidAbove = baseBlock.getRelative(BlockFace.UP).getRelative(face).isSolid
@@ -52,7 +50,7 @@ class Climbing : FlightAllowingAbility, Listener, VisibleAbility {
                         }
                         setCanFly(player, hasSolid)
                         if (hasSolid) {
-                            NMSInvoker.setFlyingFallDamage(player, TriState.TRUE)
+                            player.setFlyingFallDamage(TriState.TRUE)
                         }
 
 

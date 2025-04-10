@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "ru.turbovadim"
-version = "3.0.0-alpha7"
+version = "3.0.0-alpha8"
 
 repositories {
     mavenCentral()
@@ -18,12 +18,6 @@ dependencies {
     implementation("net.objecthunter:exp4j:0.4.8")
     implementation(project(":core"))
     implementation(project(":version"))
-    implementation(project(":1.18.2", "reobf"))
-    implementation(project(":1.19", "reobf"))
-    implementation(project(":1.19.1", "reobf"))
-    implementation(project(":1.19.2", "reobf"))
-    implementation(project(":1.19.3", "reobf"))
-    implementation(project(":1.19.4", "reobf"))
     implementation(project(":1.20", "reobf"))
     implementation(project(":1.20.1", "reobf"))
     implementation(project(":1.20.2", "reobf"))

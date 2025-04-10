@@ -1,10 +1,9 @@
 package ru.turbovadim.cooldowns
 
-import com.destroystokyo.paper.event.server.ServerTickEndEvent
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerActionBar
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
@@ -48,27 +47,21 @@ class Cooldowns : Listener {
         event.getPlayer().persistentDataContainer.remove(cooldownKey)
     }
 
-    // Создаём канал для сигналов тика
-    private val tickChannel = Channel<Unit>(Channel.CONFLATED)
-
     init {
         CoroutineScope(ioDispatcher).launch {
-            for (signal in tickChannel) {
-                processTick()
+            while (true) {
+                processCooldowns()
+                delay(50)
             }
         }
     }
 
-    @EventHandler
-    fun onServerTickEnd(event: ServerTickEndEvent) {
-        tickChannel.trySend(Unit)
-    }
+    suspend fun processCooldowns() {
 
-    private suspend fun processTick() {
         val now = Instant.now().toEpochMilli()
         val updates = mutableListOf<Pair<Player, Component>>()
 
-        for (player in Bukkit.getOnlinePlayers()) {
+        for (player in Bukkit.getOnlinePlayers().toList()) {
             val playerPDC = player.persistentDataContainer
             val cooldownPDC = playerPDC.getOrDefault(
                 cooldownKey,
@@ -129,16 +122,11 @@ class Cooldowns : Listener {
             }
             updates.add(Pair(player, message))
         }
+        for ((player, message) in updates) {
+            PacketEvents.getAPI().playerManager.sendPacket(player, WrapperPlayServerActionBar(message))
+        }
 
-//        withContext(OriginsRebornEnhanced.bukkitDispatcher) {
-
-            for ((player, message) in updates) {
-                PacketEvents.getAPI().playerManager.sendPacket(player, WrapperPlayServerActionBar(message))
-//                player.sendActionBar(message)
-            }
-//        }
     }
-
 
 
     /**
@@ -147,12 +135,12 @@ class Cooldowns : Listener {
      * либо оставшееся время <= 0 (если кулдаун не статичный).
      */
     private fun getActiveCooldownKeys(cooldownPDC: PersistentDataContainer, now: Long): MutableList<NamespacedKey> {
-        val keys: MutableList<NamespacedKey> = ArrayList(cooldownPDC.keys)
-        keys.removeIf { key: NamespacedKey? ->
+        val keys = ArrayList(cooldownPDC.keys)
+        keys.removeIf { key ->
             val info = registeredCooldowns[key]
             if (info == null) return@removeIf true
             val remaining = cooldownPDC.getOrDefault(
-                key!!,
+                key,
                 PersistentDataType.LONG,
                 0L
             ) - (if (info.isStatic) 0 else now)
@@ -216,18 +204,18 @@ class Cooldowns : Listener {
         if (info == null) return 0
         return max(
             0.0,
-            (pdc.getOrDefault<Long?, Long?>(key, PersistentDataType.LONG, 0L) - (if (info.isStatic) 0 else Instant.now()
+            (pdc.getOrDefault(key, PersistentDataType.LONG, 0L) - (if (info.isStatic) 0 else Instant.now()
                 .toEpochMilli())).toDouble()
         ).toLong()
     }
 
     fun getCooldowns(player: Player): MutableList<NamespacedKey?> {
-        val pdc = player.persistentDataContainer.getOrDefault<PersistentDataContainer?, PersistentDataContainer>(
+        val pdc = player.persistentDataContainer.getOrDefault(
             cooldownKey,
             PersistentDataType.TAG_CONTAINER,
             player.persistentDataContainer.adapterContext.newPersistentDataContainer()
         )
-        val keys: MutableList<NamespacedKey?> = ArrayList<NamespacedKey?>(pdc.keys)
+        val keys = ArrayList(pdc.keys)
         keys.removeIf { key: NamespacedKey? ->
             !registeredCooldowns.containsKey(key) || (!hasCooldown(player, key!!) && !registeredCooldowns[key]!!.isStatic)
         }
@@ -248,13 +236,13 @@ class Cooldowns : Listener {
             PersistentDataType.TAG_CONTAINER,
             player.persistentDataContainer.adapterContext.newPersistentDataContainer()
         )
-        pdc.set<Long?, Long?>(
+        pdc.set(
             key,
             PersistentDataType.LONG,
             if (isStatic) cooldown * 50L else Instant.now().toEpochMilli() + (cooldown * 50L)
         )
         player.persistentDataContainer
-            .set<PersistentDataContainer?, PersistentDataContainer?>(cooldownKey, PersistentDataType.TAG_CONTAINER, pdc)
+            .set(cooldownKey, PersistentDataType.TAG_CONTAINER, pdc)
     }
 
     fun setCooldown(player: Player, key: NamespacedKey) {
@@ -264,7 +252,7 @@ class Cooldowns : Listener {
 
     @JvmRecord
     data class CooldownIconData(val barPieces: MutableList<Component?>?, val icon: Component?) {
-        suspend fun assemble(completion: Float, height: Int): Component {
+        fun assemble(completion: Float, height: Int): Component {
             val num = floor((barPieces!!.size * completion).toDouble())
             var result = icon!!.append(Component.text("\uF002"))
             for (i in barPieces.indices) {
@@ -328,7 +316,7 @@ class Cooldowns : Listener {
         if (info.icon != null && OriginsRebornEnhanced.mainConfig.cooldowns.showCooldownIcons) {
             val icon = File(instance.dataFolder, "icons/${info.icon}.png")
             if (!icon.exists()) {
-                val ignored = icon.getParentFile().mkdirs()
+                icon.getParentFile().mkdirs()
                 instance.saveResource("icons/${info.icon}.png", false)
             }
             val iconData = makeCID(icon)

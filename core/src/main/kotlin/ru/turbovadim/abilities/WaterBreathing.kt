@@ -69,7 +69,7 @@ class WaterBreathing : Listener, VisibleAbility {
             runForAbility(
                 player,
                 AbilityRunner { player ->
-                    val underwater = NMSInvoker.isUnderWater(player)
+                    val underwater = player.isUnderWater
                     val waterBreathing = hasWaterBreathing(player)
                     val inRain = player.isInRain
 
@@ -118,7 +118,7 @@ class WaterBreathing : Listener, VisibleAbility {
                         }
                     }
                 },
-                AbilityRunner { player ->
+                { player ->
                     if (player.persistentDataContainer.has(airKey, OriginSwapper.BooleanPDT.BOOLEAN)) {
                         player.remainingAir = player.maximumAir
                         player.persistentDataContainer.remove(airKey)

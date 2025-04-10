@@ -1,6 +1,8 @@
 package ru.turbovadim.abilities
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -11,10 +13,12 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerItemConsumeEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import org.endera.enderalib.utils.async.ioDispatcher
 import org.jetbrains.annotations.NotNull
 import ru.turbovadim.OriginSwapper
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginsRebornEnhanced
+import ru.turbovadim.OriginsRebornEnhanced.Companion.bukkitDispatcher
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class Claustrophobia : VisibleAbility, Listener {
@@ -23,28 +27,32 @@ class Claustrophobia : VisibleAbility, Listener {
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent) {
         if (event.tickNumber % 5 != 0) return
-        Bukkit.getOnlinePlayers().forEach { player ->
-            runForAbility(player) { p ->
-                val currentStacks = stacks.getOrDefault(p, -200)
-                val newStacks = if (p.location.block.getRelative(BlockFace.UP, 2).isSolid) {
-                    minOf(currentStacks + 1, 3600)
-                } else {
-                    maxOf(currentStacks - 1, -200)
-                }
-                stacks[p] = newStacks
+        CoroutineScope(ioDispatcher).launch {
+            Bukkit.getOnlinePlayers().toList().forEach { p ->
+                runForAbilityAsync(p) { player ->
+                    val currentStacks = stacks.getOrDefault(player, -200)
+                    val newStacks = if (player.location.block.getRelative(BlockFace.UP, 2).isSolid) {
+                        minOf(currentStacks + 1, 3600)
+                    } else {
+                        maxOf(currentStacks - 1, -200)
+                    }
+                    stacks[player] = newStacks
 
-                if (newStacks > 0) {
-                    p.addPotionEffect(PotionEffect(PotionEffectType.WEAKNESS, newStacks, 0, true, true, true))
-                    p.addPotionEffect(
-                        PotionEffect(
-                            OriginsRebornEnhanced.NMSInvoker.slownessEffect,
-                            newStacks,
-                            0,
-                            true,
-                            true,
-                            true
-                        )
-                    )
+                    if (newStacks > 0) {
+                        launch(bukkitDispatcher) {
+                            player.addPotionEffect(PotionEffect(PotionEffectType.WEAKNESS, newStacks, 0, true, true, true))
+                            player.addPotionEffect(
+                                PotionEffect(
+                                    OriginsRebornEnhanced.NMSInvoker.slownessEffect,
+                                    newStacks,
+                                    0,
+                                    true,
+                                    true,
+                                    true
+                                )
+                            )
+                        }
+                    }
                 }
             }
         }

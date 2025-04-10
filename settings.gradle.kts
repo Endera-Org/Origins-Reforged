@@ -4,12 +4,6 @@ plugins {
 rootProject.name = "Origins-Reborn-Enhanced"
 include("core")
 include("version")
-include("1.18.2")
-include("1.19")
-include("1.19.1")
-include("1.19.2")
-include("1.19.3")
-include("1.19.4")
 include("1.20")
 include("1.20.1")
 include("1.20.2")

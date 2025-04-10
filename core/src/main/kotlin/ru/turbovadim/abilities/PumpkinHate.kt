@@ -3,7 +3,6 @@ package ru.turbovadim.abilities
 import com.destroystokyo.paper.event.server.ServerTickEndEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -18,7 +17,6 @@ import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.OriginsRebornEnhanced
 import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
 import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
-import ru.turbovadim.abilities.types.Ability.AbilityRunner
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class PumpkinHate : VisibleAbility, Listener {
@@ -34,7 +32,7 @@ class PumpkinHate : VisibleAbility, Listener {
 
             onlinePlayers.forEach { pumpkinHater ->
                 runForAbilityAsync(pumpkinHater) { hater ->
-                    withContext(OriginsRebornEnhanced.bukkitDispatcher) {
+                    launch(OriginsRebornEnhanced.bukkitDispatcher) {
                         pumpkinWearers.filter { it != hater }.forEach { pumpkinWearer ->
                             hater.hidePlayer(instance, pumpkinWearer)
                         }
@@ -49,7 +47,7 @@ class PumpkinHate : VisibleAbility, Listener {
 
     @EventHandler
     fun onPlayerItemConsume(event: PlayerItemConsumeEvent) {
-        runForAbility(event.player, AbilityRunner { player ->
+        runForAbility(event.player) { player ->
             if (event.item.type == Material.PUMPKIN_PIE) {
                 event.isCancelled = true
                 event.item.amount -= 1
@@ -58,7 +56,7 @@ class PumpkinHate : VisibleAbility, Listener {
                 player.addPotionEffect(PotionEffect(NMSInvoker.nauseaEffect, 300, 1, false, true))
                 player.addPotionEffect(PotionEffect(PotionEffectType.POISON, 1200, 1, false, true))
             }
-        })
+        }
     }
 
     override val description: MutableList<LineComponent> = makeLineFor(

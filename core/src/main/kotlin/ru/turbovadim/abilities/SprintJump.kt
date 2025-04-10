@@ -22,7 +22,7 @@ class SprintJump : VisibleAbility, Listener {
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent) {
         CoroutineScope(ioDispatcher).launch {
-            for (p in Bukkit.getOnlinePlayers().toList()) {
+            Bukkit.getOnlinePlayers().toList().forEach { p ->
                 runForAbilityAsync(p) { player ->
                     if (!player.isSprinting) return@runForAbilityAsync
                     launch(bukkitDispatcher) {

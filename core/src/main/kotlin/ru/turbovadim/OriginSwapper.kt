@@ -24,7 +24,6 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.SkullMeta
 import org.bukkit.persistence.PersistentDataAdapterContext
 import org.bukkit.persistence.PersistentDataType
-import org.bukkit.scheduler.BukkitRunnable
 import org.endera.enderalib.utils.async.ioDispatcher
 import ru.turbovadim.AddonLoader.getDefaultOrigin
 import ru.turbovadim.AddonLoader.getFirstOrigin
@@ -197,56 +196,55 @@ class OriginSwapper : Listener {
 
 
     fun startScheduledTask() {
-        object : BukkitRunnable() {
-            override fun run() {
+        CoroutineScope(ioDispatcher).launch {
+            while (true) {
                 updateAllPlayers()
+                delay(500)
             }
-        }.runTaskTimer(origins, 0L, 10L)
+        }
     }
 
-    private fun updateAllPlayers() {
-        CoroutineScope(ioDispatcher).launch {
-            val config = OriginsRebornEnhanced.mainConfig
-            val delay: Int = config.originSelection.delayBeforeRequired
+    private suspend fun updateAllPlayers() = withContext(ioDispatcher) {
+        val config = OriginsRebornEnhanced.mainConfig
+        val delay: Int = config.originSelection.delayBeforeRequired
 
-            for (player in Bukkit.getOnlinePlayers()) {
-                lastJoinedTick.putIfAbsent(player, Bukkit.getCurrentTick())
-                if (Bukkit.getCurrentTick() - delay < lastJoinedTick[player]!!) {
-                    continue
-                }
-                val reason = lastSwapReasons.getOrDefault(player, SwapReason.INITIAL)
-                val shouldDisallow = shouldDisallowSelection(player, reason)
+        for (player in Bukkit.getOnlinePlayers()) {
+            lastJoinedTick.putIfAbsent(player, Bukkit.getCurrentTick())
+            if (Bukkit.getCurrentTick() - delay < lastJoinedTick[player]!!) {
+                continue
+            }
+            val reason = lastSwapReasons.getOrDefault(player, SwapReason.INITIAL)
+            val shouldDisallow = shouldDisallowSelection(player, reason)
 
-                if (shouldDisallow) {
-                    launch(bukkitDispatcher) {
-                        player.allowFlight = AbilityRegister.canFly(player, true)
-                        AbilityRegister.updateFlight(player, true)
-                        resetAttributes(player)
-                    }
-                    continue
-                }
-
+            if (shouldDisallow) {
                 launch(bukkitDispatcher) {
-                    if (!config.miscSettings.disableFlightStuff) {
-                        player.allowFlight = AbilityRegister.canFly(player, false)
-                        AbilityRegister.updateFlight(player, false)
-                    }
+                    player.allowFlight = AbilityRegister.canFly(player, true)
+                    AbilityRegister.updateFlight(player, true)
+                    resetAttributes(player)
+                }
+                continue
+            }
 
-                    player.isInvisible = AbilityRegister.isInvisible(player)
-                    applyAttributeChanges(player)
+            launch(bukkitDispatcher) {
+                if (!config.miscSettings.disableFlightStuff) {
+                    player.allowFlight = AbilityRegister.canFly(player, false)
+                    AbilityRegister.updateFlight(player, false)
                 }
-                val layer = getFirstUnselectedLayer(player)
-                if (layer == null) {
-                    continue
+
+                player.isInvisible = AbilityRegister.isInvisible(player)
+                applyAttributeChanges(player)
+            }
+            val layer = getFirstUnselectedLayer(player)
+            if (layer == null) {
+                continue
+            }
+            if (player.openInventory.type != InventoryType.CHEST) {
+                if (getDefaultOrigin(layer) != null) {
+                    setOrigin(player, getDefaultOrigin(layer), SwapReason.INITIAL, false, layer)
                 }
-                if (player.openInventory.type != InventoryType.CHEST) {
-                    if (getDefaultOrigin(layer) != null) {
-                        setOrigin(player, getDefaultOrigin(layer), SwapReason.INITIAL, false, layer)
-                    }
-                    if (config.originSelection.randomize[layer] != true && !ShortcutUtils.isBedrockPlayer(player.uniqueId)) {
-                        launch(bukkitDispatcher) {
-                            openOriginSwapper(player, reason, 0, 0, layer)
-                        }
+                if (config.originSelection.randomize[layer] != true && !ShortcutUtils.isBedrockPlayer(player.uniqueId)) {
+                    launch(bukkitDispatcher) {
+                        openOriginSwapper(player, reason, 0, 0, layer)
                     }
                 }
             }
@@ -899,7 +897,7 @@ class OriginSwapper : Listener {
 
 
         fun applyFont(component: Component, font: Key): Component {
-            return nmsInvoker.applyFont(component, font)
+            return component.font(font)
         }
 
         @JvmStatic

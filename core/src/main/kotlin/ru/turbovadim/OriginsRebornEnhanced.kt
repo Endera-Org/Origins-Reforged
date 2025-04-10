@@ -1,6 +1,7 @@
 package ru.turbovadim
 
 import com.github.retrooper.packetevents.PacketEvents
+import com.github.retrooper.packetevents.event.PacketListenerPriority
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder
 import net.milkbowl.vault.economy.Economy
 import org.bukkit.Bukkit
@@ -26,7 +27,7 @@ import java.io.File
 class OriginsRebornEnhanced : OriginsAddon() {
 
     companion object {
-        @JvmStatic
+
         lateinit var instance: OriginsRebornEnhanced
             private set
 
@@ -36,7 +37,6 @@ class OriginsRebornEnhanced : OriginsAddon() {
         lateinit var mainConfig: MainConfig
         lateinit var charactersConfig: CharactersConfig
 
-        @JvmStatic
         lateinit var NMSInvoker: NMSInvoker
             private set
 
@@ -95,6 +95,7 @@ class OriginsRebornEnhanced : OriginsAddon() {
         private set
 
     override fun onLoad() {
+        instance = this
         PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this))
         PacketEvents.getAPI().load()
 
@@ -108,7 +109,7 @@ class OriginsRebornEnhanced : OriginsAddon() {
     }
 
     override fun onOnEnable() {
-        PacketEvents.getAPI().init()
+
     }
 
     override fun onDisable() {
@@ -116,8 +117,8 @@ class OriginsRebornEnhanced : OriginsAddon() {
     }
 
     override fun onRegister() {
-        instance = this
         bukkitDispatcher = BukkitDispatcher(this)
+        initDb(dataFolder)
         if (isWorldGuardHookInitialized) WorldGuardHook.completeInitialize()
 
         ToggleableAbilities.initialize(this)
@@ -153,9 +154,15 @@ class OriginsRebornEnhanced : OriginsAddon() {
         charactersConfig = ConfigRegistry.get(CharactersConfig::class)!!
 
 //        saveDefaultConfig()
-        initDb(dataFolder)
         initializeNMSInvoker(this)
         AbilityRegister.setupAMAF()
+
+
+        PacketEvents.getAPI().eventManager.registerListener(Unwieldy(), PacketListenerPriority.NORMAL)
+        PacketEvents.getAPI().eventManager.registerListener(SlowFalling(), PacketListenerPriority.NORMAL)
+        PacketEvents.getAPI().eventManager.registerListener(LikeWater(), PacketListenerPriority.NORMAL)
+
+        PacketEvents.getAPI().init()
 
         if (mainConfig.swapCommand.vault.enabled) {
             this.isVaultEnabled = setupEconomy()

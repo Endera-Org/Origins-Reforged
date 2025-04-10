@@ -1,22 +1,20 @@
 package ru.turbovadim.abilities
 
 import net.kyori.adventure.key.Key
-import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.abilities.types.Ability.AbilityRunner
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class BurningWrath : VisibleAbility, Listener {
 
     @EventHandler
     fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {
-        runForAbility(event.damager, AbilityRunner { player: Player ->
+        runForAbility(event.damager) { player ->
             if (player.fireTicks > 0) event.setDamage(event.damage + 3)
-        })
+        }
     }
 
     override fun getKey(): Key {

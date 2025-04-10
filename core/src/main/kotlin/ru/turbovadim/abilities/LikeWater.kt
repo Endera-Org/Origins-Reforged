@@ -1,23 +1,26 @@
 package ru.turbovadim.abilities
 
+import com.github.retrooper.packetevents.event.PacketListener
+import com.github.retrooper.packetevents.event.PacketReceiveEvent
+import com.github.retrooper.packetevents.protocol.packettype.PacketType
+import com.github.retrooper.packetevents.protocol.world.Location
+import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientPlayerPosition
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import net.kyori.adventure.key.Key
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
-import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerToggleFlightEvent
 import org.bukkit.event.player.PlayerToggleSneakEvent
 import org.bukkit.event.player.PlayerToggleSprintEvent
-import org.endera.enderalib.utils.async.ioDispatcher
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.OriginsRebornEnhanced.Companion.bukkitDispatcher
 import ru.turbovadim.abilities.types.FlightAllowingAbility
 import ru.turbovadim.abilities.types.VisibleAbility
 
-class LikeWater : VisibleAbility, FlightAllowingAbility, Listener {
+class LikeWater : VisibleAbility, FlightAllowingAbility, Listener, PacketListener {
     override fun getKey(): Key {
         return Key.key("origins:like_water")
     }
@@ -37,25 +40,53 @@ class LikeWater : VisibleAbility, FlightAllowingAbility, Listener {
         }
     }
 
-    @EventHandler
-    fun onPlayerMove(event: PlayerMoveEvent) {
-        CoroutineScope(ioDispatcher).launch {
-            val player = event.player
-            if (!player.isInWater || player.isSwimming) return@launch
+    val previousPositions = mutableMapOf<Player, Location>()
 
-            val rising = event.to.y > event.from.y
-            runForAbilityAsync(player) { p ->
-                val isFlying = (p.isFlying || rising) && !p.isInBubbleColumn
-                if (isFlying == p.isFlying) return@runForAbilityAsync
-                launch(bukkitDispatcher) {
-                    try {
-                        p.isFlying = isFlying
-                    } catch (_: IllegalArgumentException) {}
-                }
+    override fun onPacketReceive(event: PacketReceiveEvent) {
+        when (event.packetType) {
+            PacketType.Play.Client.PLAYER_POSITION -> {
+                onPlayerMove(event)
             }
         }
-
     }
+
+    fun onPlayerMove(event: PacketReceiveEvent) {
+        val packet = WrapperPlayClientPlayerPosition(event)
+        val player: Player = event.getPlayer()
+        if (!player.isInWater || player.isSwimming) return
+
+        runForAbility(player) { p ->
+
+            val rising = packet.location.y > previousPositions.getOrDefault(p, packet.location).y
+            previousPositions[p] = packet.location
+
+            val isFlying = (p.isFlying || rising) && !p.isInBubbleColumn
+            if (isFlying == p.isFlying) return@runForAbility
+            CoroutineScope(bukkitDispatcher).launch {
+                try {
+                    p.isFlying = isFlying
+                } catch (_: IllegalArgumentException) {}
+            }
+        }
+    }
+
+//    fun onPlayerMove(event: PlayerMoveEvent) {
+//        CoroutineScope(ioDispatcher).launch {
+//            val player = event.player
+//            if (!player.isInWater || player.isSwimming) return@launch
+//
+//            val rising = event.to.y > event.from.y
+//            runForAbilityAsync(player) { p ->
+//                val isFlying = (p.isFlying || rising) && !p.isInBubbleColumn
+//                if (isFlying == p.isFlying) return@runForAbilityAsync
+//                launch(bukkitDispatcher) {
+//                    try {
+//                        p.isFlying = isFlying
+//                    } catch (_: IllegalArgumentException) {}
+//                }
+//            }
+//        }
+//    }
 
     @EventHandler
     fun onPlayerToggleSprint(event: PlayerToggleSprintEvent) {

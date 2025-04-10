@@ -2,7 +2,7 @@ name: Origins-Reborn-Enhanced
 version: ${version}
 main: ru.turbovadim.OriginsRebornEnhanced
 description: Paper plugin inspired by the Origins mod by Apace
-api-version: '1.18'
+api-version: '1.20'
 author: cometcake575
 depend:
   - EnderaLib
