@@ -16,7 +16,6 @@ import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
 import ru.turbovadim.SavedPotionEffect
 import ru.turbovadim.ShortcutUtils.infiniteDuration
 import ru.turbovadim.ShortcutUtils.isInfinite
-import ru.turbovadim.abilities.types.Ability.AbilityRunner
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class WaterVision : VisibleAbility, Listener {
@@ -27,7 +26,7 @@ class WaterVision : VisibleAbility, Listener {
     fun onServerTickEnd(event: ServerTickEndEvent?) {
         val currentTick = Bukkit.getCurrentTick()
         Bukkit.getOnlinePlayers().forEach { player ->
-            runForAbility(player, AbilityRunner { player ->
+            runForAbility(player) { player ->
                 if (NMSInvoker.isUnderWater(player)) {
                     val currentEffect = player.getPotionEffect(PotionEffectType.NIGHT_VISION)
                     val ambient = currentEffect?.isAmbient == true
@@ -68,7 +67,7 @@ class WaterVision : VisibleAbility, Listener {
                         }
                     }
                 }
-            })
+            }
         }
     }
 

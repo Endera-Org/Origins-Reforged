@@ -56,7 +56,6 @@ class OriginSwapper : Listener {
     @EventHandler
     fun onInventoryClick(event: InventoryClickEvent) {
         runBlocking {
-
             val config = OriginsRebornEnhanced.mainConfig
             val item = event.whoClicked.openInventory.getItem(1)
             if (item != null) {
@@ -216,19 +215,18 @@ class OriginSwapper : Listener {
                     continue
                 }
                 val reason = lastSwapReasons.getOrDefault(player, SwapReason.INITIAL)
+                val shouldDisallow = shouldDisallowSelection(player, reason)
 
-                if (withContext(bukkitDispatcher) {
-                    if (shouldDisallowSelection(player, reason)) {
+                if (shouldDisallow) {
+                    launch(bukkitDispatcher) {
                         player.allowFlight = AbilityRegister.canFly(player, true)
                         AbilityRegister.updateFlight(player, true)
                         resetAttributes(player)
-                        true
-                    } else {
-                        false
                     }
-                }) continue
+                    continue
+                }
 
-                withContext(bukkitDispatcher) {
+                launch(bukkitDispatcher) {
                     if (!config.miscSettings.disableFlightStuff) {
                         player.allowFlight = AbilityRegister.canFly(player, false)
                         AbilityRegister.updateFlight(player, false)
@@ -246,7 +244,7 @@ class OriginSwapper : Listener {
                         setOrigin(player, getDefaultOrigin(layer), SwapReason.INITIAL, false, layer)
                     }
                     if (config.originSelection.randomize[layer] != true && !ShortcutUtils.isBedrockPlayer(player.uniqueId)) {
-                        withContext(bukkitDispatcher) {
+                        launch(bukkitDispatcher) {
                             openOriginSwapper(player, reason, 0, 0, layer)
                         }
                     }
@@ -264,25 +262,22 @@ class OriginSwapper : Listener {
 
     @EventHandler
     fun onEntityDamage(event: EntityDamageEvent) {
-        CoroutineScope(ioDispatcher).launch {
-            val player = event.entity as? Player ?: return@launch
 
-            if (invulnerableMode.equals("INITIAL", ignoreCase = true) && hasNotSelectedAllOrigins(player)) {
-                event.isCancelled = true
-                return@launch
-            }
+        val player = event.entity as? Player ?: return
 
-            if (invulnerableMode.equals("ON", ignoreCase = true)) {
-                withContext(bukkitDispatcher) {
-                    player.openInventory.topInventory.getItem(1)?.itemMeta?.persistentDataContainer?.let { container ->
-                        if (container.has(originKey, PersistentDataType.STRING)) {
-                            event.isCancelled = true
-                        }
-                    }
-                }
-            }
+        if (invulnerableMode.equals("INITIAL", ignoreCase = true) && runBlocking { hasNotSelectedAllOrigins(player) }) {
+            event.isCancelled = true
+            return
         }
 
+        if (invulnerableMode.equals("ON", ignoreCase = true)) {
+            player.openInventory.topInventory.getItem(1)?.itemMeta?.persistentDataContainer?.let { container ->
+                if (container.has(originKey, PersistentDataType.STRING)) {
+                    event.isCancelled = true
+                }
+            }
+
+        }
     }
 
     suspend fun hasNotSelectedAllOrigins(player: Player): Boolean {
@@ -312,17 +307,15 @@ class OriginSwapper : Listener {
     }
 
     private fun executeCommands(originName: String, player: Player) {
-        val commandsOnOrigin = OriginsRebornEnhanced.mainConfig.commandsOnOrigin[originName]
-        if (!commandsOnOrigin.isNullOrEmpty()) {
-            commandsOnOrigin.forEach { command ->
-                Bukkit.dispatchCommand(
-                    Bukkit.getConsoleSender(),
-                    command.replace("%player%", player.name)
-                        .replace("%uuid%", player.uniqueId.toString())
-                )
-            }
+        val console = Bukkit.getConsoleSender()
+        OriginsRebornEnhanced.mainConfig.commandsOnOrigin[originName]?.forEach { command ->
+            val parsedCommand = command
+                .replace("%player%", player.name)
+                .replace("%uuid%", player.uniqueId.toString())
+            Bukkit.dispatchCommand(console, parsedCommand)
         }
     }
+
 
 
     private val lastRespawnReasons: MutableMap<Player?, MutableSet<PlayerRespawnEvent.RespawnFlag?>?> =
@@ -330,10 +323,10 @@ class OriginSwapper : Listener {
 
     @EventHandler
     fun onPlayerRespawn(event: PlayerRespawnEvent) {
-        if (nmsInvoker.getRespawnLocation(event.getPlayer()) == null) {
+        if (nmsInvoker.getRespawnLocation(event.player) == null) {
             CoroutineScope(ioDispatcher).launch {
                 val originRespawnWorld = getOrigins(event.getPlayer())
-                withContext(bukkitDispatcher) {
+                launch(bukkitDispatcher) {
                     val world = getRespawnWorld(originRespawnWorld)
                     event.respawnLocation = world.spawnLocation
                 }
@@ -362,8 +355,7 @@ class OriginSwapper : Listener {
 
     fun getReason(icon: ItemStack): SwapReason {
         return SwapReason.get(
-            icon.itemMeta.persistentDataContainer
-                .get(swapTypeKey, PersistentDataType.STRING)
+            icon.itemMeta.persistentDataContainer.get(swapTypeKey, PersistentDataType.STRING)
         )
     }
 
@@ -377,9 +369,7 @@ class OriginSwapper : Listener {
             }
 
             private val component: Component
-            @JvmField
             val type: LineType?
-            @JvmField
             val rawText: String?
             val isEmpty: Boolean
 
@@ -584,10 +574,9 @@ class OriginSwapper : Listener {
         }
 
         fun openOriginSwapper(player: Player, reason: SwapReason, slot: Int, scrollAmount: Int, layer: String) {
-            openOriginSwapper(player, reason, slot, scrollAmount, false, false, layer)
+            openOriginSwapper(player, reason, slot, scrollAmount, false, displayOnly = false, layer = layer)
         }
 
-        @JvmStatic
         fun openOriginSwapper(
             player: Player,
             reason: SwapReason,

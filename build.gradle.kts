@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "ru.turbovadim"
-version = "3.0.0-alpha3"
+version = "3.0.0-alpha7"
 
 repositories {
     mavenCentral()

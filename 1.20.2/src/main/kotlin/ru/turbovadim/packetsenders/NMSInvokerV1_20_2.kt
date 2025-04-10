@@ -158,8 +158,8 @@ class NMSInvokerV1_20_2 : NMSInvoker() {
 
         val eData: MutableList<SynchedEntityData.DataValue<*>?> = ArrayList<SynchedEntityData.DataValue<*>?>()
         eData.add(
-            SynchedEntityData.DataValue.create<Byte?>(
-                EntityDataAccessor<Byte?>(0, EntityDataSerializers.BYTE),
+            SynchedEntityData.DataValue.create(
+                EntityDataAccessor(0, EntityDataSerializers.BYTE),
                 bytes
             )
         )

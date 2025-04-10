@@ -210,12 +210,10 @@ class NMSInvokerV1_21_4 : NMSInvoker() {
             serverPlayer.tabListDisplayName,
             true,
             0,
-            Optionull.map<RemoteChatSession?, RemoteChatSession.Data?>(
-                serverPlayer.chatSession,
-                Function { obj: RemoteChatSession? -> obj!!.asData() })
+            Optionull.map(serverPlayer.chatSession) { it.asData() }
         )
         val packet = ClientboundPlayerInfoUpdatePacket(
-            EnumSet.of<ClientboundPlayerInfoUpdatePacket.Action?>(
+            EnumSet.of(
                 ClientboundPlayerInfoUpdatePacket.Action.UPDATE_GAME_MODE
             ), entry
         )

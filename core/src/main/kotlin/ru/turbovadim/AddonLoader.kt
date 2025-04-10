@@ -21,16 +21,12 @@ object AddonLoader {
     private val originNameMap: MutableMap<String?, Origin?> = HashMap<String?, Origin?>()
     private val originFileNameMap: MutableMap<String?, Origin?> = HashMap<String?, Origin?>()
     val registeredAddons: MutableList<OriginsAddon> = ArrayList<OriginsAddon>()
-    @JvmField
-    var originFiles: MutableMap<String?, MutableList<File?>?> = HashMap<String?, MutableList<File?>?>()
-    @JvmField
+    var originFiles: MutableMap<String?, MutableList<File>> = HashMap()
     var layers: MutableList<String?> = ArrayList<String?>()
-    @JvmField
     var layerKeys: MutableMap<String?, NamespacedKey?> = HashMap<String?, NamespacedKey?>()
 
     private val random = Random()
 
-    @JvmStatic
     suspend fun getFirstUnselectedLayer(player: Player): String? {
         for (layer in layers) {
             if (OriginSwapper.getOrigin(player, layer!!) == null) return layer
@@ -38,29 +34,24 @@ object AddonLoader {
         return null
     }
 
-    @JvmStatic
     fun getOrigin(name: String): Origin? {
         return originNameMap[name]
     }
 
-    @JvmStatic
     fun getOriginByFilename(name: String): Origin? {
         return originFileNameMap[name]
     }
 
-    @JvmStatic
     fun getOrigins(layer: String): MutableList<Origin> {
         val o: MutableList<Origin> = ArrayList<Origin>(origins)
         o.removeIf { or -> or.layer != layer }
         return o
     }
 
-    @JvmStatic
     fun getFirstOrigin(layer: String): Origin? {
         return getOrigins(layer)[0]
     }
 
-    @JvmStatic
     fun getRandomOrigin(layer: String): Origin? {
         val o = getOrigins(layer)
         return o[random.nextInt(o.size)]
@@ -73,8 +64,6 @@ object AddonLoader {
         }
         registeredAddons.add(addon)
         loadOriginsFor(addon)
-        // TODO() ПРОТЕСТИРОВАТЬ ЯЗЫК
-//        prepareLanguagesFor(addon)
         if (addon.shouldAllowOriginSwapCommand() != null) allowOriginSwapChecks.add(addon.shouldAllowOriginSwapCommand()!!)
         if (addon.shouldOpenSwapMenu() != null) openSwapMenuChecks.add(addon.shouldOpenSwapMenu()!!)
         if (addon.getAbilityOverride() != null) abilityOverrideChecks.add(addon.getAbilityOverride())
@@ -105,23 +94,16 @@ object AddonLoader {
 
     val allowOriginSwapChecks: MutableList<SwapStateGetter> = ArrayList<SwapStateGetter>()
     val openSwapMenuChecks: MutableList<SwapStateGetter> = ArrayList<SwapStateGetter>()
-    @JvmField
     val abilityOverrideChecks: MutableList<KeyStateGetter?> = ArrayList<KeyStateGetter?>()
 
-
-    @JvmStatic
     fun getTextFor(key: String?, fallback: String) = fallback
 
-
-
-    @JvmStatic
     fun reloadAddons() {
         origins.clear()
         originNameMap.clear()
         originFiles.clear()
         for (addon in registeredAddons) {
             loadOriginsFor(addon)
-            //prepareLanguagesFor(addon);
         }
         sortOrigins()
     }
@@ -136,7 +118,6 @@ object AddonLoader {
      * Извлекает файл из ZipInputStream по указанному пути.
      * Перед созданием файла гарантируется, что его родительские директории существуют.
      */
-    @Throws(IOException::class)
     private fun extractFile(zipIn: ZipInputStream, filePath: String) {
         val outFile = File(filePath)
         outFile.parentFile.mkdirs()
@@ -149,52 +130,8 @@ object AddonLoader {
         }
     }
 
-    /**
-     * Подготавливает языковые файлы для плагина.
-     * Из архива извлекаются файлы из папки lang с расширением .json,
-     * затем из них подгружается язык, указанный в конфигурации.
-     */
-//    private fun prepareLanguagesFor(addon: OriginsAddon) {
-//        val langFolder = File(addon.dataFolder, "lang")
-//        if (!langFolder.exists() && !langFolder.mkdirs()) {
-//            instance.logger.warning("Не удалось создать папку с языковыми файлами: ${langFolder.absolutePath}")
-//            return
-//        }
-//        if (!langFolder.exists()) {
-//            try {
-//                ZipInputStream(FileInputStream(addon.getFile())).use { zipIn ->
-//                    var entry = zipIn.nextEntry
-//                    while (entry != null) {
-//                        if (entry.name.startsWith("lang/") && entry.name.endsWith(".json")) {
-//                            // Формируем корректный путь для извлечения файла
-//                            val outputFile = File(langFolder.parentFile, entry.name)
-//                            extractFile(zipIn, outputFile.absolutePath)
-//                        }
-//                        entry = zipIn.nextEntry
-//                    }
-//                }
-//            } catch (e: IOException) {
-//                throw RuntimeException("Ошибка при извлечении языковых файлов", e)
-//            }
-//        }
-//
-//
-//        // Загружаем языковые данные для указанного языка
-//        val lang = instance.config.getString("display.language", "en_us")!!
-//        println(lang)
-//        langFolder.listFiles()?.forEach { file ->
-//            if (file.name.equals("$lang.json", ignoreCase = true)) {
-//                val jsonObject = ShortcutUtils.openJSONFile(file)
-//                jsonObject.keySet().forEach { key ->
-//                    languageData[key] = jsonObject.getString(key)
-//                }
-//            }
-//        }
-//    }
-
-
     private fun loadOriginsFor(addon: OriginsAddon) {
-        val addonFiles: MutableList<File?> = ArrayList<File?>()
+        val addonFiles: MutableList<File> = ArrayList()
         originFiles.put(addon.getNamespace(), addonFiles)
         val originFolder = File(addon.dataFolder, "origins")
         if (!originFolder.exists()) {
@@ -277,7 +214,6 @@ object AddonLoader {
 
 
     fun loadOrigin(file: File, addon: OriginsAddon) {
-        // Ensure file name is lowercase
         val targetFile = if (file.name != file.name.lowercase(Locale.getDefault())) {
             File(file.parentFile, file.name.lowercase(Locale.getDefault())).also { lowercaseFile ->
                 if (!file.renameTo(lowercaseFile)) {
@@ -290,7 +226,6 @@ object AddonLoader {
         val json = ShortcutUtils.openJSONFile(targetFile)
         val unchoosable = if (json.has("unchoosable")) json.getBoolean("unchoosable") else false
 
-        // Parse icon info using Kotlin's when-expression
         val (itemName, cmd) = when (val iconObj = json.get("icon")) {
             is JSONObject -> {
                 val name = iconObj.getString("item")
@@ -300,7 +235,6 @@ object AddonLoader {
             else -> json.getString("icon") to 0
         }
 
-        // Create icon item
         val material = Material.matchMaterial(itemName) ?: Material.AIR
         val icon = ItemStack(material).apply {
             itemMeta = itemMeta?.let { meta ->
@@ -308,19 +242,16 @@ object AddonLoader {
             }
         }
 
-        // Process file name for display purposes
         val nameWithoutExt = targetFile.name.substringBefore(".")
         val formattedName = nameWithoutExt
             .split("_")
             .joinToString(" ") { it.replaceFirstChar { char -> char.uppercase(Locale.getDefault()) } }
 
-        // Read additional JSON properties with defaults
         val max = if (json.has("max")) json.getInt("max") else -1
         val layer = if (json.has("layer")) json.getString("layer") else "origin"
         val permission = if (json.has("permission")) json.getString("permission") else null
         val cost = if (json.has("cost")) json.getInt("cost") else null
 
-        // Calculate extra layer priority based on configuration
         var extraLayerPriority = 0
         OriginsRebornEnhanced.mainConfig.originSelection.layerOrders.forEach { _, value ->
             extraLayerPriority = minOf(extraLayerPriority, value - 1)
@@ -329,7 +260,6 @@ object AddonLoader {
 
         val displayName = if (json.has("name")) json.getString("name") else formattedName
 
-        // Build list of powers
         val powers = mutableListOf<Key>().apply {
             if (json.has("powers")) {
                 val array = json.getJSONArray("powers")

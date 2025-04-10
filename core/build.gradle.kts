@@ -13,6 +13,7 @@ repositories {
     maven { url = uri("https://jitpack.io") }
     maven { url = uri("https://repo.opencollab.dev/main/") }
     maven { url = uri("https://repo.viaversion.com") }
+    maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
 }
 
 dependencies {
@@ -30,8 +31,11 @@ dependencies {
     compileOnly("com.github.authme:authmereloaded:5.6.0-beta2")
     compileOnly("me.clip:placeholderapi:2.11.5")
     compileOnly("com.github.stleary:JSON-java:20241224")
-    compileOnly("com.github.SkriptLang:Skript:2.9.1")
+//    compileOnly("com.github.SkriptLang:Skript:2.9.1")
     compileOnly("net.objecthunter:exp4j:0.4.8")
+
+    compileOnly("com.github.retrooper:packetevents-spigot:2.7.0")
+
     compileOnly(project(":version"))
     compileOnly(project(":1.18.2"))
     compileOnly(project(":1.19"))

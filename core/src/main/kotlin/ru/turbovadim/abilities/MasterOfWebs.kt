@@ -1,6 +1,9 @@
 package ru.turbovadim.abilities
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
 import org.bukkit.Location
@@ -18,9 +21,11 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.inventory.PrepareItemCraftEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.ShapelessRecipe
+import org.endera.enderalib.utils.async.ioDispatcher
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
+import ru.turbovadim.OriginsRebornEnhanced.Companion.bukkitDispatcher
 import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
 import ru.turbovadim.abilities.types.Ability.AbilityRunner
 import ru.turbovadim.abilities.types.FlightAllowingAbility
@@ -29,9 +34,9 @@ import ru.turbovadim.cooldowns.CooldownAbility
 import ru.turbovadim.cooldowns.Cooldowns.CooldownInfo
 
 class MasterOfWebs : CooldownAbility, FlightAllowingAbility, Listener, VisibleAbility {
-    private val glowingEntities: MutableMap<Player?, MutableList<Entity?>?> = HashMap<Player?, MutableList<Entity?>?>()
 
-    private val temporaryCobwebs: MutableList<Location?> = ArrayList<Location?>()
+    private val glowingEntities: MutableMap<Player?, MutableList<Entity?>?> = HashMap()
+    private val temporaryCobwebs: MutableList<Location?> = ArrayList()
 
     @EventHandler
     fun onBlockDropItem(event: BlockDropItemEvent) {
@@ -66,43 +71,51 @@ class MasterOfWebs : CooldownAbility, FlightAllowingAbility, Listener, VisibleAb
         canFly.put(player, setFly)
     }
 
-    private val canFly: MutableMap<Player?, Boolean?> = HashMap<Player?, Boolean?>()
+    private val canFly: MutableMap<Player?, Boolean?> = HashMap()
 
 
     @EventHandler
-    fun onServerTickEnd(event: ServerTickEndEvent?) {
-        val onlinePlayers = Bukkit.getOnlinePlayers()
+    fun onServerTickEnd(event: ServerTickEndEvent) {
+        CoroutineScope(ioDispatcher).launch {
+            val onlinePlayers = Bukkit.getOnlinePlayers()
+            for (player in onlinePlayers) {
+                runForAbilityAsync(player) { webMaster ->
 
-        for (player in onlinePlayers) {
-            runForAbility(player, AbilityRunner { webMaster: Player ->
-                val inCobweb = isInCobweb(webMaster)
-                setCanFly(webMaster, inCobweb)
-                if (inCobweb) webMaster.isFlying = true
+                    val entities = withContext(bukkitDispatcher) {
+                        val inCobweb = isInCobweb(webMaster)
+                        setCanFly(webMaster, inCobweb)
+                        if (inCobweb) webMaster.isFlying = true
 
-                val entities = (webMaster.getNearbyEntities(16.0, 16.0, 16.0)
-                    .filterIsInstance<LivingEntity>()
-                    .take(16) + onlinePlayers)
-                    .distinct()
-                    .filter { it.world == webMaster.world && it.location.distance(webMaster.location) <= 16 }
+                        (webMaster.getNearbyEntities(16.0, 16.0, 16.0)
+                            .filterIsInstance<LivingEntity>()
+                            .take(16) + onlinePlayers)
+                            .distinct()
+                            .filter { it.world == webMaster.world && it.location.distance(webMaster.location) <= 16 }
+                    }
 
-                for (entity in entities) {
-                    runForAbility(entity, null) { webStuck: Player ->
-                        if (webStuck !== webMaster) {
-                            val masterEntities = glowingEntities.getOrPut(webMaster) { ArrayList() }!!
-                            if (isInCobweb(webStuck)) {
-                                if (!masterEntities.contains(webStuck)) {
-                                    masterEntities.add(webStuck)
+                    for (entity in entities) {
+                        runForAbilityAsync(entity, null) { webStuck ->
+                            if (webStuck !== webMaster) {
+                                val masterEntities = glowingEntities.getOrPut(webMaster) { ArrayList() }!!
+                                launch(bukkitDispatcher) {
+                                    if (isInCobweb(webStuck)) {
+                                        if (!masterEntities.contains(webStuck)) {
+                                            masterEntities.add(webStuck)
+                                        }
+                                        NMSInvoker.sendEntityData(webMaster, webStuck, getData(webStuck))
+                                    } else {
+                                        masterEntities.remove(webStuck)
+                                        AbilityRegister.updateEntity(webMaster, webStuck)
+                                    }
                                 }
-                                NMSInvoker.sendEntityData(webMaster, webStuck, getData(webStuck))
-                            } else {
-                                masterEntities.remove(webStuck)
-                                AbilityRegister.updateEntity(webMaster, webStuck)
                             }
                         }
                     }
                 }
-            })
+            }
         }
+
+
     }
 
 
@@ -121,10 +134,9 @@ class MasterOfWebs : CooldownAbility, FlightAllowingAbility, Listener, VisibleAb
         if (event.recipe != null) {
             if (event.recipe!!.result.type == Material.COBWEB) {
                 for (entity in event.inventory.viewers) {
-                    runForAbility(
-                        entity,
-                        null,
-                        AbilityRunner { player: Player? -> event.inventory.result = null })
+                    runForAbility(entity, null,) {
+                        player: Player? -> event.inventory.result = null
+                    }
                 }
             }
         }

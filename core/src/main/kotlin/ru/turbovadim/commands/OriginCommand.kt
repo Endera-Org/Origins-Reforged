@@ -2,6 +2,7 @@ package ru.turbovadim.commands
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Bukkit
@@ -270,13 +271,16 @@ class OriginCommand : CommandExecutor, TabCompleter {
                 if (sender is Player) {
                     val layer = if (args.size == 2) args[1]
                     else "origin"
-                    CoroutineScope(ioDispatcher).launch {
                         openOriginSwapper(
-                            sender, PlayerSwapOriginEvent.SwapReason.COMMAND, getOrigins(layer).indexOf(
-                                getOrigin(sender, layer)
-                            ), 0, false, true, layer
+                            player = sender,
+                            reason = PlayerSwapOriginEvent.SwapReason.COMMAND, getOrigins(layer).indexOf(
+                                runBlocking { getOrigin(sender, layer) }
+                            ),
+                            scrollAmount = 0,
+                            cost = false,
+                            displayOnly = true,
+                            layer = layer
                         )
-                    }
                 } else {
                     sender.sendMessage(
                         Component.text("This command can only be run by a player").color(NamedTextColor.RED)

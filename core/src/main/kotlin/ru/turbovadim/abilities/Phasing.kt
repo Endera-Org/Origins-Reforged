@@ -49,7 +49,7 @@ class Phasing : DependantAbility, VisibleAbility, FlightAllowingAbility, BreakSp
     fun onServerTick(event: ServerTickEndEvent?) {
         Bukkit.getOnlinePlayers().forEach { player ->
             runForAbility(player,
-                AbilityRunner { player ->
+                { player ->
                     val inBlock = isInBlock(player)
                     val blockBelowType = player.location.block.getRelative(BlockFace.DOWN).type
                     val shouldPhase = (player.isOnGround && player.isSneaking && !unphasable.contains(blockBelowType)) || inBlock
@@ -65,7 +65,7 @@ class Phasing : DependantAbility, VisibleAbility, FlightAllowingAbility, BreakSp
                         }
                     }
                 },
-                AbilityRunner { player ->
+                { player ->
                     if (isPhasing.getOrDefault(player, false)!!) {
                         setPhasing(player, false)
                     }

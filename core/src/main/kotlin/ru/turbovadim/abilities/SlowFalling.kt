@@ -2,7 +2,6 @@ package ru.turbovadim.abilities
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import net.kyori.adventure.key.Key
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -12,9 +11,8 @@ import org.bukkit.potion.PotionEffectType
 import org.endera.enderalib.utils.async.ioDispatcher
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.OriginsRebornEnhanced
+import ru.turbovadim.OriginsRebornEnhanced.Companion.bukkitDispatcher
 import ru.turbovadim.ShortcutUtils.infiniteDuration
-import ru.turbovadim.abilities.types.Ability.AsyncAbilityRunner
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class SlowFalling : VisibleAbility, Listener {
@@ -30,17 +28,19 @@ class SlowFalling : VisibleAbility, Listener {
     @EventHandler
     fun onPlayerMove(event: PlayerMoveEvent) {
         CoroutineScope(ioDispatcher).launch {
-            runForAbilityAsync(event.player, AsyncAbilityRunner { player ->
+            runForAbilityAsync(event.player) { player ->
                 if (player.isSneaking) {
-                    withContext(OriginsRebornEnhanced.bukkitDispatcher) {
+                    if (player.activePotionEffects.all { it.type != PotionEffectType.SLOW_FALLING }) return@runForAbilityAsync
+                    launch(bukkitDispatcher) {
                         player.removePotionEffect(PotionEffectType.SLOW_FALLING)
                     }
                 } else {
-                    withContext(OriginsRebornEnhanced.bukkitDispatcher) {
+                    if (player.activePotionEffects.any { it.type == PotionEffectType.SLOW_FALLING }) return@runForAbilityAsync
+                    launch(bukkitDispatcher) {
                         player.addPotionEffect(potionEffect)
                     }
                 }
-            })
+            }
         }
     }
 

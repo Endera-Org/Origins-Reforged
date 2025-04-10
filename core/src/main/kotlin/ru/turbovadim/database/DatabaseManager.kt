@@ -12,14 +12,25 @@ import java.util.*
 object DatabaseManager {
 
     private val originCache = Collections.synchronizedMap(HashMap<Pair<String, String>, String?>())
+    private val allUsedOriginsCache = Collections.synchronizedList(mutableListOf<String>())
 
     suspend fun fillOriginCache() = dbQuery {
         originCache.clear()
+        allUsedOriginsCache.clear()
+
+        // Fill origin cache
         UUIDOriginEntity.all().forEach { uuidEntity ->
             uuidEntity.layerOriginPairs.forEach { kv ->
                 originCache[uuidEntity.uuid to kv.layer] = kv.origin
             }
         }
+
+        // Fill all used origins cache
+        allUsedOriginsCache.addAll(
+            UsedOriginEntity.all()
+                .orderBy(UsedOrigins.id to SortOrder.ASC)
+                .map { it.usedOrigin }
+        )
     }
 
     /**
@@ -100,20 +111,38 @@ object DatabaseManager {
 
     /**
      * Retrieves all used origins across all UUIDs from the database.
+     * Uses a cache for improved performance to avoid IO wait.
      *
      * @return A list of all used origins as strings, sorted in ascending order by their IDs.
      */
-    suspend fun getAllUsedOrigins(): List<String> = dbQuery {
-        UsedOriginEntity.all()
-            .orderBy(UsedOrigins.id to SortOrder.ASC)
-            .map { it.usedOrigin }
+    suspend fun getAllUsedOrigins(): List<String> {
+        if (allUsedOriginsCache.isNotEmpty()) {
+            return allUsedOriginsCache
+        }
+
+        // Otherwise query the database and update cache
+        return dbQuery {
+            val origins = UsedOriginEntity.all()
+                .orderBy(UsedOrigins.id to SortOrder.ASC)
+                .map { it.usedOrigin }
+
+            // Update cache
+            allUsedOriginsCache.clear()
+            allUsedOriginsCache.addAll(origins)
+
+            origins
+        }
     }
 
     suspend fun addOriginToHistory(uuidEntity: UUIDOriginEntity, newOrigin: String) = dbQuery {
-        UsedOriginEntity.new {
+        val result = UsedOriginEntity.new {
             this.parent = uuidEntity
             this.usedOrigin = newOrigin
         }.toUsedOrigin()
+
+        allUsedOriginsCache.add(newOrigin)
+
+        result
     }
 
     suspend fun addOriginToHistory(uuid: String, newOrigin: String) = dbQuery {

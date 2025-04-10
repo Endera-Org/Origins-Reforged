@@ -37,7 +37,6 @@ interface BreakSpeedModifierAbility : Ability {
     fun provideContextFor(player: Player): BlockMiningContext
     fun shouldActivate(player: Player): Boolean
 
-    @JvmRecord
     data class BlockMiningContext(
         val heldItem: ItemStack,
         val slowDigging: PotionEffect?,

@@ -1,7 +1,7 @@
 package ru.turbovadim.abilities
 
+import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes
 import net.kyori.adventure.key.Key
-import org.bukkit.Particle
 import ru.turbovadim.abilities.types.ParticleAbility
 
 class EnderParticles : ParticleAbility {
@@ -10,7 +10,8 @@ class EnderParticles : ParticleAbility {
         return Key.key("origins:ender_particles")
     }
 
-    override val particle = Particle.PORTAL
+    // Using the new particleType property with PacketEvents ParticleType
+    override val particleType = ParticleTypes.PORTAL!!
 
     override val frequency: Int = 4
 }

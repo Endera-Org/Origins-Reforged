@@ -48,17 +48,21 @@ interface Ability {
     }
 
     suspend fun hasAbilityAsync(player: Player): Boolean = withContext(ioDispatcher) {
+        hasAbility(player)
+    }
+
+    fun hasAbility(player: Player): Boolean {
         for (keyStateGetter in AddonLoader.abilityOverrideChecks) {
             val state = keyStateGetter?.get(player, getKey())
-            when (state) {
-                OriginsAddon.State.DENY -> return@withContext false
-                OriginsAddon.State.ALLOW -> return@withContext true
-                else -> return@withContext false
+            return when (state) {
+                OriginsAddon.State.DENY -> false
+                OriginsAddon.State.ALLOW -> true
+                else -> false
             }
         }
 
         if (OriginsRebornEnhanced.Companion.isWorldGuardHookInitialized) {
-            if (WorldGuardHook.isAbilityDisabled(player.location, this@Ability)) return@withContext false
+            if (WorldGuardHook.isAbilityDisabled(player.location, this@Ability)) return false
 
             val section = OriginsRebornEnhanced.mainConfig.preventAbilitiesIn
             val loc = BukkitAdapter.adapt(player.location)
@@ -71,13 +75,13 @@ interface Ability {
                     val abilities = section[sectionKey] ?: emptyList()
                     if (!abilities.contains(keyStr) && !abilities.contains("all")) continue
                     if (region.id.equals(sectionKey, ignoreCase = true)) {
-                        return@withContext false
+                        return false
                     }
                 }
             }
         }
 
-        val origins = OriginSwapper.getOrigins(player)
+        val origins = runBlocking { OriginSwapper.getOrigins(player)  }
         var hasAbility = origins.any { it.hasAbility(getKey()) }
 
         if (abilityMap[getKey()] is DependantAbility) {
@@ -86,11 +90,7 @@ interface Ability {
             val expected = (dependantAbility.dependencyType == DependantAbility.DependencyType.REGULAR)
             hasAbility = hasAbility && (dependencyEnabled == expected)
         }
-        return@withContext hasAbility
-    }
-
-    fun hasAbility(player: Player): Boolean = runBlocking {
-        hasAbilityAsync(player)
+        return hasAbility
     }
 
     fun interface AbilityRunner {

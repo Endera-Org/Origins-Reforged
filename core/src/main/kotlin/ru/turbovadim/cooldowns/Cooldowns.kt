@@ -1,10 +1,11 @@
 package ru.turbovadim.cooldowns
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent
+import com.github.retrooper.packetevents.PacketEvents
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerActionBar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.TextColor
@@ -107,7 +108,7 @@ class Cooldowns : Listener {
                 for (key in cooldownKeys) {
                     val info = registeredCooldowns[key]
                     if (info == null || info.icon == null) continue
-                    val remaining = cooldownPDC.getOrDefault<Long?, Long?>(
+                    val remaining = cooldownPDC.getOrDefault(
                         key,
                         PersistentDataType.LONG,
                         0L
@@ -129,11 +130,13 @@ class Cooldowns : Listener {
             updates.add(Pair(player, message))
         }
 
-        withContext(OriginsRebornEnhanced.bukkitDispatcher) {
+//        withContext(OriginsRebornEnhanced.bukkitDispatcher) {
+
             for ((player, message) in updates) {
-                player.sendActionBar(message)
+                PacketEvents.getAPI().playerManager.sendPacket(player, WrapperPlayServerActionBar(message))
+//                player.sendActionBar(message)
             }
-        }
+//        }
     }
 
 
@@ -144,11 +147,11 @@ class Cooldowns : Listener {
      * либо оставшееся время <= 0 (если кулдаун не статичный).
      */
     private fun getActiveCooldownKeys(cooldownPDC: PersistentDataContainer, now: Long): MutableList<NamespacedKey> {
-        val keys: MutableList<NamespacedKey> = ArrayList<NamespacedKey>(cooldownPDC.keys)
+        val keys: MutableList<NamespacedKey> = ArrayList(cooldownPDC.keys)
         keys.removeIf { key: NamespacedKey? ->
             val info = registeredCooldowns[key]
             if (info == null) return@removeIf true
-            val remaining = cooldownPDC.getOrDefault<Long?, Long?>(
+            val remaining = cooldownPDC.getOrDefault(
                 key!!,
                 PersistentDataType.LONG,
                 0L
@@ -181,7 +184,7 @@ class Cooldowns : Listener {
      * Перегруженный метод getCooldown, использующий предварительно вычисленное время.
      */
     fun getCooldown(player: Player, key: NamespacedKey, now: Long): Long {
-        val pdc = player.persistentDataContainer.getOrDefault<PersistentDataContainer?, PersistentDataContainer>(
+        val pdc = player.persistentDataContainer.getOrDefault(
             cooldownKey,
             PersistentDataType.TAG_CONTAINER,
             player.persistentDataContainer.adapterContext.newPersistentDataContainer()
@@ -190,7 +193,7 @@ class Cooldowns : Listener {
         if (info == null) return 0
         return max(
             0.0,
-            (pdc.getOrDefault<Long?, Long?>(
+            (pdc.getOrDefault(
                 key,
                 PersistentDataType.LONG,
                 0L

@@ -1,5 +1,7 @@
 package ru.turbovadim
 
+import com.github.retrooper.packetevents.PacketEvents
+import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder
 import net.milkbowl.vault.economy.Economy
 import org.bukkit.Bukkit
 import org.endera.enderalib.bstats.MetricsLite
@@ -7,10 +9,10 @@ import org.endera.enderalib.utils.async.BukkitDispatcher
 import org.endera.enderalib.utils.configuration.ConfigurationManager
 import org.endera.enderalib.utils.configuration.MultiConfigurationManager
 import ru.turbovadim.abilities.*
-import ru.turbovadim.abilities.types.BreakSpeedModifierAbility.BreakSpeedModifierAbilityListener
-import ru.turbovadim.abilities.types.ParticleAbility.ParticleAbilityListener
 import ru.turbovadim.abilities.custom.ToggleableAbilities
 import ru.turbovadim.abilities.types.Ability
+import ru.turbovadim.abilities.types.BreakSpeedModifierAbility.BreakSpeedModifierAbilityListener
+import ru.turbovadim.abilities.types.ParticleAbility.ParticleAbilityListener
 import ru.turbovadim.commands.FlightToggleCommand
 import ru.turbovadim.commands.OriginCommand
 import ru.turbovadim.config.*
@@ -49,12 +51,12 @@ class OriginsRebornEnhanced : OriginsAddon() {
             val version: String? =
                 Bukkit.getBukkitVersion().split("-".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[0]
             NMSInvoker = when (version) {
-                "1.18.2" -> NMSInvokerV1_18_2()
-                "1.19" -> NMSInvokerV1_19()
-                "1.19.1" -> NMSInvokerV1_19_1()
-                "1.19.2" -> NMSInvokerV1_19_2()
-                "1.19.3" -> NMSInvokerV1_19_3()
-                "1.19.4" -> NMSInvokerV1_19_4()
+//                "1.18.2" -> NMSInvokerV1_18_2()
+//                "1.19" -> NMSInvokerV1_19()
+//                "1.19.1" -> NMSInvokerV1_19_1()
+//                "1.19.2" -> NMSInvokerV1_19_2()
+//                "1.19.3" -> NMSInvokerV1_19_3()
+//                "1.19.4" -> NMSInvokerV1_19_4()
                 "1.20" -> NMSInvokerV1_20()
                 "1.20.1" -> NMSInvokerV1_20_1()
                 "1.20.2" -> NMSInvokerV1_20_2()
@@ -93,6 +95,9 @@ class OriginsRebornEnhanced : OriginsAddon() {
         private set
 
     override fun onLoad() {
+        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this))
+        PacketEvents.getAPI().load()
+
         try {
             if (Bukkit.getPluginManager().isPluginEnabled("WorldGuard")) {
                 isWorldGuardHookInitialized = WorldGuardHook.tryInitialize()
@@ -100,6 +105,14 @@ class OriginsRebornEnhanced : OriginsAddon() {
         } catch (_: Throwable) {
             isWorldGuardHookInitialized = false
         }
+    }
+
+    override fun onOnEnable() {
+        PacketEvents.getAPI().init()
+    }
+
+    override fun onDisable() {
+        PacketEvents.getAPI().terminate()
     }
 
     override fun onRegister() {
@@ -187,8 +200,8 @@ class OriginsRebornEnhanced : OriginsAddon() {
     }
 
     override fun getAbilities(): List<Ability> {
-        val abilities: MutableList<Ability> = ArrayList<Ability>(
-            mutableListOf<Ability>(
+        val abilities: MutableList<Ability> = ArrayList(
+            mutableListOf(
                 PumpkinHate(),
                 FallImmunity(),
                 WeakArms(),

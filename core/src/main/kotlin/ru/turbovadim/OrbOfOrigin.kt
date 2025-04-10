@@ -20,6 +20,7 @@ import org.endera.enderalib.utils.async.ioDispatcher
 import ru.turbovadim.AddonLoader.getOrigins
 import ru.turbovadim.AddonLoader.getTextFor
 import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
+import ru.turbovadim.OriginsRebornEnhanced.Companion.bukkitDispatcher
 import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
 import ru.turbovadim.events.PlayerSwapOriginEvent
 
@@ -36,7 +37,7 @@ class OrbOfOrigin : Listener {
         }
     }
 
-    @EventHandler  // itemStack is null on some versions
+    @EventHandler
     fun onPrepareItemCraft(event: PrepareItemCraftEvent) {
         val recipe = event.recipe
         if (recipe != null) {
@@ -120,23 +121,27 @@ class OrbOfOrigin : Listener {
                     OriginSwapper.selectRandomOrigin(player, PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN, layer)
                     val origin = OriginSwapper.getOrigin(player, layer)
                     val index = getOrigins(layer).indexOf(origin)
-                    OriginSwapper.openOriginSwapper(
-                        player,
-                        PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN,
-                        index,
-                        0,
-                        false,
-                        true,
-                        layer
-                    )
+                    launch(bukkitDispatcher) {
+                        OriginSwapper.openOriginSwapper(
+                            player,
+                            PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN,
+                            index,
+                            0,
+                            false,
+                            true,
+                            layer
+                        )
+                    }
                 } else {
-                    OriginSwapper.openOriginSwapper(
-                        player,
-                        PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN,
-                        0,
-                        0,
-                        layer
-                    )
+                    launch(bukkitDispatcher) {
+                        OriginSwapper.openOriginSwapper(
+                            player,
+                            PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN,
+                            0,
+                            0,
+                            layer
+                        )
+                    }
                 }
                 opened = true
             }

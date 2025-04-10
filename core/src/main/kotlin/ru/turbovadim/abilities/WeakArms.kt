@@ -1,6 +1,8 @@
 package ru.turbovadim.abilities
 
 import com.destroystokyo.paper.event.server.ServerTickEndEvent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
 import org.bukkit.FluidCollisionMode
@@ -13,93 +15,106 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerItemConsumeEvent
 import org.bukkit.potion.PotionEffect
+import org.endera.enderalib.utils.async.ioDispatcher
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
+import ru.turbovadim.OriginsRebornEnhanced.Companion.bukkitDispatcher
 import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
 import ru.turbovadim.SavedPotionEffect
 import ru.turbovadim.ShortcutUtils.infiniteDuration
-import ru.turbovadim.abilities.types.Ability.AbilityRunner
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class WeakArms : VisibleAbility, Listener {
 
-    var storedEffects: MutableMap<Player?, SavedPotionEffect> = HashMap<Player?, SavedPotionEffect>()
+    var storedEffects: MutableMap<Player?, SavedPotionEffect> = HashMap()
 
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent?) {
         val attribute = NMSInvoker.blockBreakSpeedAttribute
         val currentTick = Bukkit.getCurrentTick()
-        for (player in Bukkit.getOnlinePlayers()) {
-            runForAbility(player, AbilityRunner { player ->
-                val miningFatigue = NMSInvoker.miningFatigueEffect
-                val strengthEffect = NMSInvoker.strengthEffect
-                val target = player.getTargetBlockExact(8, FluidCollisionMode.NEVER)
-                val hasStrength = player.getPotionEffect(strengthEffect) != null
-                val isTargetNatural = target != null && naturalStones.contains(target.type)
+        CoroutineScope(ioDispatcher).launch {
+            for (player in Bukkit.getOnlinePlayers().toList()) {
+                runForAbilityAsync(player) { player ->
+                    launch(bukkitDispatcher) {
+                        val miningFatigue = NMSInvoker.miningFatigueEffect
+                        val strengthEffect = NMSInvoker.strengthEffect
+                        val target = player.getTargetBlockExact(8, FluidCollisionMode.NEVER)
+                        val hasStrength = player.getPotionEffect(strengthEffect) != null
+                        val isTargetNatural = target != null && naturalStones.contains(target.type)
 
-                val sides = if (isTargetNatural) {
-                    listOf(
-                        BlockFace.DOWN,
-                        BlockFace.UP,
-                        BlockFace.WEST,
-                        BlockFace.EAST,
-                        BlockFace.NORTH,
-                        BlockFace.SOUTH
-                    ).count { face -> naturalStones.contains(target.getRelative(face).type) }
-                } else 0
+                        val sides = if (isTargetNatural) {
+                            listOf(
+                                BlockFace.DOWN,
+                                BlockFace.UP,
+                                BlockFace.WEST,
+                                BlockFace.EAST,
+                                BlockFace.NORTH,
+                                BlockFace.SOUTH
+                            ).count { face -> naturalStones.contains(target.getRelative(face).type) }
+                        } else 0
 
-                if (sides > 2 && !hasStrength) {
-                    if (attribute == null) {
-                        val currentEffect = player.getPotionEffect(miningFatigue)
-                        val ambient = currentEffect?.isAmbient ?: false
-                        val showParticles = currentEffect?.hasParticles() ?: false
-                        if (currentEffect != null && currentEffect.amplifier != -1) {
-                            storedEffects[player] = SavedPotionEffect(currentEffect, currentTick)
-                            player.removePotionEffect(miningFatigue)
-                        }
-                        player.addPotionEffect(PotionEffect(miningFatigue, infiniteDuration(), -1, ambient, showParticles))
-                    } else {
-                        val instance = player.getAttribute(attribute) ?: return@AbilityRunner
-                        if (NMSInvoker.getAttributeModifier(instance, key) == null) {
-                            NMSInvoker.addAttributeModifier(
-                                instance,
-                                key,
-                                "weak-arms",
-                                -1.0,
-                                AttributeModifier.Operation.ADD_NUMBER
-                            )
-                        }
-                    }
-                } else {
-                    if (attribute == null) {
-                        player.getPotionEffect(miningFatigue)
-                            ?.takeIf { it.amplifier == -1 }
-                            ?.let { player.removePotionEffect(miningFatigue) }
-
-                        storedEffects.remove(player)?.let { saved ->
-                            saved.effect?.let { potionEffect ->
-                                val remainingTime = potionEffect.duration - (currentTick - saved.currentTime)
-                                if (remainingTime > 0) {
-                                    player.addPotionEffect(
-                                        PotionEffect(
-                                            potionEffect.type,
-                                            remainingTime,
-                                            potionEffect.amplifier,
-                                            potionEffect.isAmbient,
-                                            potionEffect.hasParticles()
-                                        )
+                        if (sides > 2 && !hasStrength) {
+                            if (attribute == null) {
+                                val currentEffect = player.getPotionEffect(miningFatigue)
+                                val ambient = currentEffect?.isAmbient ?: false
+                                val showParticles = currentEffect?.hasParticles() ?: false
+                                if (currentEffect != null && currentEffect.amplifier != -1) {
+                                    storedEffects[player] = SavedPotionEffect(currentEffect, currentTick)
+                                    player.removePotionEffect(miningFatigue)
+                                }
+                                player.addPotionEffect(
+                                    PotionEffect(
+                                        miningFatigue,
+                                        infiniteDuration(),
+                                        -1,
+                                        ambient,
+                                        showParticles
+                                    )
+                                )
+                            } else {
+                                val instance = player.getAttribute(attribute) ?: return@launch
+                                if (NMSInvoker.getAttributeModifier(instance, key) == null) {
+                                    NMSInvoker.addAttributeModifier(
+                                        instance,
+                                        key,
+                                        "weak-arms",
+                                        -1.0,
+                                        AttributeModifier.Operation.ADD_NUMBER
                                     )
                                 }
                             }
+                        } else {
+                            if (attribute == null) {
+                                player.getPotionEffect(miningFatigue)
+                                    ?.takeIf { it.amplifier == -1 }
+                                    ?.let { player.removePotionEffect(miningFatigue) }
+
+                                storedEffects.remove(player)?.let { saved ->
+                                    saved.effect?.let { potionEffect ->
+                                        val remainingTime = potionEffect.duration - (currentTick - saved.currentTime)
+                                        if (remainingTime > 0) {
+                                            player.addPotionEffect(
+                                                PotionEffect(
+                                                    potionEffect.type,
+                                                    remainingTime,
+                                                    potionEffect.amplifier,
+                                                    potionEffect.isAmbient,
+                                                    potionEffect.hasParticles()
+                                                )
+                                            )
+                                        }
+                                    }
+                                }
+                            } else {
+                                val instance = player.getAttribute(attribute) ?: return@launch
+                                NMSInvoker.getAttributeModifier(instance, key)
+                                    ?.let { instance.removeModifier(it) }
+                            }
                         }
-                    } else {
-                        val instance = player.getAttribute(attribute) ?: return@AbilityRunner
-                        NMSInvoker.getAttributeModifier(instance, key)
-                            ?.let { instance.removeModifier(it) }
                     }
                 }
-            })
+            }
         }
     }
 

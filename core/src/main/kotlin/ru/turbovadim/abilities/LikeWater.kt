@@ -2,7 +2,6 @@ package ru.turbovadim.abilities
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import net.kyori.adventure.key.Key
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -47,8 +46,11 @@ class LikeWater : VisibleAbility, FlightAllowingAbility, Listener {
             val rising = event.to.y > event.from.y
             runForAbilityAsync(player) { p ->
                 val isFlying = (p.isFlying || rising) && !p.isInBubbleColumn
-                withContext(bukkitDispatcher) {
-                    p.isFlying = isFlying
+                if (isFlying == p.isFlying) return@runForAbilityAsync
+                launch(bukkitDispatcher) {
+                    try {
+                        p.isFlying = isFlying
+                    } catch (_: IllegalArgumentException) {}
                 }
             }
         }

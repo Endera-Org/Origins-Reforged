@@ -31,35 +31,32 @@ class WaterBreathing : Listener, VisibleAbility {
 
     @EventHandler
     fun onEntityAirChange(event: EntityAirChangeEvent) {
-        runForAbility(event.entity, AbilityRunner { player ->
+        runForAbility(event.entity) { player ->
+
             val pdc = player.persistentDataContainer
             if (pdc.get(airKey, OriginSwapper.BooleanPDT.BOOLEAN) == true ||
-                pdc.get(dehydrationKey, OriginSwapper.BooleanPDT.BOOLEAN) == true) {
-                return@AbilityRunner
-            }
+                pdc.get(dehydrationKey, OriginSwapper.BooleanPDT.BOOLEAN) == true) return@runForAbility
 
-            val underwater = NMSInvoker.isUnderWater(player)
+            val newAir = player.remainingAir - event.amount
+            val underwater = player.isUnderWater
             val waterBreathing = hasWaterBreathing(player)
 
-            if (player.remainingAir - event.amount > 0) {
-                if (!underwater && !waterBreathing) return@AbilityRunner
-            } else if (underwater || waterBreathing) {
-                return@AbilityRunner
-            }
-
-            event.isCancelled = true
-        })
+            event.isCancelled = (newAir > 0 && (underwater || waterBreathing)) ||
+                    (newAir <= 0 && !underwater && !waterBreathing)
+        }
     }
 
 
     @EventHandler
     fun onEntityPotionEffect(event: EntityPotionEffectEvent) {
         if (event.cause != EntityPotionEffectEvent.Cause.TURTLE_HELMET) return
-        runForAbility(event.getEntity(), AbilityRunner { player: Player? -> event.isCancelled = true })
+        runForAbility(event.entity) {
+            event.isCancelled = true
+        }
     }
 
     fun hasWaterBreathing(player: Player): Boolean {
-        return player.hasPotionEffect(PotionEffectType.CONDUIT_POWER) || player.hasPotionEffect(PotionEffectType.WATER_BREATHING)
+        return player.activePotionEffects.any { it.type == PotionEffectType.WATER_BREATHING || it.type == PotionEffectType.CONDUIT_POWER }
     }
 
     var airKey: NamespacedKey = NamespacedKey(instance, "fullair")
@@ -68,7 +65,7 @@ class WaterBreathing : Listener, VisibleAbility {
 
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent?) {
-        Bukkit.getOnlinePlayers().forEach { player ->
+        Bukkit.getOnlinePlayers().toList().forEach { player ->
             runForAbility(
                 player,
                 AbilityRunner { player ->

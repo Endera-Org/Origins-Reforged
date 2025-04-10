@@ -3,9 +3,9 @@ package ru.turbovadim
 import net.kyori.adventure.key.Key
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
-import ru.turbovadim.abilities.types.Ability
 import ru.turbovadim.abilities.AbilityRegister
 import ru.turbovadim.abilities.custom.ToggleableAbility
+import ru.turbovadim.abilities.types.Ability
 import ru.turbovadim.events.PlayerSwapOriginEvent
 import ru.turbovadim.packetsenders.OriginsRebornResourcePackInfo
 import java.io.File
@@ -40,6 +40,7 @@ abstract class OriginsAddon : JavaPlugin() {
 
     final override fun onEnable() {
         instance = this
+        onOnEnable()
         onRegister()
         AddonLoader.register(this)
         for (ability in getAbilities()) {
@@ -49,6 +50,8 @@ abstract class OriginsAddon : JavaPlugin() {
         getResourcePackInfo()?.let { PackApplier.addResourcePack(this, it) }
         afterRegister()
     }
+
+    open fun onOnEnable() {}
 
     open fun getResourcePackInfo(): OriginsRebornResourcePackInfo? = null
 
