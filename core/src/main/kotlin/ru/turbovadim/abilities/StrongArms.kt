@@ -15,11 +15,11 @@ import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
-import ru.turbovadim.abilities.types.Ability.AbilityRunner
-import ru.turbovadim.abilities.types.BreakSpeedModifierAbility.BlockMiningContext
 import ru.turbovadim.abilities.StrongArms.StrongArmsBreakSpeed.StrongArmsFastBlockBreakEvent
 import ru.turbovadim.abilities.types.Ability
+import ru.turbovadim.abilities.types.Ability.AbilityRunner
 import ru.turbovadim.abilities.types.BreakSpeedModifierAbility
+import ru.turbovadim.abilities.types.BreakSpeedModifierAbility.BlockMiningContext
 import ru.turbovadim.abilities.types.MultiAbility
 import ru.turbovadim.abilities.types.VisibleAbility
 
@@ -45,7 +45,7 @@ class StrongArms : MultiAbility, VisibleAbility, Listener {
 
         @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
         fun onBlockBreak(event: BlockBreakEvent) {
-            runForAbility(event.player, AbilityRunner { player ->
+            runForAbility(event.player) { player ->
                 if (event.block.type in naturalStones &&
                     !MaterialTags.PICKAXES.isTagged(player.inventory.itemInMainHand.type)
                 ) {
@@ -55,7 +55,7 @@ class StrongArms : MultiAbility, VisibleAbility, Listener {
                     }
                     event.block.breakNaturally(pickaxe, event is StrongArmsFastBlockBreakEvent)
                 }
-            })
+            }
         }
 
 

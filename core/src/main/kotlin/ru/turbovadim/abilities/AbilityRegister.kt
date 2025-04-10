@@ -12,16 +12,10 @@ import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.event.Listener
 import org.bukkit.inventory.EquipmentSlot
-import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.OriginsRebornEnhanced
-import ru.turbovadim.abilities.types.Ability
-import ru.turbovadim.abilities.types.AttributeModifierAbility
-import ru.turbovadim.abilities.types.DependencyAbility
-import ru.turbovadim.abilities.types.FlightAllowingAbility
-import ru.turbovadim.abilities.types.MultiAbility
-import ru.turbovadim.abilities.types.VisibilityChangingAbility
+import ru.turbovadim.abilities.types.*
 import ru.turbovadim.commands.FlightToggleCommand
 import ru.turbovadim.cooldowns.CooldownAbility
 import ru.turbovadim.packetsenders.NMSInvoker
