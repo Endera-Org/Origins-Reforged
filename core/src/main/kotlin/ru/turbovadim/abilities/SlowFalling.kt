@@ -2,6 +2,7 @@ package ru.turbovadim.abilities
 
 import com.github.retrooper.packetevents.event.PacketListener
 import com.github.retrooper.packetevents.event.PacketReceiveEvent
+import com.github.retrooper.packetevents.event.PacketSendEvent
 import com.github.retrooper.packetevents.protocol.packettype.PacketType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

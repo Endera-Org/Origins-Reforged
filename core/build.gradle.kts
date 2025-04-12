@@ -1,7 +1,7 @@
 plugins {
     id("java")
-    kotlin("jvm") version "2.1.10"
-    kotlin("plugin.serialization") version "2.1.10" apply true
+    kotlin("jvm") version "2.1.20"
+    kotlin("plugin.serialization") version "2.1.20" apply true
 }
 
 repositories {
@@ -13,6 +13,8 @@ repositories {
     maven { url = uri("https://jitpack.io") }
     maven { url = uri("https://repo.opencollab.dev/main/") }
     maven { url = uri("https://repo.viaversion.com") }
+
+    maven { url = uri("https://repo.codemc.io/repository/maven-snapshots/") }
     maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
 }
 
@@ -34,7 +36,7 @@ dependencies {
 //    compileOnly("com.github.SkriptLang:Skript:2.9.1")
     compileOnly("net.objecthunter:exp4j:0.4.8")
 
-    compileOnly("com.github.retrooper:packetevents-spigot:2.7.0")
+    compileOnly("com.github.retrooper:packetevents-spigot:2.8.0-SNAPSHOT")
 
     compileOnly(project(":version"))
     compileOnly(project(":1.20"))

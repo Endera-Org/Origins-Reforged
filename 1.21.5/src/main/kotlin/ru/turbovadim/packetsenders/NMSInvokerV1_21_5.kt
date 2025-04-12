@@ -7,7 +7,6 @@ import net.kyori.adventure.resource.ResourcePackRequest
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.util.TriState
 import net.minecraft.Optionull
-import net.minecraft.network.chat.RemoteChatSession
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
 import net.minecraft.network.syncher.EntityDataAccessor
@@ -42,7 +41,6 @@ import java.net.URI
 import java.util.*
 import java.util.List
 import java.util.concurrent.ExecutionException
-import java.util.function.Function
 import java.util.function.Predicate
 
 class NMSInvokerV1_21_5 : NMSInvoker() {
@@ -87,7 +85,7 @@ class NMSInvokerV1_21_5 : NMSInvoker() {
                 false
             }
 
-        ).asPaperVanillaGoal<Creeper>()
+        ).asPaperGoal<Creeper>()
     }
 
     override fun wasTouchingWater(player: Player): Boolean {
@@ -210,12 +208,12 @@ class NMSInvokerV1_21_5 : NMSInvoker() {
             serverPlayer.tabListDisplayName,
             true,
             0,
-            Optionull.map<RemoteChatSession?, RemoteChatSession.Data?>(
-                serverPlayer.chatSession,
-                Function { obj: RemoteChatSession? -> obj!!.asData() })
+            Optionull.map(serverPlayer.chatSession) { obj ->
+                obj!!.asData()
+            }
         )
         val packet = ClientboundPlayerInfoUpdatePacket(
-            EnumSet.of<ClientboundPlayerInfoUpdatePacket.Action?>(
+            EnumSet.of(
                 ClientboundPlayerInfoUpdatePacket.Action.UPDATE_GAME_MODE
             ), entry
         )

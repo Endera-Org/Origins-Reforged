@@ -51,12 +51,6 @@ class OriginsRebornEnhanced : OriginsAddon() {
             val version: String? =
                 Bukkit.getBukkitVersion().split("-".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[0]
             NMSInvoker = when (version) {
-//                "1.18.2" -> NMSInvokerV1_18_2()
-//                "1.19" -> NMSInvokerV1_19()
-//                "1.19.1" -> NMSInvokerV1_19_1()
-//                "1.19.2" -> NMSInvokerV1_19_2()
-//                "1.19.3" -> NMSInvokerV1_19_3()
-//                "1.19.4" -> NMSInvokerV1_19_4()
                 "1.20" -> NMSInvokerV1_20()
                 "1.20.1" -> NMSInvokerV1_20_1()
                 "1.20.2" -> NMSInvokerV1_20_2()
@@ -67,6 +61,7 @@ class OriginsRebornEnhanced : OriginsAddon() {
                 "1.21.1" -> NMSInvokerV1_21_1()
                 "1.21.2", "1.21.3" -> NMSInvokerV1_21_3()
                 "1.21.4" -> NMSInvokerV1_21_4()
+                "1.21.5" -> NMSInvokerV1_21_5()
                 else -> throw IllegalStateException("Unsupported version: " + Bukkit.getMinecraftVersion())
             }
             Bukkit.getPluginManager().registerEvents(NMSInvoker, instance)
@@ -81,7 +76,7 @@ class OriginsRebornEnhanced : OriginsAddon() {
 
     private fun setupEconomy(): Boolean {
         try {
-            val economyProvider = server.servicesManager.getRegistration<Economy?>(Economy::class.java)
+            val economyProvider = server.servicesManager.getRegistration(Economy::class.java)
             if (economyProvider != null) {
                 economy = economyProvider.getProvider()
             }
@@ -106,10 +101,6 @@ class OriginsRebornEnhanced : OriginsAddon() {
         } catch (_: Throwable) {
             isWorldGuardHookInitialized = false
         }
-    }
-
-    override fun onOnEnable() {
-
     }
 
     override fun onDisable() {

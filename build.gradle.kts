@@ -2,11 +2,11 @@ plugins {
     id("java")
     id("com.gradleup.shadow") version "8.3.6"
     id("io.papermc.paperweight.userdev") version "2.0.0-beta.16" apply false
-    kotlin("jvm") version "2.1.10"
+    kotlin("jvm") version "2.1.20"
 }
 
 group = "ru.turbovadim"
-version = "3.0.0-alpha8"
+version = "3.0.0-alpha9"
 
 repositories {
     mavenCentral()
@@ -28,6 +28,7 @@ dependencies {
     implementation(project(":1.21.1", "reobf"))
     implementation(project(":1.21.3", "reobf"))
     implementation(project(":1.21.4", "reobf"))
+    implementation(project(":1.21.5", "reobf"))
     implementation("net.kyori:adventure-platform-bukkit:4.3.4")
 }
 
