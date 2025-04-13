@@ -114,8 +114,6 @@ class MasterOfWebs : CooldownAbility, FlightAllowingAbility, Listener, VisibleAb
                 }
             }
         }
-
-
     }
 
 

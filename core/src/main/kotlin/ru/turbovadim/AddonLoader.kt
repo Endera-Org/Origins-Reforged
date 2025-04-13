@@ -70,7 +70,6 @@ object AddonLoader {
         sortOrigins()
     }
 
-    @JvmStatic
     fun shouldOpenSwapMenu(player: Player, reason: SwapReason): Boolean {
         for (getter in openSwapMenuChecks) {
             val v = getter.get(player, reason)
@@ -79,7 +78,6 @@ object AddonLoader {
         return true
     }
 
-    @JvmStatic
     fun allowOriginSwapCommand(player: Player): Boolean {
         var allowed = false
         for (getter in allowOriginSwapChecks) {

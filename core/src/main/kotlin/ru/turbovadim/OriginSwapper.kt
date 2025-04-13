@@ -900,7 +900,6 @@ class OriginSwapper : Listener {
             return component.font(font)
         }
 
-        @JvmStatic
         fun shouldResetPlayer(reason: SwapReason): Boolean {
             return when (reason) {
                 SwapReason.COMMAND -> OriginsRebornEnhanced.mainConfig.swapCommand.resetPlayer
@@ -1065,7 +1064,6 @@ class OriginSwapper : Listener {
             return getOrigin(player, "origin")
         }
 
-        @JvmStatic
         suspend fun getOrigin(player: Player, layer: String): Origin? {
             return if (player.persistentDataContainer.has(originKey, PersistentDataType.STRING)) {
                 getStoredOrigin(player, layer)
@@ -1109,7 +1107,6 @@ class OriginSwapper : Listener {
             }
         }
 
-        @JvmStatic
         suspend fun getOrigins(player: Player): MutableList<Origin> =
             AddonLoader.layers.filterNotNull()
                 .mapNotNull { getOrigin(player, it) }
@@ -1120,7 +1117,6 @@ class OriginSwapper : Listener {
             setOrigin(player, origin, reason, resetPlayer, "origin")
         }
 
-        @JvmStatic
         suspend fun setOrigin(player: Player, origin: Origin?, reason: SwapReason?, resetPlayer: Boolean, layer: String) {
             val uuid = player.uniqueId.toString()
             val swapOriginEvent = PlayerSwapOriginEvent(player, reason, resetPlayer, getOrigin(player, layer), origin)
@@ -1155,28 +1151,5 @@ class OriginSwapper : Listener {
                 loadOrigins(player)
             }
         }
-
-
-//        private lateinit var originFile: File
-//        lateinit var originFileConfiguration: FileConfiguration
-//
-//        private lateinit var usedOriginFile: File
-//        lateinit var usedOriginFileConfiguration: FileConfiguration
-//
-//        fun saveOrigins() {
-//            try {
-//                originFileConfiguration.save(originFile)
-//            } catch (e: IOException) {
-//                throw RuntimeException(e)
-//            }
-//        }
-//
-//        fun saveUsedOrigins() {
-//            try {
-//                usedOriginFileConfiguration.save(usedOriginFile)
-//            } catch (e: IOException) {
-//                throw RuntimeException(e)
-//            }
-//        }
     }
 }

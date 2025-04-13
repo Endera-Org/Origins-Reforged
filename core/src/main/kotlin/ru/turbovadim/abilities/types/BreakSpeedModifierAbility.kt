@@ -97,18 +97,16 @@ interface BreakSpeedModifierAbility : Ability {
                 }
                 if (speedModifierAbility == null) return@Runnable
                 val time = AtomicInteger()
-                val marker =
-                    event.player.world.spawnEntity(event.player.location, EntityType.MARKER)
-                val finalSpeedModifierAbility: BreakSpeedModifierAbility? = speedModifierAbility
+                val marker = event.player.world.spawnEntity(event.player.location, EntityType.MARKER)
+                val finalSpeedModifierAbility = speedModifierAbility
                 val task = Bukkit.getScheduler().scheduleSyncRepeatingTask(instance, Runnable {
                     try {
-                        val context = finalSpeedModifierAbility!!.provideContextFor(event.player)
+                        val context = finalSpeedModifierAbility.provideContextFor(event.player)
                         val damage = getBlockDamage(event.getBlock(), context, time.getAndIncrement())
                         if (damage >= 1) {
                             val taskNum: Int = blockbreakingTasks[event.player]!!
                             cancelTask(taskNum)
-                            val blockBreakEvent: BlockBreakEvent =
-                                StrongArmsFastBlockBreakEvent(event.getBlock(), event.player)
+                            val blockBreakEvent = StrongArmsFastBlockBreakEvent(event.getBlock(), event.player)
                             blockBreakEvent.callEvent()
                             val handItem = event.player.inventory.itemInMainHand
                             if (isTool(handItem.type)) {
@@ -123,12 +121,11 @@ interface BreakSpeedModifierAbility : Ability {
                                         itemDamage += 1
                                     }
                                 }
-                                val damageable = handItem.itemMeta as? Damageable
+                                val damageable = handItem.itemMeta
                                 if (damageable is Damageable) {
                                     damageable.damage = damageable.damage + itemDamage
                                     if (handItem.type.maxDurability <= damageable.damage) {
-                                        NMSInvoker.broadcastSlotBreak(
-                                            event.player,
+                                        event.player.broadcastSlotBreak(
                                             EquipmentSlot.HAND,
                                             object : ArrayList<Player>() {
                                                 init {
@@ -151,7 +148,7 @@ interface BreakSpeedModifierAbility : Ability {
                             }
                             return@Runnable
                         }
-                        NMSInvoker.sendBlockDamage(event.player, event.getBlock().location, damage, marker)
+                        event.player.sendBlockDamage(event.getBlock().location, damage, marker)
 
                         val target = event.player.getTargetBlockExact(8, FluidCollisionMode.NEVER)
                         if (target == null || target.location != event.getBlock().location) {

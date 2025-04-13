@@ -42,7 +42,6 @@ class OriginsRebornEnhanced : OriginsAddon() {
 
         private var cooldowns: Cooldowns? = null
 
-        @JvmStatic
         fun getCooldowns(): Cooldowns {
             return cooldowns!!
         }

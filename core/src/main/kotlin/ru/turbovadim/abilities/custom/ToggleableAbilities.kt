@@ -31,7 +31,6 @@ object ToggleableAbilities {
         }
     }
 
-    @JvmStatic
     fun registerAbility(ability: ToggleableAbility) {
         val key = ability.getKey().toString()
         if (!fileConfiguration.contains(key)) {
@@ -44,7 +43,6 @@ object ToggleableAbilities {
         }
     }
 
-    @JvmStatic
     fun isEnabled(ability: ToggleableAbility): Boolean {
         return fileConfiguration.getBoolean(ability.getKey().toString(), false)
     }

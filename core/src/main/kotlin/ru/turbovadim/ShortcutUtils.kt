@@ -22,7 +22,6 @@ object ShortcutUtils {
 
     private val colorCodeRegex = "<#\\w{6}>".toRegex()
 
-    @JvmStatic
     fun giveItemWithDrops(player: Player, vararg itemStacks: ItemStack?) {
         val validItems = itemStacks.filterNotNull().toTypedArray()
         player.inventory.addItem(*validItems).values.forEach { leftover ->
@@ -51,7 +50,6 @@ object ShortcutUtils {
         }
     }
 
-    @JvmStatic
     fun isBedrockPlayer(uuid: UUID): Boolean {
         return try {
             FloodgateApi.getInstance().isFloodgatePlayer(uuid)
@@ -93,14 +91,12 @@ object ShortcutUtils {
         return list
     }
 
-    @JvmStatic
     fun isInfinite(effect: PotionEffect): Boolean {
         return if (NMSInvoker.supportsInfiniteDuration()) {
             effect.duration == -1
         } else effect.duration >= 20000
     }
 
-    @JvmStatic
     fun infiniteDuration(): Int {
         return if (NMSInvoker.supportsInfiniteDuration()) -1 else 50000
     }

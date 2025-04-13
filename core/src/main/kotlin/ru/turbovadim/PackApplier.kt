@@ -23,7 +23,6 @@ class PackApplier : Listener {
         private val addonPacks: MutableMap<Class<out OriginsAddon>, OriginsRebornResourcePackInfo> =
             HashMap<Class<out OriginsAddon>, OriginsRebornResourcePackInfo>()
 
-        @JvmStatic
         fun sendPacks(player: Player) {
             CoroutineScope(ioDispatcher).launch {
                 NMSInvoker.sendResourcePacks(player, getPackURL(), addonPacks)

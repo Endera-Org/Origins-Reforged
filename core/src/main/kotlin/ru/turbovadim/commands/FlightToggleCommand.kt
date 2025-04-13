@@ -29,7 +29,6 @@ class FlightToggleCommand : CommandExecutor {
     }
 
     companion object {
-        @JvmStatic
         fun canFly(player: Player): Boolean {
             /*
         World w = BukkitAdapter.adapt(player.getWorld());
@@ -44,7 +43,6 @@ class FlightToggleCommand : CommandExecutor {
             return player.persistentDataContainer.has<Byte, Boolean>(key, OriginSwapper.BooleanPDT.BOOLEAN)
         }
 
-        @JvmStatic
         fun setCanFly(player: Player, b: Boolean) {
             if (b) player.persistentDataContainer.set<Byte, Boolean>(key, OriginSwapper.BooleanPDT.BOOLEAN, true)
             else player.persistentDataContainer.remove(key)

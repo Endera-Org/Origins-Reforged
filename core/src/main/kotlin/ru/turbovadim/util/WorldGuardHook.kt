@@ -11,8 +11,6 @@ import ru.turbovadim.abilities.types.Ability
 object WorldGuardHook {
     private var rc: RegionContainer? = null
 
-
-    @JvmStatic
     fun isAbilityDisabled(location: Location, ability: Ability): Boolean {
         try {
             val manager = rc!!.get(BukkitAdapter.adapt(location.getWorld()))
