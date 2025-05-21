@@ -13,7 +13,7 @@ import ru.turbovadim.abilities.*
 import ru.turbovadim.abilities.custom.ToggleableAbilities
 import ru.turbovadim.abilities.types.Ability
 import ru.turbovadim.abilities.types.BreakSpeedModifierAbility.BreakSpeedModifierAbilityListener
-import ru.turbovadim.abilities.types.ParticleAbility.ParticleAbilityListener
+import ru.turbovadim.abilities.types.ParticleAbility
 import ru.turbovadim.commands.FlightToggleCommand
 import ru.turbovadim.commands.OriginCommand
 import ru.turbovadim.config.*
@@ -168,11 +168,11 @@ class OriginsRebornEnhanced : OriginsAddon() {
         MetricsLite(this, 24890)
 
         val originSwapper = OriginSwapper()
+        ParticleAbility.initParticlesSender()
         Bukkit.getPluginManager().registerEvents(originSwapper, this)
         Bukkit.getPluginManager().registerEvents(OrbOfOrigin(), this)
         Bukkit.getPluginManager().registerEvents(PackApplier(), this)
         Bukkit.getPluginManager().registerEvents(PlayerLeftClickEventListener(), this)
-        Bukkit.getPluginManager().registerEvents(ParticleAbilityListener(), this)
         Bukkit.getPluginManager().registerEvents(BreakSpeedModifierAbilityListener(), this)
         originSwapper.startScheduledTask()
 

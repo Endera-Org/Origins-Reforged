@@ -1,65 +1,67 @@
 package ru.turbovadim.abilities.types
 
-import com.destroystokyo.paper.event.server.ServerTickEndEvent
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.particle.Particle
 import com.github.retrooper.packetevents.protocol.particle.data.ParticleData
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleType
+import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes
 import com.github.retrooper.packetevents.util.Vector3d
 import com.github.retrooper.packetevents.util.Vector3f
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerParticle
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
-import org.bukkit.event.EventHandler
-import org.bukkit.event.Listener
 import org.endera.enderalib.utils.async.ioDispatcher
 import ru.turbovadim.OriginSwapper.Companion.getOrigins
 
-interface ParticleAbility : Ability {
+abstract class ParticleAbility : Ability {
 
-    val particleType: ParticleType<*>
-    val frequency: Int
+    open val particleType: ParticleType<*>
+        get() = ParticleTypes.FLAME
+    open val frequency: Int
         get() = 4
-    val data: ParticleData?
-        get() = null
 
-    class ParticleAbilityListener : Listener {
+    companion object {
+        private var particleTicks = 0
 
-        @EventHandler
-        fun onServerTickEnd(event: ServerTickEndEvent) {
+        fun initParticlesSender() {
             CoroutineScope(ioDispatcher).launch {
-                val onlinePlayers = Bukkit.getOnlinePlayers().toList()
-                onlinePlayers.toList().forEach { player ->
-                    getOrigins(player)
-                        .flatMap { it.getAbilities() }
-                        .filterIsInstance<ParticleAbility>()
-                        .filter { event.tickNumber % it.frequency == 0 }
-                        .forEach { ability ->
-                            val packet = WrapperPlayServerParticle(
-                                Particle(
-                                    ability.particleType
-                                ),
-                                false,
-                                Vector3d(player.location.x, player.location.y, player.location.z),
-                                Vector3f(0.5f, 1f, 0.5f),
-                                0f,
-                                1,
-                            )
+                while (true) {
+                    val onlinePlayers = Bukkit.getOnlinePlayers().toList()
+                    onlinePlayers.forEach { player ->
+                        getOrigins(player)
+                            .flatMap { it.getAbilities() }
+                            .filterIsInstance<ParticleAbility>()
+                            .filter { particleTicks % it.frequency == 0 }
+                            .forEach { ability ->
+                                val packet = WrapperPlayServerParticle(
+                                    Particle(
+                                        ability.particleType
+                                    ),
+                                    false,
+                                    Vector3d(player.location.x, player.location.y, player.location.z),
+                                    Vector3f(0.5f, 0.8f, 0.5f),
+                                    0f,
+                                    1,
+                                )
 
-                            val nearbyPlayers = getNearbyPlayers(player, onlinePlayers, 48)
-                            for (nearbyPlayer in (nearbyPlayers + player)) {
-                                PacketEvents.getAPI().playerManager.sendPacket(nearbyPlayer, packet)
+                                val nearbyPlayers = getNearbyPlayers(player, onlinePlayers)
+                                for (nearbyPlayer in (nearbyPlayers + player)) {
+                                    PacketEvents.getAPI().playerManager.sendPacket(nearbyPlayer, packet)
+                                }
                             }
-                        }
+                    }
+                    particleTicks++
+                    delay(50)
                 }
             }
         }
 
-        fun getNearbyPlayers(player: Player, otherPlayers: List<Player>, range: Int): List<Player> {
+        private fun getNearbyPlayers(player: Player, otherPlayers: List<Player>): List<Player> {
             val playerLocation = player.location
-            val rangeSquared = range * range
+            val rangeSquared = 48 * 48
 
             return otherPlayers.filter { other ->
                 other.world == playerLocation.world &&
@@ -67,4 +69,6 @@ interface ParticleAbility : Ability {
             }
         }
     }
+
+
 }

@@ -48,8 +48,48 @@ interface Ability {
     }
 
     suspend fun hasAbilityAsync(player: Player): Boolean = withContext(ioDispatcher) {
-        hasAbility(player)
+        for (keyStateGetter in AddonLoader.abilityOverrideChecks) {
+            val state = keyStateGetter?.get(player, getKey())
+            return@withContext when (state) {
+                OriginsAddon.State.DENY -> false
+                OriginsAddon.State.ALLOW -> true
+                else -> false
+            }
+        }
+
+        if (OriginsRebornEnhanced.Companion.isWorldGuardHookInitialized) {
+            if (WorldGuardHook.isAbilityDisabled(player.location, this@Ability)) return@withContext false
+
+            val section = OriginsRebornEnhanced.mainConfig.preventAbilitiesIn
+            val loc = BukkitAdapter.adapt(player.location)
+            val container = WorldGuard.getInstance().platform.regionContainer
+            val query = container.createQuery()
+            val regions = query.getApplicableRegions(loc)
+            val keyStr = getKey().toString()
+            for (region in regions) {
+                for (sectionKey in section.keys) {
+                    val abilities = section[sectionKey] ?: emptyList()
+                    if (!abilities.contains(keyStr) && !abilities.contains("all")) continue
+                    if (region.id.equals(sectionKey, ignoreCase = true)) {
+                        return@withContext false
+                    }
+                }
+            }
+        }
+
+        val origins = OriginSwapper.getOrigins(player)
+        var hasAbility = origins.any { it.hasAbility(getKey()) }
+
+        if (abilityMap[getKey()] is DependantAbility) {
+            val dependantAbility = abilityMap[getKey()] as DependantAbility
+            val dependencyEnabled = dependantAbility.dependency.isEnabled(player)
+            val expected = (dependantAbility.dependencyType == DependantAbility.DependencyType.REGULAR)
+            hasAbility = hasAbility && (dependencyEnabled == expected)
+        }
+        return@withContext hasAbility
     }
+
+
 
     fun hasAbility(player: Player): Boolean {
         for (keyStateGetter in AddonLoader.abilityOverrideChecks) {
