@@ -19,7 +19,7 @@ repositories {
 }
 
 dependencies {
-    val exposedVersion = "0.59.0"
+    val exposedVersion = "0.61.0"
 
     implementation("org.jetbrains:annotations:23.0.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
@@ -33,7 +33,6 @@ dependencies {
     compileOnly("com.github.authme:authmereloaded:5.6.0-beta2")
     compileOnly("me.clip:placeholderapi:2.11.5")
     compileOnly("com.github.stleary:JSON-java:20241224")
-//    compileOnly("com.github.SkriptLang:Skript:2.9.1")
     compileOnly("net.objecthunter:exp4j:0.4.8")
 
     compileOnly("com.github.retrooper:packetevents-spigot:2.8.0-SNAPSHOT")
@@ -50,10 +49,11 @@ dependencies {
     compileOnly(project(":1.21.3"))
     compileOnly(project(":1.21.4"))
     compileOnly(project(":1.21.5"))
+    compileOnly(project(":1.21.6"))
     compileOnly(files("libs/worldguard.jar"))
     compileOnly(files("libs/worldedit.jar"))
     implementation(kotlin("stdlib-jdk8"))
-    implementation("com.github.Turbovadim:EnderaLib:1.4.5") {
+    implementation("com.github.Endera-Org:EnderaLib:1.4.5") {
         isTransitive = false
     }
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")

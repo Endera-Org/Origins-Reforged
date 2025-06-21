@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("com.gradleup.shadow") version "8.3.6"
-    id("io.papermc.paperweight.userdev") version "2.0.0-beta.16" apply false
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.17" apply false
     kotlin("jvm") version "2.1.20"
 }
 
@@ -29,6 +29,7 @@ dependencies {
     implementation(project(":1.21.3", "reobf"))
     implementation(project(":1.21.4", "reobf"))
     implementation(project(":1.21.5", "reobf"))
+    implementation(project(":1.21.6", "reobf"))
     implementation("net.kyori:adventure-platform-bukkit:4.3.4")
 }
 
