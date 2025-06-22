@@ -367,8 +367,8 @@ class OriginCommand : CommandExecutor, TabCompleter {
         }
     }
 
-    private val exchangeRequests: MutableMap<Player?, MutableList<ExchangeRequest>?> =
-        HashMap<Player?, MutableList<ExchangeRequest>?>()
+    private val exchangeRequests: MutableMap<Player, MutableList<ExchangeRequest>> =
+        HashMap<Player, MutableList<ExchangeRequest>>()
 
     @JvmRecord
     data class ExchangeRequest(val p1: Player?, val p2: Player?, val expireTime: Int, val layer: String)
@@ -379,7 +379,7 @@ class OriginCommand : CommandExecutor, TabCompleter {
         label: String,
         args: Array<String>
     ): MutableList<String?>? {
-        val result: MutableList<String?> = ArrayList<String?>()
+        val result = ArrayList<String?>()
         val data = when (args.size) {
             1 -> {
                 val r: MutableList<String?> = ArrayList<String?>()
@@ -413,11 +413,11 @@ class OriginCommand : CommandExecutor, TabCompleter {
                     }
 
                     "export" -> {
-                        ArrayList<String?>(AddonLoader.originFiles.keys)
+                        ArrayList(AddonLoader.originFiles.keys)
                     }
 
                     "check", "swap" -> {
-                        ArrayList<String?>(AddonLoader.layers)
+                        ArrayList(AddonLoader.layers)
                     }
 
                     "import" -> {
@@ -425,7 +425,7 @@ class OriginCommand : CommandExecutor, TabCompleter {
                         val files = input.listFiles()
 
                         if (files == null) mutableListOf<String?>()
-                        val fileNames: MutableList<String?> = ArrayList<String?>()
+                        val fileNames = ArrayList<String?>()
                         for (file in files!!) {
                             fileNames.add(file.getName())
                         }
@@ -433,15 +433,15 @@ class OriginCommand : CommandExecutor, TabCompleter {
                     }
 
                     else -> {
-                        mutableListOf<String?>()
+                        mutableListOf()
                     }
                 }
             }
 
             3 -> {
                 if (args[0] == "set") {
-                    ArrayList<String?>(AddonLoader.layers)
-                } else mutableListOf<String?>()
+                    ArrayList(AddonLoader.layers)
+                } else mutableListOf()
             }
 
             4 -> {
@@ -455,12 +455,12 @@ class OriginCommand : CommandExecutor, TabCompleter {
                             }
                         }
                     }
-                } else mutableListOf<String?>()
+                } else emptyList()
             }
 
-            else -> mutableListOf<String?>()
+            else -> emptyList()
         }
-        StringUtil.copyPartialMatches<MutableList<String?>?>(args[args.size - 1], data, result)
+        StringUtil.copyPartialMatches<MutableList<String?>>(args[args.size - 1], data, result)
         return result
     }
 
