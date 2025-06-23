@@ -2,7 +2,7 @@ package ru.turbovadim.abilities.types
 
 import net.kyori.adventure.key.Key
 import ru.turbovadim.abilities.AbilityRegister
-import ru.turbovadim.abilities.PlaceholderDependencyAbility
+import ru.turbovadim.abilities.main.PlaceholderDependencyAbility
 
 interface DependantAbility : Ability {
     val dependencyKey: Key

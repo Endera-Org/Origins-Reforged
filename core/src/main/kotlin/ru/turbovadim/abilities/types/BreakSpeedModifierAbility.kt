@@ -14,7 +14,6 @@ import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
-import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockDamageEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
@@ -26,7 +25,7 @@ import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
 import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
 import ru.turbovadim.SavedPotionEffect
 import ru.turbovadim.ShortcutUtils.infiniteDuration
-import ru.turbovadim.abilities.StrongArms.StrongArmsBreakSpeed.StrongArmsFastBlockBreakEvent
+import ru.turbovadim.abilities.main.StrongArms.StrongArmsBreakSpeed.StrongArmsFastBlockBreakEvent
 import ru.turbovadim.packetsenders.OriginsRebornBlockDamageAbortEvent
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
