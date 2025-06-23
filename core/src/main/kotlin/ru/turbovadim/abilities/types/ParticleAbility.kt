@@ -2,7 +2,6 @@ package ru.turbovadim.abilities.types
 
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.particle.Particle
-import com.github.retrooper.packetevents.protocol.particle.data.ParticleData
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleType
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes
 import com.github.retrooper.packetevents.util.Vector3d

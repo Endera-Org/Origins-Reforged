@@ -20,13 +20,16 @@ import org.bukkit.*
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeInstance
 import org.bukkit.attribute.AttributeModifier
+import org.bukkit.craftbukkit.CraftWorld
 import org.bukkit.craftbukkit.block.CraftBlockState
+import org.bukkit.craftbukkit.entity.CraftAllay
 import org.bukkit.craftbukkit.entity.CraftEntity
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.damage.DamageSource
 import org.bukkit.damage.DamageType
 import org.bukkit.enchantments.Enchantment
+import org.bukkit.entity.Allay
 import org.bukkit.entity.Creeper
 import org.bukkit.entity.Entity
 import org.bukkit.entity.LivingEntity
@@ -45,6 +48,14 @@ import java.util.function.Function
 import java.util.function.Predicate
 
 class NMSInvokerV1_21 : NMSInvoker() {
+
+    override fun duplicateAllay(allay: Allay): Boolean {
+        if (allay.duplicationCooldown > 0) return false
+        allay.duplicateAllay()
+        (allay.world as CraftWorld).handle
+            .broadcastEntityEvent((allay as CraftAllay).handle, 18.toByte())
+        return true
+    }
 
     override val miningEfficiencyAttribute: Attribute?
         get() = Attribute.PLAYER_MINING_EFFICIENCY
@@ -268,14 +279,14 @@ class NMSInvokerV1_21 : NMSInvoker() {
     override val hasteEffect: PotionEffectType
         get() = PotionEffectType.HASTE
 
+    override val jumpBoostEffect: PotionEffectType
+        get() = PotionEffectType.JUMP_BOOST
+
     override val unbreakingEnchantment: Enchantment
         get() = Enchantment.UNBREAKING
 
     override val efficiencyEnchantment: Enchantment
         get() = Enchantment.EFFICIENCY
-
-    override val jumpBoostEffect: PotionEffectType
-        get() = PotionEffectType.JUMP_BOOST
 
     override val aquaAffinityEnchantment: Enchantment
         get() = Enchantment.AQUA_AFFINITY

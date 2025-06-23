@@ -20,17 +20,16 @@ import org.bukkit.*
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeInstance
 import org.bukkit.attribute.AttributeModifier
+import org.bukkit.craftbukkit.CraftWorld
 import org.bukkit.craftbukkit.block.CraftBlockState
+import org.bukkit.craftbukkit.entity.CraftAllay
 import org.bukkit.craftbukkit.entity.CraftEntity
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.damage.DamageSource
 import org.bukkit.damage.DamageType
 import org.bukkit.enchantments.Enchantment
-import org.bukkit.entity.Creeper
-import org.bukkit.entity.Entity
-import org.bukkit.entity.LivingEntity
-import org.bukkit.entity.Player
+import org.bukkit.entity.*
 import org.bukkit.event.EventHandler
 import org.bukkit.event.block.BlockDamageAbortEvent
 import org.bukkit.inventory.EquipmentSlot
@@ -45,6 +44,14 @@ import java.util.function.Function
 import java.util.function.Predicate
 
 class NMSInvokerV1_21_3 : NMSInvoker() {
+
+    override fun duplicateAllay(allay: Allay): Boolean {
+        if (allay.duplicationCooldown > 0) return false
+        allay.duplicateAllay()
+        (allay.world as CraftWorld).handle
+            .broadcastEntityEvent((allay as CraftAllay).handle, 18.toByte())
+        return true
+    }
 
     override fun applyFont(component: Component, font: Key): Component {
         return component.font(font)
@@ -266,11 +273,11 @@ class NMSInvokerV1_21_3 : NMSInvoker() {
     override val respirationEnchantment: Enchantment
         get() = Enchantment.RESPIRATION
 
-    override val jumpBoostEffect: PotionEffectType
-        get() = PotionEffectType.JUMP_BOOST
-
     override val aquaAffinityEnchantment: Enchantment
         get() = Enchantment.AQUA_AFFINITY
+
+    override val jumpBoostEffect: PotionEffectType
+        get() = PotionEffectType.JUMP_BOOST
 
     override val slownessEffect: PotionEffectType
         get() = PotionEffectType.SLOWNESS

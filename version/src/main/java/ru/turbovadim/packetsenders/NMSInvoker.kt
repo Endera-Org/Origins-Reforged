@@ -12,10 +12,7 @@ import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeInstance
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.enchantments.Enchantment
-import org.bukkit.entity.Creeper
-import org.bukkit.entity.Entity
-import org.bukkit.entity.LivingEntity
-import org.bukkit.entity.Player
+import org.bukkit.entity.*
 import org.bukkit.event.Listener
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
@@ -24,6 +21,8 @@ import org.bukkit.potion.PotionEffectType
 import java.util.function.Predicate
 
 abstract class NMSInvoker : Listener {
+    abstract fun duplicateAllay(allay: Allay): Boolean
+
     abstract fun sendEntityData(player: Player, entity: Entity, bytes: Byte)
 
     abstract fun getCreeperAfraidGoal(

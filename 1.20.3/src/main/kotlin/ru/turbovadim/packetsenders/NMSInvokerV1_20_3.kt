@@ -18,12 +18,15 @@ import org.bukkit.*
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeInstance
 import org.bukkit.attribute.AttributeModifier
+import org.bukkit.craftbukkit.v1_20_R3.CraftWorld
 import org.bukkit.craftbukkit.v1_20_R3.block.CraftBlockState
+import org.bukkit.craftbukkit.v1_20_R3.entity.CraftAllay
 import org.bukkit.craftbukkit.v1_20_R3.entity.CraftEntity
 import org.bukkit.craftbukkit.v1_20_R3.entity.CraftLivingEntity
 import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer
 import org.bukkit.craftbukkit.v1_20_R3.inventory.CraftItemStack
 import org.bukkit.enchantments.Enchantment
+import org.bukkit.entity.Allay
 import org.bukkit.entity.Creeper
 import org.bukkit.entity.Entity
 import org.bukkit.entity.LivingEntity
@@ -39,6 +42,17 @@ import java.util.function.Function
 import java.util.function.Predicate
 
 class NMSInvokerV1_20_3 : NMSInvoker() {
+
+    override val jumpBoostEffect: PotionEffectType
+        get() = PotionEffectType.JUMP
+
+    override fun duplicateAllay(allay: Allay): Boolean {
+        if (allay.duplicationCooldown > 0) return false
+        allay.duplicateAllay()
+        (allay.world as CraftWorld).handle
+            .broadcastEntityEvent((allay as CraftAllay).handle, 18.toByte())
+        return true
+    }
 
     override val miningEfficiencyAttribute: Attribute?
         get() = null
@@ -131,9 +145,6 @@ class NMSInvokerV1_20_3 : NMSInvoker() {
         val livingEntity = (entity as CraftLivingEntity).handle
         livingEntity.hurt(livingEntity.damageSources().drown(), amount.toFloat())
     }
-
-    override val respirationEnchantment: Enchantment
-        get() = Enchantment.OXYGEN
 
     @EventHandler
     fun onBlockDamageAbort(event: BlockDamageAbortEvent) {
@@ -259,8 +270,8 @@ class NMSInvokerV1_20_3 : NMSInvoker() {
     override val efficiencyEnchantment: Enchantment
         get() = Enchantment.DIG_SPEED
 
-    override val jumpBoostEffect: PotionEffectType
-        get() = PotionEffectType.JUMP
+    override val respirationEnchantment: Enchantment
+        get() = Enchantment.OXYGEN
 
     override val aquaAffinityEnchantment: Enchantment
         get() = Enchantment.WATER_WORKER

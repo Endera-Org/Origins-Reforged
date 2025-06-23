@@ -19,16 +19,15 @@ import org.bukkit.*
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeInstance
 import org.bukkit.attribute.AttributeModifier
+import org.bukkit.craftbukkit.v1_20_R1.CraftWorld
 import org.bukkit.craftbukkit.v1_20_R1.block.data.CraftBlockData
+import org.bukkit.craftbukkit.v1_20_R1.entity.CraftAllay
 import org.bukkit.craftbukkit.v1_20_R1.entity.CraftEntity
 import org.bukkit.craftbukkit.v1_20_R1.entity.CraftLivingEntity
 import org.bukkit.craftbukkit.v1_20_R1.entity.CraftPlayer
 import org.bukkit.craftbukkit.v1_20_R1.inventory.CraftItemStack
 import org.bukkit.enchantments.Enchantment
-import org.bukkit.entity.Creeper
-import org.bukkit.entity.Entity
-import org.bukkit.entity.LivingEntity
-import org.bukkit.entity.Player
+import org.bukkit.entity.*
 import org.bukkit.event.EventHandler
 import org.bukkit.event.block.BlockDamageAbortEvent
 import org.bukkit.inventory.EquipmentSlot
@@ -40,6 +39,14 @@ import java.util.function.Function
 import java.util.function.Predicate
 
 class NMSInvokerV1_20 : NMSInvoker() {
+
+    override fun duplicateAllay(allay: Allay): Boolean {
+        if (allay.duplicationCooldown > 0) return false
+        allay.duplicateAllay()
+        (allay.world as CraftWorld).handle
+            .broadcastEntityEvent((allay as CraftAllay).handle, 18.toByte())
+        return true
+    }
 
     override val miningEfficiencyAttribute: Attribute?
         get() = null
@@ -173,7 +180,7 @@ class NMSInvokerV1_20 : NMSInvoker() {
         hasAbility: Predicate<Player>,
         hasKey: Predicate<LivingEntity>
     ): Goal<Creeper> {
-        return AvoidEntityGoal<net.minecraft.world.entity.player.Player>(
+        return AvoidEntityGoal(
             (creeper as CraftEntity).handle as PathfinderMob,
             net.minecraft.world.entity.player.Player::class.java,
             6f,
