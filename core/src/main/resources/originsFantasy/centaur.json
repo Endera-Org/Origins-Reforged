@@ -1,0 +1,15 @@
+{
+	"powers": [
+		"fantasyorigins:permanent_horse",
+		"fantasyorigins:super_jump",
+		"fantasyorigins:increased_speed",
+		"fantasyorigins:moon_strength",
+		"fantasyorigins:perfect_shot"
+	],
+	"icon": {
+		"item": "minecraft:saddle"
+	},
+	"order": 0,
+	"impact": 3,
+	"description": "Worshippers of the moon and trained fighters, the Centaurs are much more powerful than regular horses, and become stronger on a full moon."
+}

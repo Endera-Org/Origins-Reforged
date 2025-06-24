@@ -17,8 +17,8 @@ import org.endera.enderalib.utils.async.ioDispatcher
 import org.jetbrains.annotations.NotNull
 import ru.turbovadim.OriginSwapper
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
-import ru.turbovadim.OriginsRebornEnhanced
-import ru.turbovadim.OriginsRebornEnhanced.Companion.bukkitDispatcher
+import ru.turbovadim.OriginsReforged
+import ru.turbovadim.OriginsReforged.Companion.bukkitDispatcher
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class Claustrophobia : VisibleAbility, Listener {
@@ -43,7 +43,7 @@ class Claustrophobia : VisibleAbility, Listener {
                             player.addPotionEffect(PotionEffect(PotionEffectType.WEAKNESS, newStacks, 0, true, true, true))
                             player.addPotionEffect(
                                 PotionEffect(
-                                    OriginsRebornEnhanced.NMSInvoker.slownessEffect,
+                                    OriginsReforged.NMSInvoker.slownessEffect,
                                     newStacks,
                                     0,
                                     true,

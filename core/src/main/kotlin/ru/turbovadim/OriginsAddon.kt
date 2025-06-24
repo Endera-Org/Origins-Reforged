@@ -7,7 +7,7 @@ import ru.turbovadim.abilities.AbilityRegister
 import ru.turbovadim.abilities.custom.ToggleableAbility
 import ru.turbovadim.abilities.types.Ability
 import ru.turbovadim.events.PlayerSwapOriginEvent
-import ru.turbovadim.packetsenders.OriginsRebornResourcePackInfo
+import ru.turbovadim.packetsenders.OriginsReforgedResourcePackInfo
 import java.io.File
 
 abstract class OriginsAddon : JavaPlugin() {
@@ -53,7 +53,7 @@ abstract class OriginsAddon : JavaPlugin() {
 
     open fun onOnEnable() {}
 
-    open fun getResourcePackInfo(): OriginsRebornResourcePackInfo? = null
+    open fun getResourcePackInfo(): OriginsReforgedResourcePackInfo? = null
 
     public override fun getFile(): File = super.getFile()
 

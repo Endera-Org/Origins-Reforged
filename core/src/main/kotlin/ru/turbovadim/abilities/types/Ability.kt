@@ -11,7 +11,7 @@ import org.endera.enderalib.utils.async.ioDispatcher
 import ru.turbovadim.AddonLoader
 import ru.turbovadim.OriginSwapper
 import ru.turbovadim.OriginsAddon
-import ru.turbovadim.OriginsRebornEnhanced
+import ru.turbovadim.OriginsReforged
 import ru.turbovadim.abilities.AbilityRegister.abilityMap
 import ru.turbovadim.util.WorldGuardHook
 
@@ -57,10 +57,10 @@ interface Ability {
             }
         }
 
-        if (OriginsRebornEnhanced.Companion.isWorldGuardHookInitialized) {
+        if (OriginsReforged.Companion.isWorldGuardHookInitialized) {
             if (WorldGuardHook.isAbilityDisabled(player.location, this@Ability)) return@withContext false
 
-            val section = OriginsRebornEnhanced.mainConfig.preventAbilitiesIn
+            val section = OriginsReforged.mainConfig.preventAbilitiesIn
             val loc = BukkitAdapter.adapt(player.location)
             val container = WorldGuard.getInstance().platform.regionContainer
             val query = container.createQuery()
@@ -101,10 +101,10 @@ interface Ability {
             }
         }
 
-        if (OriginsRebornEnhanced.Companion.isWorldGuardHookInitialized) {
+        if (OriginsReforged.Companion.isWorldGuardHookInitialized) {
             if (WorldGuardHook.isAbilityDisabled(player.location, this@Ability)) return false
 
-            val section = OriginsRebornEnhanced.mainConfig.preventAbilitiesIn
+            val section = OriginsReforged.mainConfig.preventAbilitiesIn
             val loc = BukkitAdapter.adapt(player.location)
             val container = WorldGuard.getInstance().platform.regionContainer
             val query = container.createQuery()

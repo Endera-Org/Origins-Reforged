@@ -5,7 +5,7 @@ import org.bukkit.entity.Player
 import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.abilities.types.BreakSpeedModifierAbility
 import ru.turbovadim.abilities.types.BreakSpeedModifierAbility.BlockMiningContext
 import ru.turbovadim.abilities.types.VisibleAbility

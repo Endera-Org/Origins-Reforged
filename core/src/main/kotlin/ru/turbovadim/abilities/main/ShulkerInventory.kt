@@ -19,8 +19,8 @@ import ru.turbovadim.AddonLoader.getTextFor
 import ru.turbovadim.OriginSwapper
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.OriginsRebornEnhanced
-import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
+import ru.turbovadim.OriginsReforged
+import ru.turbovadim.OriginsReforged.Companion.instance
 import ru.turbovadim.ShortcutUtils.isBedrockPlayer
 import ru.turbovadim.abilities.types.VisibleAbility
 import ru.turbovadim.database.ShulkerInventoryManager
@@ -48,7 +48,7 @@ class ShulkerInventory : VisibleAbility, Listener {
             Component.text(getTextFor("container.shulker_inventory_power", "Shulker Inventory"))
         )
         player.openInventory(inventory)
-        CoroutineScope(OriginsRebornEnhanced.bukkitDispatcher).launch {
+        CoroutineScope(OriginsReforged.bukkitDispatcher).launch {
             val inv = withContext(ioDispatcher) { ShulkerInventoryManager.getInventory(player.uniqueId.toString()) }
             inv.forEach { item ->
                 inventory.setItem(item.slot, item.itemStack)

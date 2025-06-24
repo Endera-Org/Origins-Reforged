@@ -14,9 +14,9 @@ import org.bukkit.potion.PotionEffectType
 import org.endera.enderalib.utils.async.ioDispatcher
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.OriginsRebornEnhanced
-import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
-import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
+import ru.turbovadim.OriginsReforged
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
+import ru.turbovadim.OriginsReforged.Companion.instance
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class PumpkinHate : VisibleAbility, Listener {
@@ -32,7 +32,7 @@ class PumpkinHate : VisibleAbility, Listener {
 
             onlinePlayers.forEach { pumpkinHater ->
                 runForAbilityAsync(pumpkinHater) { hater ->
-                    launch(OriginsRebornEnhanced.bukkitDispatcher) {
+                    launch(OriginsReforged.bukkitDispatcher) {
                         pumpkinWearers.filter { it != hater }.forEach { pumpkinWearer ->
                             hater.hidePlayer(instance, pumpkinWearer)
                         }

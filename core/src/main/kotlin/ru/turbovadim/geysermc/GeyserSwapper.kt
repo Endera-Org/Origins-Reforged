@@ -22,9 +22,9 @@ import ru.turbovadim.OriginSwapper
 import ru.turbovadim.OriginSwapper.Companion.getOrigin
 import ru.turbovadim.OriginSwapper.Companion.shouldResetPlayer
 import ru.turbovadim.OriginSwapper.LineData
-import ru.turbovadim.OriginsRebornEnhanced
-import ru.turbovadim.OriginsRebornEnhanced.Companion.getCooldowns
-import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
+import ru.turbovadim.OriginsReforged
+import ru.turbovadim.OriginsReforged.Companion.getCooldowns
+import ru.turbovadim.OriginsReforged.Companion.instance
 import ru.turbovadim.ShortcutUtils.isBedrockPlayer
 import ru.turbovadim.commands.OriginCommand
 import ru.turbovadim.events.PlayerSwapOriginEvent.SwapReason
@@ -88,7 +88,7 @@ object GeyserSwapper {
                     origin.getResourceURL()
                 button(origin.getName(), FormImage.Type.URL, imageUrl)
             }
-            if (OriginsRebornEnhanced.mainConfig.originSelection.randomOption.enabled) {
+            if (OriginsReforged.mainConfig.originSelection.randomOption.enabled) {
                 button(
                     "Random",
                     FormImage.Type.URL,
@@ -145,14 +145,14 @@ object GeyserSwapper {
         var selectedOrigin = origin
 
         if (instance.isVaultEnabled && cost) {
-            val defaultCost = OriginsRebornEnhanced.mainConfig.swapCommand.vault.defaultCost
+            val defaultCost = OriginsReforged.mainConfig.swapCommand.vault.defaultCost
             val amount = selectedOrigin?.cost ?: defaultCost
             val amountDouble = amount.toDouble()
             val economy = checkNotNull(instance.economy)
             if (economy.has(player, amountDouble)) {
                 economy.withdrawPlayer(player, amountDouble)
             } else {
-                val symbol = OriginsRebornEnhanced.mainConfig.swapCommand.vault.currencySymbol
+                val symbol = OriginsReforged.mainConfig.swapCommand.vault.currencySymbol
                 player.sendMessage(Component.text("You need $symbol$amount to swap your origin!"))
                 return
             }
@@ -168,14 +168,14 @@ object GeyserSwapper {
             } ?: return
 
             OriginSwapper.orbCooldown[player] = System.currentTimeMillis()
-            withContext(OriginsRebornEnhanced.bukkitDispatcher) {
+            withContext(OriginsReforged.bukkitDispatcher) {
                 when (hand) {
                     EquipmentSlot.HAND -> player.swingMainHand()
                     EquipmentSlot.OFF_HAND -> player.swingOffHand()
                     else -> {}
                 }
-                if (OriginsRebornEnhanced.mainConfig.orbOfOrigin.consume) {
-                    player.inventory.getItem(hand)?.let { item ->
+                if (OriginsReforged.mainConfig.orbOfOrigin.consume) {
+                    player.inventory.getItem(hand).let { item ->
                         item.amount = item.amount - 1
                     }
                 }
@@ -184,7 +184,7 @@ object GeyserSwapper {
 
         val resetPlayer = shouldResetPlayer(reason)
         if (selectedOrigin == null) {
-            val excludedOrigins = OriginsRebornEnhanced.mainConfig.originSelection.randomOption.exclude
+            val excludedOrigins = OriginsReforged.mainConfig.originSelection.randomOption.exclude
             val origins = getOrigins(layer)
                 .filter { !it.isUnchoosable(player) && excludedOrigins.contains(it.getName())}
             selectedOrigin = origins[random.nextInt(origins.size)]
@@ -214,7 +214,7 @@ object GeyserSwapper {
             }
         } else {
             form.title("Random Origin")
-            val excludedOrigins = OriginsRebornEnhanced.mainConfig.originSelection.randomOption.exclude
+            val excludedOrigins = OriginsReforged.mainConfig.originSelection.randomOption.exclude
             val origins = getOrigins(layer).filter { !it.isUnchoosable(player) }
             info.append("You'll be assigned one of the following:\n\n")
             origins.filter { it.getName() !in excludedOrigins }
@@ -222,8 +222,8 @@ object GeyserSwapper {
         }
 
         if (cost) {
-            val symbol = OriginsRebornEnhanced.mainConfig.swapCommand.vault.currencySymbol
-            var amount = OriginsRebornEnhanced.mainConfig.swapCommand.vault.defaultCost
+            val symbol = OriginsReforged.mainConfig.swapCommand.vault.currencySymbol
+            var amount = OriginsReforged.mainConfig.swapCommand.vault.defaultCost
             origin?.cost?.let { amount = it }
             info.append("\n\n\n§eThis will cost you $symbol$amount!")
         }

@@ -79,7 +79,7 @@ object ShulkerInventoryManager {
      * @return ShulkerItem или null, если слот пустой
      */
     suspend fun getItem(uuid: String, slot: Int): ShulkerItem? {
-        if (slot !in 0..8) throw IllegalArgumentException("Слот должен быть от 0 до 8")
+        if (slot !in 0..8) throw IllegalArgumentException("Slot must be between 0 and 8")
 
         return dbQuery {
             val uuidEntity = UUIDOriginEntity.find {
@@ -116,7 +116,7 @@ object ShulkerInventoryManager {
      * @return true если предмет был удален, false если слот был пуст
      */
     suspend fun removeItem(uuid: String, slot: Int): Boolean {
-        if (slot !in 0..8) throw IllegalArgumentException("Слот должен быть от 0 до 8")
+        if (slot !in 0..8) throw IllegalArgumentException("Slot must be between 0 and 8")
 
         return dbQuery {
             val uuidEntity = UUIDOriginEntity.find {
@@ -152,7 +152,7 @@ object ShulkerInventoryManager {
         try {
             return item.serializeAsBytes()
         } catch (e: Exception) {
-            throw IllegalStateException("Не удалось сохранить ItemStack.", e)
+            throw IllegalStateException("Unable to save ItemStack.", e)
         }
     }
 
@@ -160,7 +160,7 @@ object ShulkerInventoryManager {
         try {
             return ItemStack.deserializeBytes(data)
         } catch (e: Exception) {
-            throw IOException("Не удалось загрузить ItemStack.", e)
+            throw IOException("Unable to load ItemStack.", e)
         }
     }
 

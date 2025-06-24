@@ -16,7 +16,7 @@ import org.bukkit.potion.PotionEffectType
 import org.endera.enderalib.utils.async.ioDispatcher
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.OriginsRebornEnhanced
+import ru.turbovadim.OriginsReforged
 import ru.turbovadim.SavedPotionEffect
 import ru.turbovadim.ShortcutUtils.infiniteDuration
 import ru.turbovadim.ShortcutUtils.isInfinite
@@ -31,7 +31,7 @@ open class CatVision : VisibleAbility, Listener {
             for (player in Bukkit.getOnlinePlayers().toList()) {
                 runForAbilityAsync(player) { player ->
                     if (player.isUnderWater) {
-                        val currentEffect = withContext(OriginsRebornEnhanced.bukkitDispatcher) {
+                        val currentEffect = withContext(OriginsReforged.bukkitDispatcher) {
                             player.getPotionEffect(PotionEffectType.NIGHT_VISION)
                         }
                         val ambient = currentEffect?.isAmbient == true
@@ -40,12 +40,12 @@ open class CatVision : VisibleAbility, Listener {
                         currentEffect?.let {
                             if (!isInfinite(it)) {
                                 storedEffects[player] = SavedPotionEffect(it, Bukkit.getCurrentTick())
-                                withContext(OriginsRebornEnhanced.bukkitDispatcher) {
+                                withContext(OriginsReforged.bukkitDispatcher) {
                                     player.removePotionEffect(PotionEffectType.NIGHT_VISION)
                                 }
                             }
                         }
-                        launch(OriginsRebornEnhanced.bukkitDispatcher) {
+                        launch(OriginsReforged.bukkitDispatcher) {
                             player.addPotionEffect(
                                 PotionEffect(
                                     PotionEffectType.NIGHT_VISION,
@@ -58,7 +58,7 @@ open class CatVision : VisibleAbility, Listener {
                             )
                         }
                     } else {
-                        launch(OriginsRebornEnhanced.bukkitDispatcher) {
+                        launch(OriginsReforged.bukkitDispatcher) {
                             player.getPotionEffect(PotionEffectType.NIGHT_VISION)?.let { effect ->
                                 if (isInfinite(effect)) {
                                     player.removePotionEffect(PotionEffectType.NIGHT_VISION)

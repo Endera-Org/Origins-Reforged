@@ -12,7 +12,7 @@ import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.SavedPotionEffect
 import ru.turbovadim.ShortcutUtils.infiniteDuration
 import ru.turbovadim.ShortcutUtils.isInfinite

@@ -1,0 +1,16 @@
+{
+	"powers": [
+		"fantasyorigins:vampiric_transformation",
+		"fantasyorigins:daylight_sensitive",
+		"fantasyorigins:water_sensitive",
+		"fantasyorigins:leeching",
+		"fantasyorigins:stronger",
+		"fantasyorigins:undead_ally"
+	],
+	"icon": {
+		"item": "minecraft:iron_sword"
+	},
+	"order": 1,
+	"impact": 3,
+	"description": "The vampire is a powerful creature of the night, with the ability to transform those it kills into more of its kind."
+}

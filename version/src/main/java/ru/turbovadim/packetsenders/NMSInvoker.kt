@@ -14,6 +14,7 @@ import org.bukkit.attribute.AttributeModifier
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.entity.*
 import org.bukkit.event.Listener
+import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
@@ -21,7 +22,20 @@ import org.bukkit.potion.PotionEffectType
 import java.util.function.Predicate
 
 abstract class NMSInvoker : Listener {
+
+    abstract fun getGenericScaleAttribute(): Attribute?
+
+    abstract fun transferDamageEvent(entity: LivingEntity, event: EntityDamageEvent)
+
+    abstract fun getGenericJumpStrengthAttribute(): Attribute
+
+    abstract fun getFortuneEnchantment(): Enchantment
+
     abstract fun duplicateAllay(allay: Allay): Boolean
+
+    abstract fun launchArrow(projectile: Entity, entity: Entity, roll: Float, force: Float, divergence: Float)
+
+    abstract fun boostArrow(arrow: Arrow)
 
     abstract fun sendEntityData(player: Player, entity: Entity, bytes: Byte)
 
@@ -44,7 +58,7 @@ abstract class NMSInvoker : Listener {
     abstract fun sendResourcePacks(
         player: Player,
         pack: String,
-        extraPacks: MutableMap<*, OriginsRebornResourcePackInfo>
+        extraPacks: MutableMap<*, OriginsReforgedResourcePackInfo>
     )
 
     abstract val nauseaEffect: PotionEffectType

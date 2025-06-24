@@ -49,7 +49,7 @@ data class MainConfig(
     @Comment("""
         Whether to enable the resource pack
         If this is set to false you should send the pack to players either in server.properties or in another plugin
-        You can find the packs for each version on the GitHub at https://github.com/cometcake575/Origins-Reborn/tree/main/packs/
+        You can find the packs for each version on the GitHub at https://github.com/Endera-Organ/Origins-Reforged/tree/main/OriginsPack.zip
     """)
     val resourcePack: ResourcePack,
 
@@ -312,11 +312,11 @@ val defaultMainConfig = MainConfig(
     ),
     swapCommand = SwapCommand(
         enabled = true,
-        permission = "originsreborn.admin",
+        permission = "originsreforged.admin",
         resetPlayer = false,
         vault = Vault(
             enabled = false,
-            bypassPermission = "originsreborn.costbypass",
+            bypassPermission = "originsreforged.costbypass",
             defaultCost = 1000,
             permanentPurchases = false,
             currencySymbol = "$"

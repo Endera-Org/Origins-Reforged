@@ -18,9 +18,9 @@ import org.bukkit.potion.PotionEffect
 import org.endera.enderalib.utils.async.ioDispatcher
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
-import ru.turbovadim.OriginsRebornEnhanced.Companion.bukkitDispatcher
-import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
+import ru.turbovadim.OriginsReforged.Companion.bukkitDispatcher
+import ru.turbovadim.OriginsReforged.Companion.instance
 import ru.turbovadim.SavedPotionEffect
 import ru.turbovadim.ShortcutUtils.infiniteDuration
 import ru.turbovadim.abilities.types.VisibleAbility

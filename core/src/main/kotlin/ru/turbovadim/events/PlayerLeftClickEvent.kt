@@ -14,7 +14,7 @@ import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.ItemStack
-import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
+import ru.turbovadim.OriginsReforged.Companion.instance
 
 @Suppress("unused")
 class PlayerLeftClickEvent(private val playerInteractEvent: PlayerInteractEvent) : PlayerEvent(

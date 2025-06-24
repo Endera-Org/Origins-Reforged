@@ -1,0 +1,17 @@
+{
+	"powers": [
+		"fantasyorigins:oceans_grace",
+		"fantasyorigins:ocean_wish",
+		"origins:water_breathing",
+		"origins:water_vision",
+		"origins:aqua_affinity",
+		"origins:swim_speed",
+		"origins:like_water"
+	],
+	"icon": {
+		"item": "minecraft:water_bucket"
+	},
+	"order": 1,
+	"impact": 3,
+	"description": "Spirits that have a special connection to the water, Naiads become much stronger in their home territory, though are weak on land."
+}

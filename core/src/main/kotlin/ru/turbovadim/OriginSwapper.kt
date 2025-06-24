@@ -33,9 +33,9 @@ import ru.turbovadim.AddonLoader.getRandomOrigin
 import ru.turbovadim.AddonLoader.getTextFor
 import ru.turbovadim.AddonLoader.shouldOpenSwapMenu
 import ru.turbovadim.OriginSwapper.LineData.LineComponent.LineType
-import ru.turbovadim.OriginsRebornEnhanced.Companion.bukkitDispatcher
-import ru.turbovadim.OriginsRebornEnhanced.Companion.getCooldowns
-import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
+import ru.turbovadim.OriginsReforged.Companion.bukkitDispatcher
+import ru.turbovadim.OriginsReforged.Companion.getCooldowns
+import ru.turbovadim.OriginsReforged.Companion.instance
 import ru.turbovadim.abilities.AbilityRegister
 import ru.turbovadim.abilities.types.AttributeModifierAbility
 import ru.turbovadim.abilities.types.DefaultSpawnAbility
@@ -55,7 +55,7 @@ class OriginSwapper : Listener {
     @EventHandler
     fun onInventoryClick(event: InventoryClickEvent) {
         runBlocking {
-            val config = OriginsRebornEnhanced.mainConfig
+            val config = OriginsReforged.mainConfig
             val item = event.whoClicked.openInventory.getItem(1)
             if (item != null) {
                 val meta = item.itemMeta
@@ -176,10 +176,10 @@ class OriginSwapper : Listener {
                     if (defaultOrigin != null) {
                         setOrigin(player, defaultOrigin, SwapReason.INITIAL, false, layer)
 
-                    } else if (OriginsRebornEnhanced.mainConfig.originSelection.randomize[layer] == true) {
+                    } else if (OriginsReforged.mainConfig.originSelection.randomize[layer] == true) {
                         selectRandomOrigin(player, SwapReason.INITIAL, layer)
                     } else if (ShortcutUtils.isBedrockPlayer(player.uniqueId)) {
-                        val delayMillis = OriginsRebornEnhanced.mainConfig.geyser.joinFormDelay.toLong()
+                        val delayMillis = OriginsReforged.mainConfig.geyser.joinFormDelay.toLong()
                         delay(delayMillis)
                         withContext(bukkitDispatcher) {
                             GeyserSwapper.openOriginSwapper(player, SwapReason.INITIAL, false, false, layer)
@@ -205,14 +205,21 @@ class OriginSwapper : Listener {
     }
 
     private suspend fun updateAllPlayers() = withContext(ioDispatcher) {
-        val config = OriginsRebornEnhanced.mainConfig
+        val config = OriginsReforged.mainConfig
         val delay: Int = config.originSelection.delayBeforeRequired
+        val currentTick = Bukkit.getCurrentTick()
+        val disableFlightStuff = config.miscSettings.disableFlightStuff
+        val originSelectionRandomize = config.originSelection.randomize
 
-        for (player in Bukkit.getOnlinePlayers()) {
-            lastJoinedTick.putIfAbsent(player, Bukkit.getCurrentTick())
-            if (Bukkit.getCurrentTick() - delay < lastJoinedTick[player]!!) {
+        val onlinePlayers = Bukkit.getOnlinePlayers().toList()
+
+        for (player in onlinePlayers) {
+            val lastJoinTick = lastJoinedTick.getOrPut(player) { currentTick }!!
+
+            if (currentTick - delay < lastJoinTick) {
                 continue
             }
+
             val reason = lastSwapReasons.getOrDefault(player, SwapReason.INITIAL)
             val shouldDisallow = shouldDisallowSelection(player, reason)
 
@@ -226,7 +233,7 @@ class OriginSwapper : Listener {
             }
 
             launch(bukkitDispatcher) {
-                if (!config.miscSettings.disableFlightStuff) {
+                if (!disableFlightStuff) {
                     player.allowFlight = AbilityRegister.canFly(player, false)
                     AbilityRegister.updateFlight(player, false)
                 }
@@ -234,18 +241,24 @@ class OriginSwapper : Listener {
                 player.isInvisible = AbilityRegister.isInvisible(player)
                 applyAttributeChanges(player)
             }
-            val layer = getFirstUnselectedLayer(player)
-            if (layer == null) {
+
+            val layer = getFirstUnselectedLayer(player) ?: continue
+
+            val hasChestOpen = player.openInventory.type == InventoryType.CHEST
+            if (hasChestOpen) continue
+
+            val defaultOrigin = getDefaultOrigin(layer)
+            if (defaultOrigin != null) {
+                setOrigin(player, defaultOrigin, SwapReason.INITIAL, false, layer)
                 continue
             }
-            if (player.openInventory.type != InventoryType.CHEST) {
-                if (getDefaultOrigin(layer) != null) {
-                    setOrigin(player, getDefaultOrigin(layer), SwapReason.INITIAL, false, layer)
-                }
-                if (config.originSelection.randomize[layer] != true && !ShortcutUtils.isBedrockPlayer(player.uniqueId)) {
-                    launch(bukkitDispatcher) {
-                        openOriginSwapper(player, reason, 0, 0, layer)
-                    }
+
+            val shouldRandomize = originSelectionRandomize[layer] == true
+            val isBedrockPlayer = ShortcutUtils.isBedrockPlayer(player.uniqueId)
+
+            if (!shouldRandomize && !isBedrockPlayer) {
+                launch(bukkitDispatcher) {
+                    openOriginSwapper(player, reason, 0, 0, layer)
                 }
             }
         }
@@ -295,7 +308,7 @@ class OriginSwapper : Listener {
         val originName = newOrigin.getActualName().replace(" ", "_").lowercase(Locale.getDefault())
         executeCommands(originName, player)
 
-        if (!OriginsRebornEnhanced.mainConfig.originSelection.autoSpawnTeleport) return
+        if (!OriginsReforged.mainConfig.originSelection.autoSpawnTeleport) return
 
         if (event.reason == SwapReason.INITIAL || event.reason == SwapReason.DIED) {
             val loc = nmsInvoker.getRespawnLocation(player)
@@ -306,7 +319,7 @@ class OriginSwapper : Listener {
 
     private fun executeCommands(originName: String, player: Player) {
         val console = Bukkit.getConsoleSender()
-        OriginsRebornEnhanced.mainConfig.commandsOnOrigin[originName]?.forEach { command ->
+        OriginsReforged.mainConfig.commandsOnOrigin[originName]?.forEach { command ->
             val parsedCommand = command
                 .replace("%player%", player.name)
                 .replace("%uuid%", player.uniqueId.toString())
@@ -337,11 +350,11 @@ class OriginSwapper : Listener {
     fun onPlayerPostRespawn(event: PlayerPostRespawnEvent) {
         CoroutineScope(ioDispatcher).launch {
             if (lastRespawnReasons[event.player]!!.contains(PlayerRespawnEvent.RespawnFlag.END_PORTAL)) return@launch
-            if (OriginsRebornEnhanced.mainConfig.originSelection.deathOriginChange) {
+            if (OriginsReforged.mainConfig.originSelection.deathOriginChange) {
                 for (layer in AddonLoader.layers) {
                     setOrigin(event.player, null, SwapReason.DIED, false, layer!!)
 
-                    if (OriginsRebornEnhanced.mainConfig.originSelection.randomize[layer] == true) {
+                    if (OriginsReforged.mainConfig.originSelection.randomize[layer] == true) {
                         selectRandomOrigin(event.player, SwapReason.INITIAL, layer)
                     } else {
                         openOriginSwapper(event.player, SwapReason.INITIAL, 0, 0, layer)
@@ -357,7 +370,7 @@ class OriginSwapper : Listener {
         )
     }
 
-    private val invulnerableMode: String = OriginsRebornEnhanced.mainConfig.originSelection.invulnerableMode
+    private val invulnerableMode: String = OriginsReforged.mainConfig.originSelection.invulnerableMode
 
     class LineData {
         class LineComponent {
@@ -538,8 +551,8 @@ class OriginSwapper : Listener {
         private val closeKey = NamespacedKey(instance, "close")
         private val random = Random()
 
-        var origins: OriginsRebornEnhanced = instance
-        var nmsInvoker: NMSInvoker = OriginsRebornEnhanced.NMSInvoker
+        var origins: OriginsReforged = instance
+        var nmsInvoker: NMSInvoker = OriginsReforged.NMSInvoker
 
         fun getInverse(string: String): String {
             val result = StringBuilder()
@@ -595,7 +608,7 @@ class OriginSwapper : Listener {
             displayOnly: Boolean,
             layer: String
         ) {
-            val config = OriginsRebornEnhanced.mainConfig
+            val config = OriginsReforged.mainConfig
             var slotIndex = slot
 
             if (shouldDisallowSelection(player, reason)) return
@@ -652,14 +665,7 @@ class OriginSwapper : Listener {
 
             if (slotIndex == origins.size) {
                 val excludedOriginNames = config.originSelection.randomOption.exclude.map { s ->
-                    getOriginByFilename(s)?.let { origin ->
-                        getTextFor(
-                            "origin.${origin.addon.getNamespace()}.${
-                                s.replace(" ", "_").lowercase(Locale.getDefault())
-                            }.name",
-                            origin.getName()
-                        )
-                    }
+                    getOriginByFilename(s)?.getName()
                 }
                 icon = OrbOfOrigin.orb.clone()
                 name = getTextFor("origin.origins.random.name", "Random")
@@ -902,8 +908,8 @@ class OriginSwapper : Listener {
 
         fun shouldResetPlayer(reason: SwapReason): Boolean {
             return when (reason) {
-                SwapReason.COMMAND -> OriginsRebornEnhanced.mainConfig.swapCommand.resetPlayer
-                SwapReason.ORB_OF_ORIGIN -> OriginsRebornEnhanced.mainConfig.orbOfOrigin.resetPlayer
+                SwapReason.COMMAND -> OriginsReforged.mainConfig.swapCommand.resetPlayer
+                SwapReason.ORB_OF_ORIGIN -> OriginsReforged.mainConfig.orbOfOrigin.resetPlayer
                 else -> false
             }
         }
@@ -980,7 +986,7 @@ class OriginSwapper : Listener {
                 .firstNotNullOfOrNull { it.world }
                 ?.let { return it }
 
-            val overworld = OriginsRebornEnhanced.mainConfig.worlds.world
+            val overworld = OriginsReforged.mainConfig.worlds.world
 
             return Bukkit.getWorld(overworld) ?: Bukkit.getWorlds()[0]
         }
@@ -1049,7 +1055,7 @@ class OriginSwapper : Listener {
             runCatching { AuthMeApi.getInstance().isAuthenticated(player) }
                 .getOrNull()?.let { return !it }
             val worldId = player.world.name
-            return !shouldOpenSwapMenu(player, reason) || OriginsRebornEnhanced.mainConfig.worlds.disabledWorlds.contains(worldId)
+            return !shouldOpenSwapMenu(player, reason) || OriginsReforged.mainConfig.worlds.disabledWorlds.contains(worldId)
         }
 
 

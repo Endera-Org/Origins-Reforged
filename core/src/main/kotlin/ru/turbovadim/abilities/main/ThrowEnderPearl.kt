@@ -12,7 +12,7 @@ import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.Vector
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
+import ru.turbovadim.OriginsReforged.Companion.instance
 import ru.turbovadim.abilities.types.VisibleAbility
 import ru.turbovadim.cooldowns.CooldownAbility
 import ru.turbovadim.cooldowns.Cooldowns.CooldownInfo

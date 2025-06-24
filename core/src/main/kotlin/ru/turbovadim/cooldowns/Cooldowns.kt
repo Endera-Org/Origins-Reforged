@@ -23,9 +23,9 @@ import org.bukkit.plugin.java.JavaPlugin
 import org.endera.enderalib.utils.async.ioDispatcher
 import org.intellij.lang.annotations.Subst
 import ru.turbovadim.OriginSwapper
-import ru.turbovadim.OriginsRebornEnhanced
-import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
-import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
+import ru.turbovadim.OriginsReforged
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
+import ru.turbovadim.OriginsReforged.Companion.instance
 import ru.turbovadim.ShortcutUtils.isBedrockPlayer
 import ru.turbovadim.events.PlayerSwapOriginEvent
 import java.awt.image.BufferedImage
@@ -311,9 +311,9 @@ class Cooldowns : Listener {
     val iconDataMap: MutableMap<String?, CooldownIconData?> = HashMap<String?, CooldownIconData?>()
 
     fun registerCooldown(instance: JavaPlugin, key: NamespacedKey, info: CooldownInfo): NamespacedKey {
-        if (OriginsRebornEnhanced.mainConfig.cooldowns.disableAllCooldowns) return key
+        if (OriginsReforged.mainConfig.cooldowns.disableAllCooldowns) return key
 
-        if (info.icon != null && OriginsRebornEnhanced.mainConfig.cooldowns.showCooldownIcons) {
+        if (info.icon != null && OriginsReforged.mainConfig.cooldowns.showCooldownIcons) {
             val icon = File(instance.dataFolder, "icons/${info.icon}.png")
             if (!icon.exists()) {
                 icon.getParentFile().mkdirs()

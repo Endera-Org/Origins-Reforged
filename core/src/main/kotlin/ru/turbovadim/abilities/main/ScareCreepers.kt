@@ -16,8 +16,8 @@ import org.bukkit.event.world.EntitiesLoadEvent
 import org.bukkit.persistence.PersistentDataType
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
-import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
+import ru.turbovadim.OriginsReforged.Companion.instance
 import ru.turbovadim.abilities.types.Ability.AbilityRunner
 import ru.turbovadim.abilities.types.VisibleAbility
 import java.util.function.Predicate
@@ -55,8 +55,8 @@ class ScareCreepers : VisibleAbility, Listener {
     fun fixCreeper(creeper: Creeper) {
         val afraidGoal = NMSInvoker.getCreeperAfraidGoal(
             creeper,
-            Predicate { player -> hasAbility(player) },
-            Predicate { livingEntity ->
+            { player -> hasAbility(player) },
+            { livingEntity ->
                 creeper.persistentDataContainer.get(hitByPlayerKey, PersistentDataType.STRING)
                     ?.let { stored -> stored == livingEntity.uniqueId.toString() } == true
             }
@@ -79,9 +79,9 @@ class ScareCreepers : VisibleAbility, Listener {
             else -> return
         }
 
-        runForAbility(player, AbilityRunner { p ->
+        runForAbility(player) { p ->
             p.persistentDataContainer.set(hitByPlayerKey, PersistentDataType.STRING, p.uniqueId.toString())
-        })
+        }
     }
 
 

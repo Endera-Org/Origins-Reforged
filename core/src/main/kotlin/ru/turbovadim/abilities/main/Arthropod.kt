@@ -6,7 +6,7 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.potion.PotionEffect
-import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.abilities.types.Ability
 import ru.turbovadim.abilities.types.Ability.AbilityRunner
 import java.util.*
@@ -27,7 +27,7 @@ class Arthropod : Ability, Listener {
 
         if (!mainHand.containsEnchantment(baneEnchantment)) return
 
-        runForAbility(event.entity, AbilityRunner { player ->
+        runForAbility(event.entity) { player ->
             val level = mainHand.getEnchantmentLevel(baneEnchantment)
             event.damage += 1.25 * level
             val duration = (20 * random.nextDouble(1.0, 1 + (0.5 * level))).toInt()
@@ -40,7 +40,7 @@ class Arthropod : Ability, Listener {
                     true
                 )
             )
-        })
+        }
     }
 
 }

@@ -18,14 +18,12 @@ object DatabaseManager {
         originCache.clear()
         allUsedOriginsCache.clear()
 
-        // Fill origin cache
         UUIDOriginEntity.all().forEach { uuidEntity ->
             uuidEntity.layerOriginPairs.forEach { kv ->
                 originCache[uuidEntity.uuid to kv.layer] = kv.origin
             }
         }
 
-        // Fill all used origins cache
         allUsedOriginsCache.addAll(
             UsedOriginEntity.all()
                 .orderBy(UsedOrigins.id to SortOrder.ASC)
@@ -40,7 +38,6 @@ object DatabaseManager {
      * @return The `UUIDOrigin` object containing the selected origins, or `null` if no matching data is found.
      */
     suspend fun getSelectedOrigins(uuid: String) = dbQuery {
-        // Находим запись в таблице UUIDOrigins по uuid
         val uuidEntity = UUIDOriginEntity.find { UUIDOrigins.uuid eq uuid }.firstOrNull()
         uuidEntity?.toUUIDOrigin()
     }
@@ -147,7 +144,7 @@ object DatabaseManager {
 
     suspend fun addOriginToHistory(uuid: String, newOrigin: String) = dbQuery {
         val uuidEntity = UUIDOriginEntity.find { UUIDOrigins.uuid eq uuid }
-            .firstOrNull() ?: throw IllegalArgumentException("Сущность для UUID $uuid не найдена.")
+            .firstOrNull() ?: throw IllegalArgumentException("Entity with UUID $uuid not found")
         addOriginToHistory(uuidEntity, newOrigin)
     }
 }

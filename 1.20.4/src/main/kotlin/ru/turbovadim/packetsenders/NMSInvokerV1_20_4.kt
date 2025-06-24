@@ -22,21 +22,17 @@ import org.bukkit.attribute.AttributeInstance
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.craftbukkit.v1_20_R3.CraftWorld
 import org.bukkit.craftbukkit.v1_20_R3.block.CraftBlockState
-import org.bukkit.craftbukkit.v1_20_R3.entity.CraftAllay
-import org.bukkit.craftbukkit.v1_20_R3.entity.CraftEntity
-import org.bukkit.craftbukkit.v1_20_R3.entity.CraftLivingEntity
-import org.bukkit.craftbukkit.v1_20_R3.entity.CraftPlayer
+import org.bukkit.craftbukkit.v1_20_R3.entity.*
 import org.bukkit.craftbukkit.v1_20_R3.inventory.CraftItemStack
 import org.bukkit.damage.DamageSource
 import org.bukkit.damage.DamageType
 import org.bukkit.enchantments.Enchantment
-import org.bukkit.entity.Allay
-import org.bukkit.entity.Creeper
-import org.bukkit.entity.Entity
-import org.bukkit.entity.LivingEntity
-import org.bukkit.entity.Player
+import org.bukkit.entity.*
 import org.bukkit.event.EventHandler
 import org.bukkit.event.block.BlockDamageAbortEvent
+import org.bukkit.event.entity.EntityDamageEvent
+import org.bukkit.event.entity.EntityDismountEvent
+import org.bukkit.event.entity.EntityMountEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
@@ -47,7 +43,56 @@ import java.util.concurrent.ExecutionException
 import java.util.function.Function
 import java.util.function.Predicate
 
+@Suppress("UnstableApiUsage")
 class NMSInvokerV1_20_4 : NMSInvoker() {
+
+    override fun getGenericScaleAttribute(): Attribute? {
+        return null
+    }
+
+    override fun transferDamageEvent(entity: LivingEntity, event: EntityDamageEvent) {
+        entity.damage(event.damage, event.damageSource)
+    }
+
+    override fun getGenericJumpStrengthAttribute(): Attribute {
+        return Attribute.HORSE_JUMP_STRENGTH
+    }
+
+    @EventHandler
+    fun onEntityDismount(event: EntityDismountEvent) {
+        event.isCancelled = !FantasyEntityDismountEvent(
+            event.entity,
+            event.dismounted,
+            event.isCancellable
+        ).callEvent()
+    }
+
+    @EventHandler
+    fun onEntityMount(event: EntityMountEvent) {
+        event.isCancelled = !FantasyEntityMountEvent(event.entity, event.mount).callEvent()
+    }
+
+    override fun getFortuneEnchantment(): Enchantment = Enchantment.LOOT_BONUS_BLOCKS
+
+    override fun launchArrow(projectile: Entity, entity: Entity, roll: Float, force: Float, divergence: Float) {
+        (projectile as AbstractProjectile).handle.shootFromRotation(
+            (entity as CraftEntity).handle,
+            entity.location.pitch,
+            entity.location.yaw,
+            roll,
+            force,
+            divergence
+        )
+    }
+
+    override fun boostArrow(arrow: Arrow) {
+        for (effect in arrow.basePotionType.potionEffects) {
+            arrow.addCustomEffect(
+                effect.withDuration(effect.duration).withAmplifier(effect.amplifier + 1),
+                true
+            )
+        }
+    }
 
     override fun duplicateAllay(allay: Allay): Boolean {
         if (allay.duplicationCooldown > 0) return false
@@ -153,7 +198,7 @@ class NMSInvokerV1_20_4 : NMSInvoker() {
 
     @EventHandler
     fun onBlockDamageAbort(event: BlockDamageAbortEvent) {
-        OriginsRebornBlockDamageAbortEvent(event.player, event.getBlock(), event.itemInHand).callEvent()
+        OriginsReforgedBlockDamageAbortEvent(event.player, event.getBlock(), event.itemInHand).callEvent()
     }
 
     override val armorAttribute: Attribute
@@ -174,8 +219,8 @@ class NMSInvokerV1_20_4 : NMSInvoker() {
 
         val eData: MutableList<SynchedEntityData.DataValue<*>?> = ArrayList<SynchedEntityData.DataValue<*>?>()
         eData.add(
-            SynchedEntityData.DataValue.create<Byte?>(
-                EntityDataAccessor<Byte?>(0, EntityDataSerializers.BYTE),
+            SynchedEntityData.DataValue.create(
+                EntityDataAccessor(0, EntityDataSerializers.BYTE),
                 bytes
             )
         )
@@ -188,7 +233,7 @@ class NMSInvokerV1_20_4 : NMSInvoker() {
         hasAbility: Predicate<Player>,
         hasKey: Predicate<LivingEntity>
     ): Goal<Creeper> {
-        return AvoidEntityGoal<net.minecraft.world.entity.player.Player>(
+        return AvoidEntityGoal(
             (creeper as CraftEntity).handle as PathfinderMob,
             net.minecraft.world.entity.player.Player::class.java,
             6f,
@@ -204,7 +249,7 @@ class NMSInvokerV1_20_4 : NMSInvoker() {
                 false
             }
 
-        ).asPaperVanillaGoal<Creeper>()
+        ).asPaperVanillaGoal()
     }
 
     override fun wasTouchingWater(player: Player): Boolean {
@@ -255,7 +300,7 @@ class NMSInvokerV1_20_4 : NMSInvoker() {
     override fun sendResourcePacks(
         player: Player,
         pack: String,
-        extraPacks: MutableMap<*, OriginsRebornResourcePackInfo>
+        extraPacks: MutableMap<*, OriginsReforgedResourcePackInfo>
     ) {
         try {
             val packInfo = ResourcePackInfo.resourcePackInfo()
@@ -263,8 +308,8 @@ class NMSInvokerV1_20_4 : NMSInvoker() {
                 .computeHashAndBuild().get()
             val packs: MutableList<ResourcePackInfo?> = ArrayList<ResourcePackInfo?>()
             packs.add(packInfo)
-            for (originsRebornResourcePackInfo in extraPacks.values) {
-                val info = originsRebornResourcePackInfo.packInfo as? ResourcePackInfo
+            for (originsReforgedResourcePackInfo in extraPacks.values) {
+                val info = originsReforgedResourcePackInfo.packInfo as? ResourcePackInfo
                 if (info != null) {
                     packs.add(info)
                 }

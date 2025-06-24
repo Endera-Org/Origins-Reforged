@@ -21,12 +21,12 @@ import org.bukkit.inventory.meta.Damageable
 import org.bukkit.potion.PotionEffect
 import ru.turbovadim.Origin
 import ru.turbovadim.OriginSwapper.Companion.getOrigins
-import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
-import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
+import ru.turbovadim.OriginsReforged.Companion.instance
 import ru.turbovadim.SavedPotionEffect
 import ru.turbovadim.ShortcutUtils.infiniteDuration
 import ru.turbovadim.abilities.main.StrongArms.StrongArmsBreakSpeed.StrongArmsFastBlockBreakEvent
-import ru.turbovadim.packetsenders.OriginsRebornBlockDamageAbortEvent
+import ru.turbovadim.packetsenders.OriginsReforgedBlockDamageAbortEvent
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
@@ -189,7 +189,7 @@ interface BreakSpeedModifierAbility : Ability {
         }
 
         @EventHandler
-        fun onBlockDamage(event: OriginsRebornBlockDamageAbortEvent) {
+        fun onBlockDamage(event: OriginsReforgedBlockDamageAbortEvent) {
             if (blockbreakingTasks.containsKey(event.player)) {
                 val taskNum: Int = blockbreakingTasks[event.player]!!
                 cancelTask(taskNum)

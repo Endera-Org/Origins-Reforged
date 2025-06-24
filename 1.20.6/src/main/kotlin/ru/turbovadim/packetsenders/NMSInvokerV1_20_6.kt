@@ -22,6 +22,7 @@ import org.bukkit.attribute.AttributeInstance
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.craftbukkit.CraftWorld
 import org.bukkit.craftbukkit.block.CraftBlockState
+import org.bukkit.craftbukkit.entity.AbstractProjectile
 import org.bukkit.craftbukkit.entity.CraftAllay
 import org.bukkit.craftbukkit.entity.CraftEntity
 import org.bukkit.craftbukkit.entity.CraftPlayer
@@ -29,13 +30,12 @@ import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.damage.DamageSource
 import org.bukkit.damage.DamageType
 import org.bukkit.enchantments.Enchantment
-import org.bukkit.entity.Allay
-import org.bukkit.entity.Creeper
-import org.bukkit.entity.Entity
-import org.bukkit.entity.LivingEntity
-import org.bukkit.entity.Player
+import org.bukkit.entity.*
 import org.bukkit.event.EventHandler
 import org.bukkit.event.block.BlockDamageAbortEvent
+import org.bukkit.event.entity.EntityDamageEvent
+import org.bukkit.event.entity.EntityDismountEvent
+import org.bukkit.event.entity.EntityMountEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
@@ -46,7 +46,57 @@ import java.util.concurrent.ExecutionException
 import java.util.function.Function
 import java.util.function.Predicate
 
+@Suppress("UnstableApiUsage")
 class NMSInvokerV1_20_6 : NMSInvoker() {
+
+    override fun getGenericScaleAttribute(): Attribute? {
+        return Attribute.GENERIC_SCALE
+    }
+
+    @Suppress("UnstableApiUsage")
+    override fun transferDamageEvent(entity: LivingEntity, event: EntityDamageEvent) {
+        entity.damage(event.damage, event.damageSource)
+    }
+
+    override fun getGenericJumpStrengthAttribute(): Attribute {
+        return Attribute.GENERIC_JUMP_STRENGTH
+    }
+
+    @EventHandler
+    fun onEntityDismount(event: EntityDismountEvent) {
+        event.isCancelled = !FantasyEntityDismountEvent(
+            event.entity,
+            event.dismounted,
+            event.isCancellable
+        ).callEvent()
+    }
+
+    @EventHandler
+    fun onEntityMount(event: EntityMountEvent) {
+        event.isCancelled = !FantasyEntityMountEvent(event.entity, event.mount).callEvent()
+    }
+
+    override fun getFortuneEnchantment(): Enchantment = Enchantment.FORTUNE
+
+    override fun launchArrow(projectile: Entity, entity: Entity, roll: Float, force: Float, divergence: Float) {
+        (projectile as AbstractProjectile).handle.shootFromRotation(
+            (entity as CraftEntity).handle,
+            entity.location.pitch,
+            entity.location.yaw,
+            roll,
+            force,
+            divergence
+        )
+    }
+
+    override fun boostArrow(arrow: Arrow) {
+        for (effect in arrow.basePotionType?.potionEffects.orEmpty()) {
+            arrow.addCustomEffect(
+                effect.withDuration(effect.duration).withAmplifier(effect.amplifier + 1),
+                true
+            )
+        }
+    }
 
     override fun duplicateAllay(allay: Allay): Boolean {
         if (allay.duplicationCooldown > 0) return false
@@ -178,7 +228,7 @@ class NMSInvokerV1_20_6 : NMSInvoker() {
         hasAbility: Predicate<Player>,
         hasKey: Predicate<LivingEntity>
     ): Goal<Creeper> {
-        return AvoidEntityGoal<net.minecraft.world.entity.player.Player>(
+        return AvoidEntityGoal(
             (creeper as CraftEntity).handle as PathfinderMob,
             net.minecraft.world.entity.player.Player::class.java,
             6f,
@@ -194,7 +244,7 @@ class NMSInvokerV1_20_6 : NMSInvoker() {
                 false
             }
 
-        ).asPaperVanillaGoal<Creeper>()
+        ).asPaperVanillaGoal()
     }
 
     override fun wasTouchingWater(player: Player): Boolean {
@@ -230,12 +280,12 @@ class NMSInvokerV1_20_6 : NMSInvoker() {
             1,
             gameType,
             serverPlayer.tabListDisplayName,
-            Optionull.map<RemoteChatSession?, RemoteChatSession.Data?>(
-                serverPlayer.chatSession,
-                Function { obj: RemoteChatSession? -> obj!!.asData() })
+            Optionull.map(
+                serverPlayer.chatSession
+            ) { obj -> obj!!.asData() }
         )
         val packet = ClientboundPlayerInfoUpdatePacket(
-            EnumSet.of<ClientboundPlayerInfoUpdatePacket.Action?>(
+            EnumSet.of(
                 ClientboundPlayerInfoUpdatePacket.Action.UPDATE_GAME_MODE
             ), entry
         )
@@ -245,7 +295,7 @@ class NMSInvokerV1_20_6 : NMSInvoker() {
     override fun sendResourcePacks(
         player: Player,
         pack: String,
-        extraPacks: MutableMap<*, OriginsRebornResourcePackInfo>
+        extraPacks: MutableMap<*, OriginsReforgedResourcePackInfo>
     ) {
         try {
             val packInfo = ResourcePackInfo.resourcePackInfo()
@@ -253,8 +303,8 @@ class NMSInvokerV1_20_6 : NMSInvoker() {
                 .computeHashAndBuild().get()
             val packs: MutableList<ResourcePackInfo?> = ArrayList<ResourcePackInfo?>()
             packs.add(packInfo)
-            for (originsRebornResourcePackInfo in extraPacks.values) {
-                val info = originsRebornResourcePackInfo.packInfo as? ResourcePackInfo
+            for (originsReforgedResourcePackInfo in extraPacks.values) {
+                val info = originsReforgedResourcePackInfo.packInfo as? ResourcePackInfo
                 if (info != null) {
                     packs.add(info)
                 }
@@ -388,6 +438,6 @@ class NMSInvokerV1_20_6 : NMSInvoker() {
 
     @EventHandler
     fun onBlockDamageAbort(event: BlockDamageAbortEvent) {
-        OriginsRebornBlockDamageAbortEvent(event.player, event.getBlock(), event.itemInHand).callEvent()
+        OriginsReforgedBlockDamageAbortEvent(event.player, event.getBlock(), event.itemInHand).callEvent()
     }
 }

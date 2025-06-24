@@ -16,7 +16,7 @@ import org.bukkit.event.player.PlayerToggleSneakEvent
 import org.bukkit.event.player.PlayerToggleSprintEvent
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.OriginsRebornEnhanced.Companion.bukkitDispatcher
+import ru.turbovadim.OriginsReforged.Companion.bukkitDispatcher
 import ru.turbovadim.abilities.types.FlightAllowingAbility
 import ru.turbovadim.abilities.types.VisibleAbility
 

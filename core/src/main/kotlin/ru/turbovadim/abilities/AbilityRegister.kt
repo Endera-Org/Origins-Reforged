@@ -14,7 +14,7 @@ import org.bukkit.event.Listener
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.potion.PotionEffectType
-import ru.turbovadim.OriginsRebornEnhanced
+import ru.turbovadim.OriginsReforged
 import ru.turbovadim.abilities.types.*
 import ru.turbovadim.commands.FlightToggleCommand
 import ru.turbovadim.cooldowns.CooldownAbility
@@ -27,8 +27,8 @@ object AbilityRegister {
     val dependencyAbilityMap: MutableMap<Key, DependencyAbility> = mutableMapOf()
     val multiAbilityMap: MutableMap<Key, MutableList<MultiAbility>> = mutableMapOf()
 
-    val origins: OriginsRebornEnhanced = OriginsRebornEnhanced.instance
-    val nmsInvoker: NMSInvoker = OriginsRebornEnhanced.NMSInvoker
+    val origins: OriginsReforged = OriginsReforged.instance
+    val nmsInvoker: NMSInvoker = OriginsReforged.NMSInvoker
 
     lateinit var attributeModifierAbilityFileConfig: FileConfiguration
     private lateinit var attributeModifierAbilityFile: File
@@ -45,7 +45,7 @@ object AbilityRegister {
         }
 
         if (ability is CooldownAbility) {
-            OriginsRebornEnhanced.getCooldowns().registerCooldown(
+            OriginsReforged.getCooldowns().registerCooldown(
                 instance,
                 ability.cooldownKey,
                 requireNotNull(ability.cooldownInfo)

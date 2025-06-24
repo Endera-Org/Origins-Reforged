@@ -1,0 +1,15 @@
+{
+	"powers": [
+		"fantasyorigins:double_health",
+		"fantasyorigins:heavy_blow",
+		"fantasyorigins:poor_shot",
+		"origins:natural_armor",
+		"fantasyorigins:large_body"
+	],
+	"icon": {
+		"item": "minecraft:iron_chestplate"
+	},
+	"order": 0,
+	"impact": 2,
+	"description": "Although clumsy and weak with a bow and arrow, Giants can deal powerful creatures that can destroy any foe with their fists."
+}

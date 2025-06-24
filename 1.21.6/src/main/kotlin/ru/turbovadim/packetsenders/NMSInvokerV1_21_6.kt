@@ -19,19 +19,22 @@ import org.bukkit.*
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeInstance
 import org.bukkit.attribute.AttributeModifier
+import org.bukkit.craftbukkit.CraftWorld
 import org.bukkit.craftbukkit.block.CraftBlockState
+import org.bukkit.craftbukkit.entity.AbstractProjectile
+import org.bukkit.craftbukkit.entity.CraftAllay
 import org.bukkit.craftbukkit.entity.CraftEntity
 import org.bukkit.craftbukkit.entity.CraftPlayer
 import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.damage.DamageSource
 import org.bukkit.damage.DamageType
 import org.bukkit.enchantments.Enchantment
-import org.bukkit.entity.Creeper
-import org.bukkit.entity.Entity
-import org.bukkit.entity.LivingEntity
-import org.bukkit.entity.Player
+import org.bukkit.entity.*
 import org.bukkit.event.EventHandler
 import org.bukkit.event.block.BlockDamageAbortEvent
+import org.bukkit.event.entity.EntityDamageEvent
+import org.bukkit.event.entity.EntityDismountEvent
+import org.bukkit.event.entity.EntityMountEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.EquipmentSlotGroup
 import org.bukkit.inventory.ItemStack
@@ -43,7 +46,65 @@ import java.util.List
 import java.util.concurrent.ExecutionException
 import java.util.function.Predicate
 
+@Suppress("UnstableApiUsage")
 class NMSInvokerV1_21_6 : NMSInvoker() {
+
+    override fun getGenericScaleAttribute(): Attribute? {
+        return Attribute.SCALE
+    }
+
+    @Suppress("UnstableApiUsage")
+    override fun transferDamageEvent(entity: LivingEntity, event: EntityDamageEvent) {
+        entity.damage(event.damage, event.damageSource)
+    }
+
+    override fun getGenericJumpStrengthAttribute(): Attribute {
+        return Attribute.JUMP_STRENGTH
+    }
+
+    @EventHandler
+    fun onEntityDismount(event: EntityDismountEvent) {
+        event.isCancelled = !FantasyEntityDismountEvent(
+            event.entity,
+            event.dismounted,
+            event.isCancellable
+        ).callEvent()
+    }
+
+    @EventHandler
+    fun onEntityMount(event: EntityMountEvent) {
+        event.isCancelled = !FantasyEntityMountEvent(event.entity, event.mount).callEvent()
+    }
+
+    override fun getFortuneEnchantment(): Enchantment = Enchantment.FORTUNE
+
+    override fun launchArrow(projectile: Entity, entity: Entity, roll: Float, force: Float, divergence: Float) {
+        (projectile as AbstractProjectile).handle.shootFromRotation(
+            (entity as CraftEntity).handle,
+            entity.location.pitch,
+            entity.location.yaw,
+            roll,
+            force,
+            divergence
+        )
+    }
+
+    override fun duplicateAllay(allay: Allay): Boolean {
+        if (allay.duplicationCooldown > 0) return false
+        allay.duplicateAllay()
+        (allay.world as CraftWorld).handle
+            .broadcastEntityEvent((allay as CraftAllay).handle, 18.toByte())
+        return true
+    }
+
+    override fun boostArrow(arrow: Arrow) {
+        for (effect in arrow.basePotionType?.potionEffects.orEmpty()) {
+            arrow.addCustomEffect(
+                effect.withDuration(effect.duration).withAmplifier(effect.amplifier + 1),
+                true
+            )
+        }
+    }
 
     override fun applyFont(component: Component, font: Key): Component {
         return component.font(font)
@@ -182,7 +243,7 @@ class NMSInvokerV1_21_6 : NMSInvoker() {
 
     override fun setCustomModelData(meta: ItemMeta, cmd: Int): ItemMeta {
         val component = meta.customModelDataComponent
-        component.strings = List.of<String?>(cmd.toString())
+        component.strings = listOf(cmd.toString())
         meta.setCustomModelDataComponent(component)
         return meta
     }
@@ -223,7 +284,7 @@ class NMSInvokerV1_21_6 : NMSInvoker() {
     override fun sendResourcePacks(
         player: Player,
         pack: String,
-        extraPacks: MutableMap<*, OriginsRebornResourcePackInfo>
+        extraPacks: MutableMap<*, OriginsReforgedResourcePackInfo>
     ) {
         try {
             val packInfo = ResourcePackInfo.resourcePackInfo()
@@ -231,8 +292,8 @@ class NMSInvokerV1_21_6 : NMSInvoker() {
                 .computeHashAndBuild().get()
             val packs: MutableList<ResourcePackInfo?> = ArrayList<ResourcePackInfo?>()
             packs.add(packInfo)
-            for (originsRebornResourcePackInfo in extraPacks.values) {
-                val info = originsRebornResourcePackInfo.packInfo as? ResourcePackInfo
+            for (originsReforgedResourcePackInfo in extraPacks.values) {
+                val info = originsReforgedResourcePackInfo.packInfo as? ResourcePackInfo
                 if (info != null) {
                     packs.add(info)
                 }
@@ -370,7 +431,7 @@ class NMSInvokerV1_21_6 : NMSInvoker() {
 
     @EventHandler
     fun onBlockDamageAbort(event: BlockDamageAbortEvent) {
-        OriginsRebornBlockDamageAbortEvent(event.player, event.getBlock(), event.itemInHand).callEvent()
+        OriginsReforgedBlockDamageAbortEvent(event.player, event.getBlock(), event.itemInHand).callEvent()
     }
 
     override val ominousBottle: Material?

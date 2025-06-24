@@ -12,7 +12,7 @@ import org.geysermc.api.Geyser
 import org.geysermc.floodgate.api.FloodgateApi
 import org.json.JSONException
 import org.json.JSONObject
-import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import java.io.File
 import java.io.IOException
 import java.util.*

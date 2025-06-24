@@ -1,0 +1,15 @@
+{
+	"powers": [
+		"fantasyorigins:perfect_shot",
+		"fantasyorigins:increased_arrow_damage",
+		"fantasyorigins:increased_arrow_speed",
+		"fantasyorigins:arrow_effect_booster",
+		"fantasyorigins:bow_burst"
+	],
+	"icon": {
+		"item": "minecraft:bow"
+	},
+	"order": 0,
+	"impact": 1,
+	"description": "Skilled masters of the bow, Elves shoot arrows that are much stronger and faster than any other creatures."
+}

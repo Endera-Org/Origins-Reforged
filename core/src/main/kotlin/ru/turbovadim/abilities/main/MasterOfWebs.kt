@@ -24,9 +24,9 @@ import org.bukkit.inventory.ShapelessRecipe
 import org.endera.enderalib.utils.async.ioDispatcher
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
-import ru.turbovadim.OriginsRebornEnhanced.Companion.bukkitDispatcher
-import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
+import ru.turbovadim.OriginsReforged.Companion.bukkitDispatcher
+import ru.turbovadim.OriginsReforged.Companion.instance
 import ru.turbovadim.abilities.AbilityRegister
 import ru.turbovadim.abilities.types.Ability.AbilityRunner
 import ru.turbovadim.abilities.types.FlightAllowingAbility
@@ -56,7 +56,7 @@ class MasterOfWebs : CooldownAbility, FlightAllowingAbility, Listener, VisibleAb
                 val location = event.getEntity().location.block.location
                 temporaryCobwebs.add(location)
                 location.block.type = Material.COBWEB
-                Bukkit.getScheduler().scheduleSyncDelayedTask(instance, Runnable {
+                Bukkit.getScheduler().scheduleSyncDelayedTask(instance, {
                     if (location.block.type == Material.COBWEB && temporaryCobwebs.contains(location)) {
                         temporaryCobwebs.remove(location)
                         location.block.type = Material.AIR

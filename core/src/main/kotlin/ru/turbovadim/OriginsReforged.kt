@@ -11,7 +11,9 @@ import org.endera.enderalib.utils.configuration.ConfigurationManager
 import org.endera.enderalib.utils.configuration.MultiConfigurationManager
 import ru.turbovadim.abilities.AbilityRegister
 import ru.turbovadim.abilities.custom.ToggleableAbilities
+import ru.turbovadim.abilities.fantasy.*
 import ru.turbovadim.abilities.main.*
+import ru.turbovadim.abilities.main.NaturalArmor
 import ru.turbovadim.abilities.types.Ability
 import ru.turbovadim.abilities.types.BreakSpeedModifierAbility.BreakSpeedModifierAbilityListener
 import ru.turbovadim.abilities.types.ParticleAbility
@@ -25,11 +27,11 @@ import ru.turbovadim.packetsenders.*
 import ru.turbovadim.util.WorldGuardHook
 import java.io.File
 
-class OriginsRebornEnhanced : OriginsAddon() {
+class OriginsReforged : OriginsAddon() {
 
     companion object {
 
-        lateinit var instance: OriginsRebornEnhanced
+        lateinit var instance: OriginsReforged
             private set
 
         lateinit var multiConfigurationManager: MultiConfigurationManager
@@ -37,6 +39,7 @@ class OriginsRebornEnhanced : OriginsAddon() {
 
         lateinit var mainConfig: MainConfig
         lateinit var charactersConfig: CharactersConfig
+        lateinit var modulesConfig: ModulesConfig
 
         lateinit var NMSInvoker: NMSInvoker
             private set
@@ -47,7 +50,7 @@ class OriginsRebornEnhanced : OriginsAddon() {
             return cooldowns!!
         }
 
-        private fun initializeNMSInvoker(instance: OriginsRebornEnhanced) {
+        private fun initializeNMSInvoker(instance: OriginsReforged) {
             val version: String? =
                 Bukkit.getBukkitVersion().split("-".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[0]
             NMSInvoker = when (version) {
@@ -123,6 +126,7 @@ class OriginsRebornEnhanced : OriginsAddon() {
             serializer = MainConfig.serializer(),
             clazz = MainConfig::class,
         )
+
         val charactersConfigManager = ConfigurationManager(
             configFile = File("${dataFolder}/characters.yml"),
             dataFolder = dataFolder,
@@ -132,10 +136,20 @@ class OriginsRebornEnhanced : OriginsAddon() {
             clazz = CharactersConfig::class,
         )
 
+        val modulesConfigManager = ConfigurationManager(
+            configFile = File("${dataFolder}/modules.yml"),
+            dataFolder = dataFolder,
+            defaultConfig = defaultModulesConfig,
+            logger = logger,
+            serializer = ModulesConfig.serializer(),
+            clazz = ModulesConfig::class,
+        )
+
         multiConfigurationManager = MultiConfigurationManager(
             listOf(
                 mainConfigManager,
-                charactersConfigManager
+                charactersConfigManager,
+                modulesConfigManager
             )
         )
 
@@ -144,6 +158,7 @@ class OriginsRebornEnhanced : OriginsAddon() {
         }
         mainConfig = ConfigRegistry.get(MainConfig::class)!!
         charactersConfig = ConfigRegistry.get(CharactersConfig::class)!!
+        modulesConfig = ConfigRegistry.get(ModulesConfig::class)!!
 
 //        saveDefaultConfig()
         initializeNMSInvoker(this)
@@ -199,70 +214,132 @@ class OriginsRebornEnhanced : OriginsAddon() {
     }
 
     override fun getAbilities(): List<Ability> {
-        val abilities: MutableList<Ability> = ArrayList(
-            mutableListOf(
-                PumpkinHate(),
-                FallImmunity(),
-                WeakArms(),
-                Fragile(),
-                SlowFalling(),
-                FreshAir(),
-                Vegetarian(),
-                LayEggs(),
-                Unwieldy(),
-                MasterOfWebs(),
-                Tailwind(),
-                Arthropod(),
-                Climbing(),
-                Carnivore(),
-                WaterBreathing(),
-                WaterVision(),
-                CatVision(),
-                NineLives(),
-                BurnInDaylight(),
-                WaterVulnerability(),
-                Phantomize(),
-                Invisibility(),
-                ThrowEnderPearl(),
-                PhantomizeOverlay(),
-                FireImmunity(),
-                AirFromPotions(),
-                SwimSpeed(),
-                LikeWater(),
-                LightArmor(),
-                MoreKineticDamage(),
-                DamageFromPotions(),
-                DamageFromSnowballs(),
-                Hotblooded(),
-                BurningWrath(),
-                SprintJump(),
-                AerialCombatant(),
-                Elytra(),
-                LaunchIntoAir(),
-                HungerOverTime(),
-                MoreExhaustion(),
-                Aquatic(),
-                NetherSpawn(),
-                Claustrophobia(),
-                VelvetPaws(),
-                AquaAffinity(),
-                FlameParticles(),
-                EnderParticles(),
-                Phasing(),
-                ScareCreepers(),
-                StrongArms(),
-                StrongArms.StrongArmsBreakSpeed.strongArmsBreakSpeed,
-                StrongArms.StrongArmsDrops.strongArmsDrops,
-                ShulkerInventory(),
-                NaturalArmor()
-            )
+        val abilities = mutableListOf<Ability>()
+        abilities.addAll(getMainModuleAbilities())
+        if (modulesConfig.fantasy) {
+            abilities.addAll(getFantasyModuleAbilities())
+        }
+        return abilities.toList()
+    }
+
+    fun getMainModuleAbilities(): List<Ability> {
+        val abilities = mutableListOf(
+            PumpkinHate(),
+            FallImmunity(),
+            WeakArms(),
+            Fragile(),
+            SlowFalling(),
+            FreshAir(),
+            Vegetarian(),
+            LayEggs(),
+            Unwieldy(),
+            MasterOfWebs(),
+            Tailwind(),
+            Arthropod(),
+            Climbing(),
+            Carnivore(),
+            WaterBreathing(),
+            WaterVision(),
+            CatVision(),
+            NineLives(),
+            BurnInDaylight(),
+            WaterVulnerability(),
+            Phantomize(),
+            Invisibility(),
+            ThrowEnderPearl(),
+            PhantomizeOverlay(),
+            FireImmunity(),
+            AirFromPotions(),
+            SwimSpeed(),
+            LikeWater(),
+            LightArmor(),
+            MoreKineticDamage(),
+            DamageFromPotions(),
+            DamageFromSnowballs(),
+            Hotblooded(),
+            BurningWrath(),
+            SprintJump(),
+            AerialCombatant(),
+            Elytra(),
+            LaunchIntoAir(),
+            HungerOverTime(),
+            MoreExhaustion(),
+            Aquatic(),
+            NetherSpawn(),
+            Claustrophobia(),
+            VelvetPaws(),
+            AquaAffinity(),
+            FlameParticles(),
+            EnderParticles(),
+            Phasing(),
+            ScareCreepers(),
+            StrongArms(),
+            StrongArms.StrongArmsBreakSpeed.strongArmsBreakSpeed,
+            StrongArms.StrongArmsDrops.strongArmsDrops,
+            ShulkerInventory(),
+            NaturalArmor()
         )
+
         if (NMSInvoker.blockInteractionRangeAttribute != null && NMSInvoker.entityInteractionRangeAttribute != null) {
             abilities.add(ExtraReach())
             abilities.add(ExtraReach.ExtraReachBlocks.extraReachBlocks)
             abilities.add(ExtraReach.ExtraReachEntities.extraReachEntities)
         }
         abilities.addAll(ToggleableAbilities.abilities)
-        return abilities.toList()
+        return abilities
+    }
+
+    fun getFantasyModuleAbilities(): List<Ability> {
+        val abilities = mutableListOf(
+            AllayMaster(),
+            ArrowEffectBooster(),
+            BardicIntuition(),
+            BowBurst(),
+            BreathStorer(),
+            Chime(),
+            DoubleHealth(),
+            DragonFireball(),
+            Elegy(),
+            EndCrystalHealing(),
+            EndBoost(),
+            FortuneIncreaser(),
+            IncreasedArrowDamage(),
+            IncreasedArrowSpeed(),
+            HeavyBlow(),
+            HeavyBlow.IncreasedCooldown,
+            HeavyBlow.IncreasedDamage,
+            EndBoost.EndHealth,
+            EndBoost.EndStrength,
+            IncreasedSpeed(),
+            InfiniteHaste(),
+            InfiniteNightVision(),
+            OceanWish(),
+            OceanWish.LandWeakness.landWeakness,
+            OceanWish.LandHealth.landHealth,
+            OceanWish.LandSlowness.landSlowness,
+            MagicResistance(),
+            MoonStrength(),
+            NaturalArmor(),
+            NoteBlockPower(),
+            PerfectShot(),
+            PermanentHorse(),
+            PoorShot(),
+            StrongSkin(),
+            SuperJump(),
+            OceansGrace(),
+            OceansGrace.WaterHealthImpl,
+            OceansGrace.WaterStrengthImpl,
+            VampiricTransformation(),
+            DaylightSensitive(),
+            WaterSensitive(),
+            Leeching(),
+            Stronger(),
+            UndeadAlly()
+        )
+        if (NMSInvoker.getGenericScaleAttribute() != null) {
+            abilities.add(LargeBody())
+            abilities.add(SmallBody())
+        }
+        return abilities
     }
 }

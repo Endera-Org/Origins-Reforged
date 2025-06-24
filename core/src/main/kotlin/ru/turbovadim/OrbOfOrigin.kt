@@ -19,9 +19,9 @@ import org.bukkit.inventory.ShapedRecipe
 import org.endera.enderalib.utils.async.ioDispatcher
 import ru.turbovadim.AddonLoader.getOrigins
 import ru.turbovadim.AddonLoader.getTextFor
-import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
-import ru.turbovadim.OriginsRebornEnhanced.Companion.bukkitDispatcher
-import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
+import ru.turbovadim.OriginsReforged.Companion.bukkitDispatcher
+import ru.turbovadim.OriginsReforged.Companion.instance
 import ru.turbovadim.events.PlayerSwapOriginEvent
 
 class OrbOfOrigin : Listener {
@@ -55,12 +55,12 @@ class OrbOfOrigin : Listener {
 
     init {
         Bukkit.removeRecipe(orbKey)
-        if (OriginsRebornEnhanced.mainConfig.orbOfOrigin.enableRecipe) {
+        if (OriginsReforged.mainConfig.orbOfOrigin.enableRecipe) {
             val shapedRecipe = ShapedRecipe(orbKey, orb).apply {
                 shape("012", "345", "678")
             }
 
-            val recipeData: List<String> = OriginsRebornEnhanced.mainConfig.orbOfOrigin.recipe.flatten()
+            val recipeData: List<String> = OriginsReforged.mainConfig.orbOfOrigin.recipe.flatten()
 
             recipeData.forEachIndexed { index, materialName ->
                 val material = Material.matchMaterial(materialName) ?: Material.AIR
@@ -99,7 +99,7 @@ class OrbOfOrigin : Listener {
             else -> player.swingOffHand()
         }
 
-        if (OriginsRebornEnhanced.mainConfig.orbOfOrigin.consume) {
+        if (OriginsReforged.mainConfig.orbOfOrigin.consume) {
             item.amount--
             player.inventory.setItemInMainHand(item)
         }
@@ -117,7 +117,7 @@ class OrbOfOrigin : Listener {
                 if (opened) continue
 
 
-                if (OriginsRebornEnhanced.mainConfig.orbOfOrigin.random[layer] == true) {
+                if (OriginsReforged.mainConfig.orbOfOrigin.random[layer] == true) {
                     OriginSwapper.selectRandomOrigin(player, PlayerSwapOriginEvent.SwapReason.ORB_OF_ORIGIN, layer)
                     val origin = OriginSwapper.getOrigin(player, layer)
                     val index = getOrigins(layer).indexOf(origin)

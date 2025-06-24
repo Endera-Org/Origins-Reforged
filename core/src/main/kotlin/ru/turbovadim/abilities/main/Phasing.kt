@@ -18,8 +18,8 @@ import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
-import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
+import ru.turbovadim.OriginsReforged.Companion.instance
 import ru.turbovadim.abilities.types.Ability.AbilityRunner
 import ru.turbovadim.abilities.types.BreakSpeedModifierAbility
 import ru.turbovadim.abilities.types.BreakSpeedModifierAbility.BlockMiningContext
@@ -119,11 +119,11 @@ class Phasing : DependantAbility, VisibleAbility, FlightAllowingAbility, BreakSp
 
     @EventHandler
     fun onEntityDamage(event: EntityDamageEvent) {
-        runForAbility(event.getEntity(), AbilityRunner { player: Player? ->
+        runForAbility(event.entity) {
             if (event.cause == EntityDamageEvent.DamageCause.SUFFOCATION) {
                 event.isCancelled = true
             }
-        })
+        }
     }
 
     override fun getFlightSpeed(player: Player): Float {

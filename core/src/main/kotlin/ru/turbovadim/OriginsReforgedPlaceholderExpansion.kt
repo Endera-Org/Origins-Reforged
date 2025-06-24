@@ -4,7 +4,7 @@ import kotlinx.coroutines.runBlocking
 import me.clip.placeholderapi.expansion.PlaceholderExpansion
 import org.bukkit.entity.Player
 
-class OriginsRebornPlaceholderExpansion(private val layer: String) : PlaceholderExpansion() {
+class OriginsReforgedPlaceholderExpansion(private val layer: String) : PlaceholderExpansion() {
     override fun getIdentifier(): String {
         return layer
     }

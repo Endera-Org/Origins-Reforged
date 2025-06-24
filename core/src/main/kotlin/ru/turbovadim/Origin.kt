@@ -31,7 +31,7 @@ class Origin(
     private val max: Int,
     val layer: String
 ) {
-    val team: Team? = if (OriginsRebornEnhanced.mainConfig.display.enablePrefixes) {
+    val team: Team? = if (OriginsReforged.mainConfig.display.enablePrefixes) {
         val scoreboard: Scoreboard = Bukkit.getScoreboardManager().mainScoreboard
         scoreboard.getTeam(name)?.unregister()
         val newTeam = scoreboard.registerNewTeam(name)
@@ -54,8 +54,8 @@ class Origin(
 
     suspend fun isUnchoosable(player: Player): Boolean {
         if (unchoosable) return true
-        val mode = OriginsRebornEnhanced.mainConfig.restrictions.reusingOrigins
-        val same = OriginsRebornEnhanced.mainConfig.restrictions.preventSameOrigins
+        val mode = OriginsReforged.mainConfig.restrictions.reusingOrigins
+        val same = OriginsReforged.mainConfig.restrictions.preventSameOrigins
 
         if (max != -1) {
             var num = 0
@@ -114,19 +114,13 @@ class Origin(
     }
 
     fun getName(): String {
-        return AddonLoader.getTextFor(
-            "origin.${addon.getNamespace()}.${name.replace(" ", "_").lowercase(Locale.getDefault())}.name",
-            name
-        )
+        return name
     }
 
     fun getActualName(): String = name
 
     fun getDescription(): String {
-        return AddonLoader.getTextFor(
-            "origin.${addon.getNamespace()}.${name.replace(" ", "_").lowercase(Locale.getDefault())}.description",
-            description
-        )
+        return description
     }
 
     fun getResourceURL(): String {

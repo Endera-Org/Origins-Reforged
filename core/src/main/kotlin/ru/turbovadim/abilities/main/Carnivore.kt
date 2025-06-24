@@ -9,7 +9,7 @@ import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.abilities.types.Ability.AbilityRunner
 import ru.turbovadim.abilities.types.VisibleAbility
 
@@ -41,7 +41,7 @@ class Carnivore : VisibleAbility, Listener {
     fun onPlayerItemConsume(event: PlayerItemConsumeEvent) {
         if (event.item.type == Material.POTION) return
 
-        runForAbility(event.player, AbilityRunner { player ->
+        runForAbility(event.player) { player ->
             if (event.item.type !in meat) {
                 event.isCancelled = true
                 event.item.amount--
@@ -49,7 +49,7 @@ class Carnivore : VisibleAbility, Listener {
                     PotionEffect(PotionEffectType.POISON, 300, 1, false, true)
                 )
             }
-        })
+        }
     }
 
 

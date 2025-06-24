@@ -7,7 +7,7 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerItemConsumeEvent
 import ru.turbovadim.OriginSwapper
-import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
+import ru.turbovadim.OriginsReforged.Companion.instance
 import ru.turbovadim.abilities.types.Ability
 
 class AirFromPotions : Ability, Listener {

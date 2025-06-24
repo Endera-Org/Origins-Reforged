@@ -1,0 +1,15 @@
+{
+	"powers": [
+		"fantasyorigins:infinite_haste",
+		"fantasyorigins:infinite_night_vision",
+		"fantasyorigins:fortune_increaser",
+		"fantasyorigins:magic_resistance",
+		"fantasyorigins:small_body"
+	],
+	"icon": {
+		"item": "minecraft:iron_pickaxe"
+	},
+	"order": 1,
+	"impact": 2,
+	"description": "Known for their great skill in finding minerals, the Dwarfs spend most of their time in caves deep underground."
+}

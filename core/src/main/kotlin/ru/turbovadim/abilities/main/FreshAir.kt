@@ -11,7 +11,7 @@ import org.bukkit.event.player.PlayerInteractEvent
 import ru.turbovadim.AddonLoader.getTextFor
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.OriginsRebornEnhanced
+import ru.turbovadim.OriginsReforged
 import ru.turbovadim.abilities.types.Ability.AbilityRunner
 import ru.turbovadim.abilities.types.VisibleAbility
 
@@ -34,7 +34,7 @@ class FreshAir : VisibleAbility, Listener {
         runForAbility(player, AbilityRunner { p ->
             if (clickedBlock.y >= 86) return@AbilityRunner
 
-            val overworld = OriginsRebornEnhanced.mainConfig.worlds.world
+            val overworld = OriginsReforged.mainConfig.worlds.world
 
             val world = Bukkit.getWorld(overworld) ?: return@AbilityRunner
             if (p.world != world) return@AbilityRunner
@@ -58,7 +58,7 @@ class FreshAir : VisibleAbility, Listener {
     }
 
     override val description: MutableList<LineComponent> = makeLineFor(
-        "When sleeping, your bed needs to be at an altitude of at least ${OriginsRebornEnhanced.mainConfig.extraSettings.freshAirRequiredSleepHeight} blocks, so you can breathe fresh air.",
+        "When sleeping, your bed needs to be at an altitude of at least ${OriginsReforged.mainConfig.extraSettings.freshAirRequiredSleepHeight} blocks, so you can breathe fresh air.",
         LineComponent.LineType.DESCRIPTION
     )
 

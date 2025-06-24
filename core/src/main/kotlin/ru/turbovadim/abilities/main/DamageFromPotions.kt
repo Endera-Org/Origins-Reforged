@@ -5,7 +5,7 @@ import org.bukkit.Material
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerItemConsumeEvent
-import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.abilities.types.Ability
 import ru.turbovadim.abilities.types.Ability.AbilityRunner
 
@@ -17,9 +17,9 @@ class DamageFromPotions : Ability, Listener {
     @EventHandler
     fun onPlayerItemConsume(event: PlayerItemConsumeEvent) {
         if (event.item.type != Material.POTION) return
-        runForAbility(event.player, AbilityRunner { player ->
+        runForAbility(event.player) { player ->
             NMSInvoker.dealFreezeDamage(player, 2)
-        })
+        }
     }
 
 }

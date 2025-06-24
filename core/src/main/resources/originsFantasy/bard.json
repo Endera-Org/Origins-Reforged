@@ -1,0 +1,15 @@
+{
+	"powers": [
+		"fantasyorigins:elegy",
+		"fantasyorigins:note_block_power",
+		"fantasyorigins:allay_master",
+		"fantasyorigins:chime",
+		"fantasyorigins:bardic_intuition"
+	],
+	"icon": {
+		"item": "minecraft:note_block"
+	},
+	"order": 1,
+	"impact": 3,
+	"description": "Bards are masters of music and song, and emit a musical aura."
+}

@@ -7,21 +7,21 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
 import org.endera.enderalib.utils.async.ioDispatcher
-import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
-import ru.turbovadim.packetsenders.OriginsRebornResourcePackInfo
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
+import ru.turbovadim.packetsenders.OriginsReforgedResourcePackInfo
 
 class PackApplier : Listener {
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
-        if (OriginsRebornEnhanced.mainConfig.resourcePack.enabled) {
+        if (OriginsReforged.mainConfig.resourcePack.enabled) {
             if (ShortcutUtils.isBedrockPlayer(event.getPlayer().uniqueId)) return
             sendPacks(event.getPlayer())
         }
     }
 
     companion object {
-        private val addonPacks: MutableMap<Class<out OriginsAddon>, OriginsRebornResourcePackInfo> =
-            HashMap<Class<out OriginsAddon>, OriginsRebornResourcePackInfo>()
+        private val addonPacks: MutableMap<Class<out OriginsAddon>, OriginsReforgedResourcePackInfo> =
+            HashMap<Class<out OriginsAddon>, OriginsReforgedResourcePackInfo>()
 
         fun sendPacks(player: Player) {
             CoroutineScope(ioDispatcher).launch {
@@ -33,7 +33,7 @@ class PackApplier : Listener {
             return "https://github.com/Endera-Org/Origins-Reborn-Enhanced/raw/refs/heads/master/OriginsPack.zip"
         }
 
-        fun addResourcePack(addon: OriginsAddon, info: OriginsRebornResourcePackInfo) {
+        fun addResourcePack(addon: OriginsAddon, info: OriginsReforgedResourcePackInfo) {
             addonPacks.put(addon.javaClass, info)
         }
     }

@@ -9,8 +9,9 @@ import org.bukkit.inventory.ItemStack
 import org.json.JSONObject
 import ru.turbovadim.OriginsAddon.KeyStateGetter
 import ru.turbovadim.OriginsAddon.SwapStateGetter
-import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
-import ru.turbovadim.OriginsRebornEnhanced.Companion.instance
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
+import ru.turbovadim.OriginsReforged.Companion.instance
+import ru.turbovadim.OriginsReforged.Companion.modulesConfig
 import ru.turbovadim.events.PlayerSwapOriginEvent.SwapReason
 import java.io.*
 import java.util.*
@@ -43,7 +44,7 @@ object AddonLoader {
     }
 
     fun getOrigins(layer: String): MutableList<Origin> {
-        val o: MutableList<Origin> = ArrayList<Origin>(origins)
+        val o: MutableList<Origin> = ArrayList<Origin>(origins.filterNotNull())
         o.removeIf { or -> or.layer != layer }
         return o
     }
@@ -60,7 +61,9 @@ object AddonLoader {
     fun register(addon: OriginsAddon) {
         if (registeredAddons.contains(addon)) {
             registeredAddons.remove(addon)
-            origins.removeIf { origin: Origin? -> origin!!.addon.getNamespace() == addon.getNamespace() }
+            origins.removeIf { origin ->
+                origin!!.addon.getNamespace() == addon.getNamespace()
+            }
         }
         registeredAddons.add(addon)
         loadOriginsFor(addon)
@@ -86,7 +89,7 @@ object AddonLoader {
             else if (v == OriginsAddon.State.ALLOW) allowed = true
         }
         return allowed || player.hasPermission(
-            OriginsRebornEnhanced.mainConfig.swapCommand.permission
+            OriginsReforged.mainConfig.swapCommand.permission
         )
     }
 
@@ -99,6 +102,7 @@ object AddonLoader {
     fun reloadAddons() {
         origins.clear()
         originNameMap.clear()
+        originFileNameMap.clear()
         originFiles.clear()
         for (addon in registeredAddons) {
             loadOriginsFor(addon)
@@ -131,14 +135,23 @@ object AddonLoader {
     private fun loadOriginsFor(addon: OriginsAddon) {
         val addonFiles: MutableList<File> = ArrayList()
         originFiles.put(addon.getNamespace(), addonFiles)
-        val originFolder = File(addon.dataFolder, "origins")
+
+        loadOriginsFromFolder(addon, "originsMain", addonFiles)
+
+        if (modulesConfig.fantasy) {
+            loadOriginsFromFolder(addon, "originsFantasy", addonFiles)
+        }
+    }
+
+    private fun loadOriginsFromFolder(addon: OriginsAddon, folderName: String, addonFiles: MutableList<File>) {
+        val originFolder = File(addon.dataFolder, folderName)
         if (!originFolder.exists()) {
             originFolder.mkdirs()
             try {
                 ZipInputStream(FileInputStream(addon.getFile())).use { inputStream ->
                     var entry = inputStream.getNextEntry()
                     while (entry != null) {
-                        if (entry.getName().startsWith("origins/") && entry.getName().endsWith(".json")) {
+                        if (entry.getName().startsWith("$folderName/") && entry.getName().endsWith(".json")) {
                             extractFile(
                                 inputStream,
                                 originFolder.getParentFile().absolutePath + "/" + entry.getName()
@@ -162,7 +175,7 @@ object AddonLoader {
     }
 
     private fun sortLayers() {
-        layers.sortBy { OriginsRebornEnhanced.mainConfig.originSelection.layerOrders[it] }
+        layers.sortBy { OriginsReforged.mainConfig.originSelection.layerOrders[it] }
     }
 
     fun registerLayer(layer: String, priority: Int, addon: OriginsAddon) {
@@ -206,7 +219,7 @@ object AddonLoader {
         sortLayers()
 
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
-            OriginsRebornPlaceholderExpansion(layer).register()
+            OriginsReforgedPlaceholderExpansion(layer).register()
         }
     }
 
@@ -251,7 +264,7 @@ object AddonLoader {
         val cost = if (json.has("cost")) json.getInt("cost") else null
 
         var extraLayerPriority = 0
-        OriginsRebornEnhanced.mainConfig.originSelection.layerOrders.forEach { _, value ->
+        OriginsReforged.mainConfig.originSelection.layerOrders.forEach { _, value ->
             extraLayerPriority = minOf(extraLayerPriority, value - 1)
         }
         registerLayer(layer, extraLayerPriority, addon)
@@ -307,7 +320,7 @@ object AddonLoader {
      * @return The default origin for the specified layer
      */
     fun getDefaultOrigin(layer: String?): Origin? {
-        val originName = OriginsRebornEnhanced.mainConfig.originSelection.defaultOrigin[layer]
+        val originName = OriginsReforged.mainConfig.originSelection.defaultOrigin[layer]
         return originFileNameMap[originName]
     }
 

@@ -23,8 +23,8 @@ import ru.turbovadim.OrbOfOrigin
 import ru.turbovadim.OriginSwapper.Companion.getOrigin
 import ru.turbovadim.OriginSwapper.Companion.openOriginSwapper
 import ru.turbovadim.OriginSwapper.Companion.setOrigin
-import ru.turbovadim.OriginsRebornEnhanced
-import ru.turbovadim.OriginsRebornEnhanced.Companion.getCooldowns
+import ru.turbovadim.OriginsReforged
+import ru.turbovadim.OriginsReforged.Companion.getCooldowns
 import ru.turbovadim.PackApplier.Companion.sendPacks
 import ru.turbovadim.config.ConfigRegistry
 import ru.turbovadim.cooldowns.Cooldowns.CooldownInfo
@@ -40,8 +40,8 @@ class OriginCommand : CommandExecutor, TabCompleter {
     companion object {
         @JvmField
         var key: NamespacedKey = getCooldowns().registerCooldown(
-            OriginsRebornEnhanced.instance,
-            NamespacedKey(OriginsRebornEnhanced.instance, "swap-command-cooldown"),
+            OriginsReforged.instance,
+            NamespacedKey(OriginsReforged.instance, "swap-command-cooldown"),
             CooldownInfo(0)
         )
 
@@ -111,13 +111,13 @@ class OriginCommand : CommandExecutor, TabCompleter {
             return true
         }
 
-        if (!OriginsRebornEnhanced.mainConfig.swapCommand.enabled) {
+        if (!OriginsReforged.mainConfig.swapCommand.enabled) {
             player.sendMessage(Component.text(MSG_COMMAND_DISABLED).color(NamedTextColor.RED))
             return true
         }
 
         if (!allowOriginSwapCommand(player)) {
-            player.sendMessage(Component.text(OriginsRebornEnhanced.mainConfig.messages.noSwapCommandPermissions))
+            player.sendMessage(Component.text(OriginsReforged.mainConfig.messages.noSwapCommandPermissions))
             return true
         }
 
@@ -127,7 +127,7 @@ class OriginCommand : CommandExecutor, TabCompleter {
             PlayerSwapOriginEvent.SwapReason.COMMAND,
             0,
             0,
-            OriginsRebornEnhanced.instance.isVaultEnabled,
+            OriginsReforged.instance.isVaultEnabled,
             layer
         )
         return true
@@ -137,7 +137,7 @@ class OriginCommand : CommandExecutor, TabCompleter {
         if (!hasAdminPermission(sender)) return true
 
         reloadAddons()
-        OriginsRebornEnhanced.multiConfigurationManager.loadAllConfigs().forEach { (clazz, config) ->
+        OriginsReforged.multiConfigurationManager.loadAllConfigs().forEach { (clazz, config) ->
             ConfigRegistry.register(clazz, config)
         }
         return true
@@ -149,7 +149,7 @@ class OriginCommand : CommandExecutor, TabCompleter {
             return true
         }
 
-        if (!player.hasPermission("originsreborn.exchange")) {
+        if (!player.hasPermission("originsreforged.exchange")) {
             player.sendMessage(Component.text(MSG_NO_PERMISSION).color(NamedTextColor.RED))
             return true
         }
@@ -275,7 +275,7 @@ class OriginCommand : CommandExecutor, TabCompleter {
     private fun handleOrbCommand(sender: CommandSender, args: Array<String>): Boolean {
         val player: Player = when {
             sender is Player -> {
-                if (!sender.hasPermission("originsreborn.admin")) {
+                if (!sender.hasPermission("originsreforged.admin")) {
                     sender.sendMessage(Component.text(MSG_NO_PERMISSION).color(NamedTextColor.RED))
                     return true
                 }
@@ -334,7 +334,7 @@ class OriginCommand : CommandExecutor, TabCompleter {
             )
             return true
         }
-        val output = File(OriginsRebornEnhanced.instance.dataFolder, "export/${args[2]}.orbarch")
+        val output = File(OriginsReforged.instance.dataFolder, "export/${args[2]}.orbarch")
         val files = AddonLoader.originFiles[args[1]]
         if (files == null) {
             sender.sendMessage(
@@ -348,7 +348,7 @@ class OriginCommand : CommandExecutor, TabCompleter {
         try {
             CompressionUtils.compressFiles(nonNullFiles, output)
             sender.sendMessage(
-                Component.text("Exported origins to '~/plugins/Origins-Reborn/export/${args[2]}.orbarch'")
+                Component.text("Exported origins to '~/plugins/Origins-Reforged/export/${args[2]}.orbarch'")
                     .color(NamedTextColor.AQUA)
             )
         } catch (e: IOException) {
@@ -364,8 +364,8 @@ class OriginCommand : CommandExecutor, TabCompleter {
             )
             return true
         }
-        val input = File(OriginsRebornEnhanced.instance.dataFolder, "import/" + args[1])
-        val output = File(OriginsRebornEnhanced.instance.dataFolder, "origins")
+        val input = File(OriginsReforged.instance.dataFolder, "import/" + args[1])
+        val output = File(OriginsReforged.instance.dataFolder, "originsMain")
         if (!input.exists() || !output.exists()) {
             sender.sendMessage(
                 Component.text("Invalid command. Usage: /origin import <path>").color(NamedTextColor.RED)
@@ -410,11 +410,11 @@ class OriginCommand : CommandExecutor, TabCompleter {
             completions.add(CMD_SWAP)
         }
 
-        if (sender.hasPermission("originsreborn.exchange")) {
+        if (sender.hasPermission("originsreforged.exchange")) {
             completions.add(CMD_EXCHANGE)
         }
 
-        if (sender.hasPermission("originsreborn.admin")) {
+        if (sender.hasPermission("originsreforged.admin")) {
             completions.addAll(listOf(CMD_RELOAD, CMD_SET, CMD_ORB, CMD_EXPORT, CMD_IMPORT, CMD_PACK))
         }
 
@@ -444,13 +444,13 @@ class OriginCommand : CommandExecutor, TabCompleter {
     }
 
     private fun getImportFileNames(): List<String?> {
-        val input = File(OriginsRebornEnhanced.instance.dataFolder, "import")
+        val input = File(OriginsReforged.instance.dataFolder, "import")
         val files = input.listFiles() ?: return emptyList()
         return files.map { it.name }
     }
 
     private fun hasAdminPermission(sender: CommandSender): Boolean {
-        if (sender is Player && !sender.hasPermission("originsreborn.admin")) {
+        if (sender is Player && !sender.hasPermission("originsreforged.admin")) {
             sender.sendMessage(Component.text(MSG_NO_PERMISSION).color(NamedTextColor.RED))
             return false
         }

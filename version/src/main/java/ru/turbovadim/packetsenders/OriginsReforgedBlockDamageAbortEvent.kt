@@ -7,7 +7,7 @@ import org.bukkit.event.block.BlockEvent
 import org.bukkit.inventory.ItemStack
 
 @Suppress("unused")
-class OriginsRebornBlockDamageAbortEvent(
+class OriginsReforgedBlockDamageAbortEvent(
     val player: Player,
     block: Block,
     val itemInHand: ItemStack

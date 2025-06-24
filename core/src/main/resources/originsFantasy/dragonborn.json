@@ -1,0 +1,15 @@
+{
+	"powers": [
+		"fantasyorigins:breath_storer",
+		"fantasyorigins:end_boost",
+		"fantasyorigins:end_crystal_healing",
+		"fantasyorigins:dragon_fireball",
+		"fantasyorigins:strong_skin"
+	],
+	"icon": {
+		"item": "minecraft:dragon_breath"
+	},
+	"order": 1,
+	"impact": 1,
+	"description": "Children of ancient, long forgotten dragons, the Dragonborn have the increased power of their ancestors when in their homeland of the End."
+}

@@ -12,7 +12,7 @@ import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.OriginsRebornEnhanced.Companion.NMSInvoker
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.SavedPotionEffect
 import ru.turbovadim.ShortcutUtils.infiniteDuration
 import ru.turbovadim.ShortcutUtils.isInfinite
@@ -29,7 +29,7 @@ class SwimSpeed : Listener, VisibleAbility {
         val dolphinGrace = PotionEffectType.DOLPHINS_GRACE
 
         for (player in Bukkit.getOnlinePlayers()) {
-            runForAbility(player, AbilityRunner { p ->
+            runForAbility(player) { p ->
                 if (NMSInvoker.isUnderWater(p)) {
                     val effect = p.getPotionEffect(dolphinGrace)
                     val ambient = effect?.isAmbient == true
@@ -72,7 +72,7 @@ class SwimSpeed : Listener, VisibleAbility {
                         }
                     }
                 }
-            })
+            }
         }
     }
 
