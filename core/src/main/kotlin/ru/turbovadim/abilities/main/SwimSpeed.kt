@@ -16,7 +16,6 @@ import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.SavedPotionEffect
 import ru.turbovadim.ShortcutUtils.infiniteDuration
 import ru.turbovadim.ShortcutUtils.isInfinite
-import ru.turbovadim.abilities.types.Ability.AbilityRunner
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class SwimSpeed : Listener, VisibleAbility {

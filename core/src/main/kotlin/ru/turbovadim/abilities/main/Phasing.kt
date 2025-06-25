@@ -20,7 +20,6 @@ import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.OriginsReforged.Companion.instance
-import ru.turbovadim.abilities.types.Ability.AbilityRunner
 import ru.turbovadim.abilities.types.BreakSpeedModifierAbility
 import ru.turbovadim.abilities.types.BreakSpeedModifierAbility.BlockMiningContext
 import ru.turbovadim.abilities.types.DependantAbility

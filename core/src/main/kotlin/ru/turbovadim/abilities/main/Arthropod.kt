@@ -8,7 +8,6 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.potion.PotionEffect
 import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.abilities.types.Ability
-import ru.turbovadim.abilities.types.Ability.AbilityRunner
 import java.util.*
 
 class Arthropod : Ability, Listener {

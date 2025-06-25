@@ -9,7 +9,6 @@ import org.bukkit.event.entity.EntityDeathEvent
 import org.bukkit.inventory.ItemStack
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
-import ru.turbovadim.abilities.types.Ability.AbilityRunner
 import ru.turbovadim.abilities.types.VisibleAbility
 import java.util.*
 

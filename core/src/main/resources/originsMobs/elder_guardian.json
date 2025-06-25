@@ -1,0 +1,23 @@
+{
+  "powers": [
+    "moborigins:elder_spikes",
+    "moborigins:elder_magic",
+    "moborigins:mining_fatigue_immune",
+    "moborigins:guardian_ally",
+    "moborigins:prismarine_skin",
+    "moborigins:surface_weakness",
+    "origins:water_breathing",
+    "origins:water_vision",
+    "origins:aqua_affinity",
+    "origins:swim_speed",
+    "origins:like_water",
+    "origins:aquatic",
+    "origins:conduit_power_on_land",
+    "origins:air_from_potions"
+  ],
+  "unchoosable": true,
+  "icon": "minecraft:prismarine_crystals",
+  "order": 6,
+  "impact": 3,
+  "description": "Elder\u0020Guardians\u0020are\u0020the\u0020leaders\u0020of\u0020monuments,\u0020and\u0020wield\u0020more\u0020power\u0020than\u0020normal\u0020guardians."
+}

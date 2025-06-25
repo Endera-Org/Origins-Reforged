@@ -1,0 +1,13 @@
+{
+  "powers": [
+    "moborigins:bouncy",
+    "moborigins:split",
+    "moborigins:small_weak",
+    "moborigins:small_weak_knockback",
+    "origins:fall_immunity"
+  ],
+  "icon": "minecraft:slime_ball",
+  "impact": 1,
+  "order": 3,
+  "description": "Green\u0020blobs\u0020of\u0020Jello,\u0020that\u0020bounce\u0020all\u0020around!"
+}

@@ -1,0 +1,14 @@
+{
+  "powers": [
+    "moborigins:stinger",
+    "moborigins:flower_power",
+    "moborigins:queen_bee",
+    "moborigins:small_bug",
+    "moborigins:bee_wings",
+    "origins:vegetarian"
+  ],
+  "icon": "minecraft:honeycomb",
+  "order": 4,
+  "impact": 2,
+  "description": "A\u0020flying\u0020insect\u0020that\u0020pollinates\u0020the\u0020world,\u0020spreading\u0020flowers\u0020and\u0020honey\u0020all\u0020around."
+}

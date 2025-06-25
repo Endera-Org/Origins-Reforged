@@ -96,11 +96,11 @@ object AbilityRegister {
         return false
     }
 
-    fun isInvisible(player: Player): Boolean {
+    suspend fun isInvisible(player: Player): Boolean {
         if (player.hasPotionEffect(PotionEffectType.INVISIBILITY)) return true
         for (ability in abilityMap.values) {
             if (ability is VisibilityChangingAbility) {
-                if (ability.hasAbility(player) && ability.isInvisible(player)) return true
+                if (ability.hasAbilityAsync(player) && ability.isInvisible(player)) return true
             }
         }
         return false

@@ -1,0 +1,14 @@
+{
+  "powers": [
+    "moborigins:timid_creature",
+    "moborigins:better_berries",
+    "moborigins:careful_gatherer",
+    "moborigins:item_collector",
+    "moborigins:sly",
+    "moborigins:small_fox"
+  ],
+  "icon": "minecraft:sweet_berries",
+  "order": 2,
+  "impact": 1,
+  "description": "Sly\u0020and\u0020cunning,\u0020foxes\u0020are\u0020timid\u0020animals\u0020who\u0020enjoy\u0020eating\u0020berries,\u0020and\u0020stealing\u0020items."
+}

@@ -13,11 +13,14 @@ import net.minecraft.network.syncher.EntityDataSerializers
 import net.minecraft.network.syncher.SynchedEntityData
 import net.minecraft.server.level.ServerPlayer
 import net.minecraft.world.effect.MobEffectInstance
+import net.minecraft.world.entity.MoverType
 import net.minecraft.world.entity.PathfinderMob
 import net.minecraft.world.entity.ai.goal.AvoidEntityGoal
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal
 import net.minecraft.world.entity.projectile.Arrow
 import net.minecraft.world.item.alchemy.PotionUtils
 import net.minecraft.world.level.GameType
+import net.minecraft.world.phys.Vec3
 import org.bukkit.*
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeInstance
@@ -35,13 +38,80 @@ import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.potion.PotionEffectType
+import org.bukkit.util.Vector
 import org.spigotmc.event.entity.EntityDismountEvent
 import org.spigotmc.event.entity.EntityMountEvent
 import java.util.*
-import java.util.function.Function
 import java.util.function.Predicate
 
 class NMSInvokerV1_20 : NMSInvoker() {
+
+    override fun dealThornsDamage(target: Entity, amount: Int, attacker: Entity) {
+        val entity = (target as CraftEntity).handle
+        entity.hurt(entity.damageSources().thorns((attacker as CraftEntity).handle), amount.toFloat())
+    }
+
+    override fun getSmiteEnchantment(): Enchantment {
+        return Enchantment.DAMAGE_UNDEAD
+    }
+
+    override fun getElderGuardianParticle(): Particle {
+        return Particle.MOB_APPEARANCE
+    }
+
+    override fun getWitchParticle(): Particle {
+        return Particle.SPELL_WITCH
+    }
+
+    override fun damageItem(item: ItemStack, amount: Int, player: Player) {
+        item.damage(amount, player)
+    }
+
+    override fun startAutoSpinAttack(
+        player: Player,
+        duration: Int,
+        riptideAttackDamage: Float,
+        item: ItemStack
+    ) {
+        (player as CraftPlayer).handle.startAutoSpinAttack(duration)
+    }
+
+    override fun tridentMove(player: Player) {
+        (player as CraftPlayer).handle.move(MoverType.SELF, Vec3(0.0, 1.1999999284744263, 0.0))
+    }
+
+    override fun getIronGolemAttackGoal(golem: LivingEntity, hasAbility: Predicate<Player>): Goal<Mob> {
+        return NearestAttackableTargetGoal(
+            (golem as CraftMob).handle,
+            net.minecraft.world.entity.player.Player::class.java,
+            10,
+            true,
+            false,
+            Predicate { livingEntity ->
+                val player = livingEntity.bukkitEntity as? Player
+                if (player != null) {
+                    return@Predicate hasAbility.test(player)
+                } else return@Predicate false
+            }).asPaperVanillaGoal<Mob>()
+    }
+
+    private val lastVec3Map: MutableMap<Player?, Vec3?> = HashMap<Player?, Vec3?>()
+
+    override fun bounce(player: Player) {
+        val p = (player as CraftPlayer).handle
+        if (player.isOnGround) {
+            if (player.fallDistance <= 0) return
+            val dm = lastVec3Map[player]
+            if (dm != null) {
+                player.velocity = player.velocity.add(Vector(0.0, -dm.y, 0.0))
+            }
+        }
+        lastVec3Map.put(player, p.deltaMovement)
+    }
+
+
+
+
 
     override fun getGenericScaleAttribute(): Attribute? {
         return null

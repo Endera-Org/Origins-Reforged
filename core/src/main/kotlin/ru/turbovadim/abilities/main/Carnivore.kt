@@ -10,7 +10,6 @@ import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
-import ru.turbovadim.abilities.types.Ability.AbilityRunner
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class Carnivore : VisibleAbility, Listener {

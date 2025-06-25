@@ -1,0 +1,17 @@
+{
+  "powers": [
+    "moborigins:wolf_body",
+    "moborigins:full_moon",
+    "moborigins:full_moon_health",
+    "moborigins:full_moon_attack",
+    "moborigins:alpha_wolf",
+    "moborigins:wolf_howl",
+    "moborigins:wolf_pack",
+    "moborigins:wolf_pack_attack",
+    "origins:carnivore"
+  ],
+  "icon": "minecraft:bone",
+  "order": 2,
+  "impact": 1,
+  "description": "Strong\u0020and\u0020Fast,\u0020Wolves\u0020are\u0020creatures\u0020that\u0020have\u0020strength\u0020in\u0020numbers."
+}

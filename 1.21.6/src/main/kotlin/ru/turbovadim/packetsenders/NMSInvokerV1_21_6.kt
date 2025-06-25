@@ -12,19 +12,21 @@ import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
 import net.minecraft.network.syncher.EntityDataAccessor
 import net.minecraft.network.syncher.EntityDataSerializers
 import net.minecraft.network.syncher.SynchedEntityData
+import net.minecraft.server.level.ServerLevel
+import net.minecraft.world.entity.MoverType
 import net.minecraft.world.entity.PathfinderMob
 import net.minecraft.world.entity.ai.goal.AvoidEntityGoal
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal
+import net.minecraft.world.entity.ai.targeting.TargetingConditions
 import net.minecraft.world.level.GameType
+import net.minecraft.world.phys.Vec3
 import org.bukkit.*
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeInstance
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.craftbukkit.CraftWorld
 import org.bukkit.craftbukkit.block.CraftBlockState
-import org.bukkit.craftbukkit.entity.AbstractProjectile
-import org.bukkit.craftbukkit.entity.CraftAllay
-import org.bukkit.craftbukkit.entity.CraftEntity
-import org.bukkit.craftbukkit.entity.CraftPlayer
+import org.bukkit.craftbukkit.entity.*
 import org.bukkit.craftbukkit.inventory.CraftItemStack
 import org.bukkit.damage.DamageSource
 import org.bukkit.damage.DamageType
@@ -40,14 +42,83 @@ import org.bukkit.inventory.EquipmentSlotGroup
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.potion.PotionEffectType
+import org.bukkit.util.Vector
 import java.net.URI
 import java.util.*
-import java.util.List
 import java.util.concurrent.ExecutionException
 import java.util.function.Predicate
 
 @Suppress("UnstableApiUsage")
 class NMSInvokerV1_21_6 : NMSInvoker() {
+
+    override fun dealThornsDamage(target: Entity, amount: Int, attacker: Entity) {
+        val entity = (target as CraftEntity).handle
+        entity.hurtServer(
+            entity.level() as ServerLevel,
+            entity.damageSources().thorns((attacker as CraftEntity).handle),
+            amount.toFloat()
+        )
+    }
+
+    override fun getSmiteEnchantment(): Enchantment {
+        return Enchantment.SMITE
+    }
+
+    override fun getElderGuardianParticle(): Particle {
+        return Particle.ELDER_GUARDIAN
+    }
+
+    override fun getWitchParticle(): Particle {
+        return Particle.WITCH
+    }
+
+    override fun damageItem(item: ItemStack, amount: Int, player: Player) {
+        item.damage(amount, player)
+    }
+
+    override fun startAutoSpinAttack(
+        player: Player,
+        duration: Int,
+        riptideAttackDamage: Float,
+        item: ItemStack
+    ) {
+        (player as CraftPlayer).handle
+            .startAutoSpinAttack(duration, riptideAttackDamage, CraftItemStack.asNMSCopy(item))
+    }
+
+    override fun tridentMove(player: Player) {
+        (player as CraftPlayer).handle.move(MoverType.SELF, Vec3(0.0, 1.1999999284744263, 0.0))
+    }
+
+    override fun getIronGolemAttackGoal(golem: LivingEntity, hasAbility: Predicate<Player>): Goal<Mob> {
+        return NearestAttackableTargetGoal(
+            (golem as CraftMob).handle,
+            net.minecraft.world.entity.player.Player::class.java,
+            10,
+            true,
+            false,
+            TargetingConditions.Selector { livingEntity: net.minecraft.world.entity.LivingEntity, serverLevel ->
+                val player = livingEntity.bukkitEntity as? Player
+                if (player != null) {
+                    return@Selector hasAbility.test(player)
+                } else return@Selector false
+            }).asPaperGoal()
+    }
+
+    private val lastVec3Map: MutableMap<Player?, Vec3?> = HashMap<Player?, Vec3?>()
+
+    override fun bounce(player: Player) {
+        val p = (player as CraftPlayer).handle
+        if (player.isOnGround) {
+            if (player.fallDistance <= 0) return
+            val dm = lastVec3Map[player]
+            if (dm != null) {
+                player.velocity = player.velocity.add(Vector(0.0, -dm.y, 0.0))
+            }
+        }
+        lastVec3Map.put(player, p.deltaMovement)
+    }
+
 
     override fun getGenericScaleAttribute(): Attribute? {
         return Attribute.SCALE

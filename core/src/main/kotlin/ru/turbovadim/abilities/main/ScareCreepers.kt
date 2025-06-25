@@ -20,7 +20,6 @@ import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.OriginsReforged.Companion.instance
 import ru.turbovadim.abilities.types.Ability.AbilityRunner
 import ru.turbovadim.abilities.types.VisibleAbility
-import java.util.function.Predicate
 
 class ScareCreepers : VisibleAbility, Listener {
 

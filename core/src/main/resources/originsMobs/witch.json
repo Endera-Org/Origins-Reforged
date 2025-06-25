@@ -1,0 +1,13 @@
+{
+  "powers": [
+    "moborigins:better_potions",
+    "moborigins:potion_action",
+    "moborigins:witch_particles",
+    "moborigins:pillager_aligned",
+    "moborigins:illager"
+  ],
+  "icon": "minecraft:brewing_stand",
+  "order": 4,
+  "impact": 2,
+  "description": "Cruel\u0020and\u0020cackling,\u0020Witches\u0020are\u0020masters\u0020of\u0020brewing,\u0020and\u0020are\u0020great\u0020with\u0020magic."
+}

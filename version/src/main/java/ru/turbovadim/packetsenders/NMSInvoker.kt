@@ -4,10 +4,7 @@ import com.destroystokyo.paper.entity.ai.Goal
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.util.TriState
-import org.bukkit.GameMode
-import org.bukkit.Location
-import org.bukkit.Material
-import org.bukkit.NamespacedKey
+import org.bukkit.*
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeInstance
 import org.bukkit.attribute.AttributeModifier
@@ -22,6 +19,24 @@ import org.bukkit.potion.PotionEffectType
 import java.util.function.Predicate
 
 abstract class NMSInvoker : Listener {
+
+    abstract fun dealThornsDamage(target: Entity, amount: Int, attacker: Entity)
+
+    abstract fun getSmiteEnchantment(): Enchantment
+
+    abstract fun getElderGuardianParticle(): Particle
+
+    abstract fun getWitchParticle(): Particle
+
+    abstract fun damageItem(item: ItemStack, amount: Int, player: Player)
+
+    abstract fun startAutoSpinAttack(player: Player, duration: Int, riptideAttackDamage: Float, item: ItemStack)
+
+    abstract fun tridentMove(player: Player)
+
+    abstract fun getIronGolemAttackGoal(golem: LivingEntity, hasAbility: Predicate<Player>): Goal<Mob>
+
+    abstract fun bounce(player: Player)
 
     abstract fun getGenericScaleAttribute(): Attribute?
 

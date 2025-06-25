@@ -13,7 +13,8 @@ import ru.turbovadim.abilities.AbilityRegister
 import ru.turbovadim.abilities.custom.ToggleableAbilities
 import ru.turbovadim.abilities.fantasy.*
 import ru.turbovadim.abilities.main.*
-import ru.turbovadim.abilities.main.NaturalArmor
+import ru.turbovadim.abilities.main.WaterBreathing
+import ru.turbovadim.abilities.mobs.*
 import ru.turbovadim.abilities.types.Ability
 import ru.turbovadim.abilities.types.BreakSpeedModifierAbility.BreakSpeedModifierAbilityListener
 import ru.turbovadim.abilities.types.ParticleAbility
@@ -219,6 +220,9 @@ class OriginsReforged : OriginsAddon() {
         if (modulesConfig.fantasy) {
             abilities.addAll(getFantasyModuleAbilities())
         }
+        if (modulesConfig.mobs) {
+            abilities.addAll(getMobsModuleAbilities())
+        }
         return abilities.toList()
     }
 
@@ -341,5 +345,64 @@ class OriginsReforged : OriginsAddon() {
             abilities.add(SmallBody())
         }
         return abilities
+    }
+
+    fun getMobsModuleAbilities(): List<Ability> {
+        return listOf(
+            SmallBug(),
+            SmallFox(),
+            LowerTotemChance(),
+            SnowTrail(),
+            StrongerSnowballs(),
+            BeeWings(),
+            Stinger(),
+            BecomesElderGuardian(),
+            WarpedFungusEater(),
+            WaterCombatant(),
+            QueenBee(),
+            Undead(),
+            Sly(),
+            TimidCreature(),
+            PillagerAligned(),
+            Illager(),
+            WitchParticles(),
+            MiningFatigueImmune(),
+            SmallWeak(),
+            SmallWeakKnockback(),
+            RideableCreature(),
+            GuardianAlly(),
+            SurfaceSlowness(),
+            SurfaceWeakness(),
+            GuardianSpikes(),
+            PrismarineSkin(),
+            CarefulGatherer(),
+            FrigidStrength(),
+            BetterBerries(),
+            WolfBody(),
+            AlphaWolf(),
+            ItemCollector(),
+            BetterPotions(),
+            ElderMagic(),
+            ElderSpikes(),
+            WaterVision(),
+            SummonFangs(),
+            FullMoon(),
+            FullMoonHealth(),
+            FullMoonAttack(),
+            WolfPack(),
+            WolfPackAttack(),
+            ZombieHunger(),
+            Temperature.INSTANCE,
+            Overheat(),
+            Melting(),
+            MeltingSpeed(),
+            WolfHowl(),
+            TridentExpert(),
+            FlowerPower(),
+            Bouncy(),
+            LavaWalk(),
+            Split(),
+            PotionAction()
+        )
     }
 }

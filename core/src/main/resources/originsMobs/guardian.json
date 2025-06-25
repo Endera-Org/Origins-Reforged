@@ -1,0 +1,21 @@
+{
+  "powers": [
+    "moborigins:guardian_spikes",
+    "moborigins:guardian_ally",
+    "moborigins:prismarine_skin",
+    "moborigins:surface_weakness",
+    "moborigins:becomes_elder_guardian",
+    "origins:water_breathing",
+    "origins:water_vision",
+    "origins:aqua_affinity",
+    "origins:swim_speed",
+    "origins:like_water",
+    "origins:aquatic",
+    "origins:conduit_power_on_land",
+    "origins:air_from_potions"
+  ],
+  "icon": "minecraft:prismarine_shard",
+  "order": 6,
+  "impact": 3,
+  "description": "Guardians\u0020are\u0020known\u0020for\u0020protecting\u0020their\u0020Monuments\u0020and\u0020the\u0020treasured\u0020sponges\u0020within.\u0020Some\u0020are\u0020known\u0020for\u0020evolving\u0020into\u0020Elder\u0020Guardians."
+}

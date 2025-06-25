@@ -55,7 +55,7 @@ tasks {
         archiveFileName.set("${rootProject.name}-${rootProject.version}.jar")
         from(sourceSets.main.get().output)
         dependencies {
-            exclude(dependency("com.github.Turbovadim:EnderaLib"))
+            exclude(dependency("com.github.Endera-Org:EnderaLib"))
             exclude {
                 it.moduleGroup == "org.jetbrains.kotlin" || it.moduleGroup == "org.jetbrains.kotlinx"
             }
