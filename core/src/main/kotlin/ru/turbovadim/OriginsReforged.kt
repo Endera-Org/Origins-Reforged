@@ -15,6 +15,50 @@ import ru.turbovadim.abilities.fantasy.*
 import ru.turbovadim.abilities.main.*
 import ru.turbovadim.abilities.main.WaterBreathing
 import ru.turbovadim.abilities.mobs.*
+import ru.turbovadim.abilities.monsters.ApplyHungerEffect
+import ru.turbovadim.abilities.monsters.ApplyWitherEffect
+import ru.turbovadim.abilities.monsters.BetterAim
+import ru.turbovadim.abilities.monsters.BetterGoldArmour
+import ru.turbovadim.abilities.monsters.BetterGoldWeapons
+import ru.turbovadim.abilities.monsters.Blindness
+import ru.turbovadim.abilities.monsters.BurnInDay
+import ru.turbovadim.abilities.monsters.ColdSlowness
+import ru.turbovadim.abilities.monsters.CreeperAlly
+import ru.turbovadim.abilities.monsters.DoubleDamage
+import ru.turbovadim.abilities.monsters.DoubleFireDamage
+import ru.turbovadim.abilities.monsters.DoubleHealth
+import ru.turbovadim.abilities.monsters.Explosive
+import ru.turbovadim.abilities.monsters.FearCats
+import ru.turbovadim.abilities.monsters.FreezeImmune
+import ru.turbovadim.abilities.monsters.GuardianAllyMosters
+import ru.turbovadim.abilities.monsters.HalfMaxSaturation
+import ru.turbovadim.abilities.monsters.HeatSlowness
+import ru.turbovadim.abilities.monsters.InfiniteArrows
+import ru.turbovadim.abilities.monsters.LandNightVision
+import ru.turbovadim.abilities.monsters.LandSlowness
+import ru.turbovadim.abilities.monsters.PiglinAlly
+import ru.turbovadim.abilities.monsters.ScareVillagers
+import ru.turbovadim.abilities.monsters.SenseMovement
+import ru.turbovadim.abilities.monsters.SkeletonBody
+import ru.turbovadim.abilities.monsters.Slowness
+import ru.turbovadim.abilities.monsters.SlownessArrows
+import ru.turbovadim.abilities.monsters.SonicBoom
+import ru.turbovadim.abilities.monsters.SuperBartering
+import ru.turbovadim.abilities.monsters.SwimSpeedMonsters
+import ru.turbovadim.abilities.monsters.UndeadAllyMonsters
+import ru.turbovadim.abilities.monsters.UndeadMonsters
+import ru.turbovadim.abilities.monsters.WaterBreathingMonsters
+import ru.turbovadim.abilities.monsters.WitherImmunity
+import ru.turbovadim.abilities.monsters.ZombieTouch
+import ru.turbovadim.abilities.monsters.ZombifiedPiglinAllies
+import ru.turbovadim.abilities.monsters.metamorphosis.DrownedTransformIntoZombie
+import ru.turbovadim.abilities.monsters.metamorphosis.HuskTransformIntoZombie
+import ru.turbovadim.abilities.monsters.metamorphosis.MetamorphosisTemperature
+import ru.turbovadim.abilities.monsters.metamorphosis.TransformIntoHuskAndDrowned
+import ru.turbovadim.abilities.monsters.metamorphosis.TransformIntoPiglin
+import ru.turbovadim.abilities.monsters.metamorphosis.TransformIntoSkeleton
+import ru.turbovadim.abilities.monsters.metamorphosis.TransformIntoStray
+import ru.turbovadim.abilities.monsters.metamorphosis.TransformIntoZombifiedPiglin
 import ru.turbovadim.abilities.types.Ability
 import ru.turbovadim.abilities.types.BreakSpeedModifierAbility.BreakSpeedModifierAbilityListener
 import ru.turbovadim.abilities.types.ParticleAbility
@@ -223,6 +267,9 @@ class OriginsReforged : OriginsAddon() {
         if (modulesConfig.mobs) {
             abilities.addAll(getMobsModuleAbilities())
         }
+        if (modulesConfig.monsters) {
+            abilities.addAll(getMonstersModuleAbilities())
+        }
         return abilities.toList()
     }
 
@@ -301,7 +348,7 @@ class OriginsReforged : OriginsAddon() {
             BowBurst(),
             BreathStorer(),
             Chime(),
-            DoubleHealth(),
+            DoubleHealthFantasy(),
             DragonFireball(),
             Elegy(),
             EndCrystalHealing(),
@@ -403,6 +450,58 @@ class OriginsReforged : OriginsAddon() {
             LavaWalk(),
             Split(),
             PotionAction()
+        )
+    }
+
+    fun getMonstersModuleAbilities(): List<Ability> {
+        return listOf(
+            CreeperAlly(),
+            Explosive(),
+            FearCats(),
+            DrownedTransformIntoZombie(),
+            HuskTransformIntoZombie(),
+            TransformIntoHuskAndDrowned(),
+            TransformIntoStray(),
+            TransformIntoSkeleton(),
+            MetamorphosisTemperature.INSTANCE,
+            Blindness(),
+            SenseMovement(),
+            DoubleHealth(),
+            DoubleDamage(),
+            SonicBoom(),
+            LandNightVision(),
+            DoubleFireDamage(),
+            BurnInDay(),
+            UndeadMonsters(),
+            TridentExpert(),
+            ZombieHunger(),
+            WitherImmunity(),
+            HalfMaxSaturation(),
+            GuardianAllyMosters(),
+            WaterCombatant(),
+            UndeadAllyMonsters(),
+            ApplyWitherEffect(),
+            InfiniteArrows(),
+            SlownessArrows(),
+            ApplyHungerEffect(),
+            SkeletonBody(),
+            Slowness(),
+            LandSlowness(),
+            WaterBreathingMonsters(),
+            SwimSpeedMonsters(),
+            FreezeImmune(),
+            HeatSlowness(),
+            BetterAim(),
+            ColdSlowness(),
+            ZombieTouch(),
+            ScareVillagers(),
+            TransformIntoZombifiedPiglin(),
+            TransformIntoPiglin(),
+            BetterGoldArmour(),
+            BetterGoldWeapons(),
+            ZombifiedPiglinAllies(),
+            SuperBartering(),
+            PiglinAlly()
         )
     }
 }

@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     id("java")
     kotlin("jvm") version "2.1.20"
@@ -83,3 +85,4 @@ kotlin {
         freeCompilerArgs.add("-Xjvm-default=all") // or "-Xjvm-default=all-compatibility"
     }
 }
+val compileKotlin: KotlinCompile by tasks

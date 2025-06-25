@@ -1,0 +1,17 @@
+{
+	"powers": [
+		"monsterorigins:sense_movement",
+		"monsterorigins:blindness",
+		"monsterorigins:double_damage",
+		"monsterorigins:sonic_boom",
+		"monsterorigins:double_health",
+		"origins:natural_armor",
+		"origins:no_shield"
+	],
+	"icon": {
+		"item": "minecraft:sculk"
+	},
+	"order": 1,
+	"impact": 3,
+	"description": "Guardian\u0020of\u0020the\u0020Ancient\u0020Cities,\u0020the\u0020Warden\u0020relies\u0020on\u0020its\u0020senses\u0020of\u0020smell\u0020and\u0020hearing\u0020to\u0020find\u0020its\u0020target."
+}

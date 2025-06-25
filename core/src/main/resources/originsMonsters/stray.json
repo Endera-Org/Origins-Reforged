@@ -1,0 +1,23 @@
+{
+	"powers": [
+		"monsterorigins:infinite_arrows",
+		"monsterorigins:freeze_immune",
+		"monsterorigins:undead_ally",
+		"monsterorigins:better_aim",
+		"monsterorigins:slowness_arrows",
+		"monsterorigins:undead",
+		"monsterorigins:burn_in_day",
+		"monsterorigins:skeleton_body",
+		"monsterorigins:heat_slowness",
+		"monsterorigins:double_fire_damage",
+		"monsterorigins:metamorphosis_temperature",
+		"monsterorigins:transform_into_skeleton"
+	],
+	"icon": {
+		"item": "minecraft:ice"
+	},
+	"unchoosable": true,
+	"order": 1,
+	"impact": 1,
+	"description": "The\u0020Strays\u0020are\u0020frozen\u0020Skeletons\u0020that\u0020have\u0020found\u0020ways\u0020to\u0020harness\u0020the\u0020cold\u0020in\u0020order\u0020to\u0020slow\u0020down\u0020their\u0020enemies."
+}

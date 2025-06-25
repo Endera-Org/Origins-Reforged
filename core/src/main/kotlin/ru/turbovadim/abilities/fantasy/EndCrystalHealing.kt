@@ -38,6 +38,7 @@ class EndCrystalHealing : VisibleAbility, Listener {
 
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent) {
+
         if (event.tickNumber % 5 != 0) return
         CoroutineScope(ioDispatcher).launch {
             Bukkit.getOnlinePlayers().toList().forEach { player ->

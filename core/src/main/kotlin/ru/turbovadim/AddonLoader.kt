@@ -144,6 +144,9 @@ object AddonLoader {
         if (modulesConfig.mobs) {
             loadOriginsFromFolder(addon, "originsMobs", addonFiles)
         }
+        if (modulesConfig.monsters) {
+            loadOriginsFromFolder(addon, "originsMonsters", addonFiles)
+        }
     }
 
     private fun loadOriginsFromFolder(addon: OriginsAddon, folderName: String, addonFiles: MutableList<File>) {

@@ -71,7 +71,7 @@ class Claustrophobia : VisibleAbility, Listener {
         return Key.key("origins:claustrophobia")
     }
 
-    override val description: List<OriginSwapper.LineData.LineComponent> =
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> =
         makeLineFor(
             "Being somewhere with a low ceiling for too long will weaken you and make you slower.",
             OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION

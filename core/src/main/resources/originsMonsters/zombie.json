@@ -1,0 +1,21 @@
+{
+	"powers": [
+		"monsterorigins:land_night_vision",
+		"monsterorigins:undead_ally",
+		"monsterorigins:undead",
+		"monsterorigins:burn_in_day",
+		"monsterorigins:slowness",
+		"monsterorigins:zombie_hunger",
+		"monsterorigins:zombie_touch",
+		"monsterorigins:scare_villagers",
+		"monsterorigins:transform_into_husk_and_drowned",
+		"monsterorigins:metamorphosis_temperature",
+		"origins:carnivore"
+	],
+	"icon": {
+		"item": "minecraft:rotten_flesh"
+	},
+	"order": 1,
+	"impact": 1,
+	"description": "Zombies\u0020are\u0020the\u0020corpses\u0020of\u0020fallen\u0020builders\u0020that\u0020have\u0020reawakened\u0020in\u0020the\u0020world\u0020for\u0020unknown\u0020reasons."
+}

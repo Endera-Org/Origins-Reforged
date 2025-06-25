@@ -1,0 +1,26 @@
+{
+	"powers": [
+		"monsterorigins:trident_expert",
+		"origins:water_vision",
+		"monsterorigins:guardian_ally",
+		"origins:water_breathing",
+		"monsterorigins:swim_speed",
+		"monsterorigins:water_combatant",
+		"monsterorigins:undead",
+		"monsterorigins:burn_in_day",
+		"monsterorigins:zombie_hunger",
+		"monsterorigins:zombie_touch",
+		"monsterorigins:scare_villagers",
+		"monsterorigins:slowness",
+		"monsterorigins:land_slowness",
+		"monsterorigins:drowned_transform_into_zombie",
+		"monsterorigins:metamorphosis_temperature",
+		"origins:carnivore"
+	],
+	"icon": "minecraft:trident",
+	"unchoosable": true,
+	"order": 2,
+	"impact": 1,
+	"priority": 2,
+	"description": "The\u0020dwellers\u0020of\u0020the\u0020deep\u0020ocean,\u0020they\u0020wield\u0020their\u0020tridents\u0020and\u0020attack\u0020the\u0020living\u0020that\u0020dare\u0020cross\u0020the\u0020ocean."
+}

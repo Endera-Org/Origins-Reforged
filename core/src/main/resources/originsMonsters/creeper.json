@@ -1,0 +1,14 @@
+{
+	"powers": [
+		"monsterorigins:creeper_ally",
+		"monsterorigins:explosive",
+		"monsterorigins:fear_cats",
+		"origins:no_shield"
+	],
+	"icon": {
+		"item": "minecraft:gunpowder"
+	},
+	"order": 1,
+	"impact": 1,
+	"description": "A\u0020remnant\u0020of\u0020an\u0020unexpected\u0020mistake,\u0020the\u0020Creeper\u0020blasts\u0020its\u0020way\u0020through\u0020its\u0020enemies."
+}

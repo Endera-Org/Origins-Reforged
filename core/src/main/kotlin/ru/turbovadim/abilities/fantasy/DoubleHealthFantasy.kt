@@ -9,7 +9,7 @@ import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.abilities.types.AttributeModifierAbility
 import ru.turbovadim.abilities.types.VisibleAbility
 
-class DoubleHealth : VisibleAbility, AttributeModifierAbility {
+class DoubleHealthFantasy : VisibleAbility, AttributeModifierAbility {
     override val description: MutableList<LineComponent> = makeLineFor(
         "As you're larger than humans, you have more health as your body protects you from damage.",
         LineComponent.LineType.DESCRIPTION

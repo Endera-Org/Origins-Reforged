@@ -20,6 +20,17 @@ import java.util.function.Predicate
 
 abstract class NMSInvoker : Listener {
 
+    abstract fun dealExplosionDamage(player: Player, amount: Int)
+
+    abstract fun dealSonicBoomDamage(entity: LivingEntity, amount: Int, source: Player)
+    
+    abstract fun getVillagerAfraidGoal(villager: LivingEntity, hasAbility: Predicate<Player>): Goal<Villager>
+
+    abstract fun getNearestVisiblePlayer(piglin: Piglin): Player
+
+    abstract fun throwItem(piglin: Piglin, itemStack: ItemStack, pos: Location)
+
+
     abstract fun dealThornsDamage(target: Entity, amount: Int, attacker: Entity)
 
     abstract fun getSmiteEnchantment(): Enchantment

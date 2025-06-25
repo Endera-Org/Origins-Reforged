@@ -15,8 +15,10 @@ import net.minecraft.network.syncher.EntityDataSerializers
 import net.minecraft.network.syncher.SynchedEntityData
 import net.minecraft.world.entity.MoverType
 import net.minecraft.world.entity.PathfinderMob
+import net.minecraft.world.entity.ai.behavior.BehaviorUtils
 import net.minecraft.world.entity.ai.goal.AvoidEntityGoal
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal
+import net.minecraft.world.entity.ai.memory.MemoryModuleType
 import net.minecraft.world.level.GameType
 import net.minecraft.world.phys.Vec3
 import org.bukkit.*
@@ -49,6 +51,53 @@ import java.util.function.Predicate
 
 @Suppress("UnstableApiUsage")
 class NMSInvokerV1_20_4 : NMSInvoker() {
+
+    override fun dealExplosionDamage(player: Player, amount: Int) {
+        val serverPlayer = (player as CraftPlayer).handle
+        serverPlayer.hurt(serverPlayer.damageSources().explosion(null), amount.toFloat())
+    }
+
+    override fun dealSonicBoomDamage(entity: LivingEntity, amount: Int, source: Player) {
+        val serverPlayer = (source as CraftPlayer).handle
+        val e = (entity as CraftEntity).handle
+        e.hurt(e.damageSources().sonicBoom(serverPlayer), amount.toFloat())
+    }
+
+    override fun getVillagerAfraidGoal(villager: LivingEntity, hasAbility: Predicate<Player>): Goal<Villager> {
+        return AvoidEntityGoal(
+            (villager as CraftEntity).handle as PathfinderMob,
+            net.minecraft.world.entity.player.Player::class.java,
+            6f,
+            0.5,
+            0.8,
+            Predicate { livingEntity ->
+                val player = livingEntity.bukkitEntity as? Player
+                if (player != null) {
+                    return@Predicate hasAbility.test(player)
+                }
+                false
+            }
+        ).asPaperVanillaGoal()
+    }
+
+    override fun getNearestVisiblePlayer(piglin: Piglin): Player {
+        val optional = (piglin as CraftPiglin).handle.getBrain()
+            .getMemory(MemoryModuleType.NEAREST_VISIBLE_PLAYER)
+        return optional.map(Function { player ->
+            player.bukkitEntity as Player
+        }).orElse(null)
+    }
+
+    override fun throwItem(piglin: Piglin, itemStack: ItemStack, pos: Location) {
+        BehaviorUtils.throwItem(
+            (piglin as CraftLivingEntity).handle,
+            CraftItemStack.asNMSCopy(itemStack),
+            Vec3(pos.x, pos.y, pos.z)
+        )
+    }
+
+
+
 
     override fun dealThornsDamage(target: Entity, amount: Int, attacker: Entity) {
         val entity = (target as CraftEntity).handle

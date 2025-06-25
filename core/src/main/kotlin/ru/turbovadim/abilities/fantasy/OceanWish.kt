@@ -14,7 +14,7 @@ import ru.turbovadim.abilities.types.MultiAbility
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class OceanWish : VisibleAbility, MultiAbility {
-    override val description: List<LineComponent> = LineData.makeLineFor(
+    override val description: MutableList<LineComponent> = LineData.makeLineFor(
         "Your natural habitat is the ocean, so you're much weaker when you're not in the water.",
         LineType.DESCRIPTION
     )

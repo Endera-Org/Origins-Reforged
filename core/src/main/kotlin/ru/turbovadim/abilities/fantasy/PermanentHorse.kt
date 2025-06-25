@@ -32,7 +32,7 @@ import ru.turbovadim.packetsenders.FantasyEntityMountEvent
 
 class PermanentHorse : VisibleAbility, Listener {
 
-    override val description: List<OriginSwapper.LineData.LineComponent> =
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> =
         OriginSwapper.LineData.makeLineFor(
             "You are half horse, half human.",
             OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
