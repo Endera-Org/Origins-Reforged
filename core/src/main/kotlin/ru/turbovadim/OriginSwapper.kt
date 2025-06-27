@@ -15,6 +15,7 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.event.inventory.InventoryClickEvent
+import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.event.player.PlayerChangedWorldEvent
 import org.bukkit.event.player.PlayerDropItemEvent
@@ -30,7 +31,6 @@ import ru.turbovadim.AddonLoader.getFirstOrigin
 import ru.turbovadim.AddonLoader.getFirstUnselectedLayer
 import ru.turbovadim.AddonLoader.getOriginByFilename
 import ru.turbovadim.AddonLoader.getRandomOrigin
-import ru.turbovadim.AddonLoader.getTextFor
 import ru.turbovadim.AddonLoader.shouldOpenSwapMenu
 import ru.turbovadim.OriginSwapper.LineData.LineComponent.LineType
 import ru.turbovadim.OriginsReforged.Companion.bukkitDispatcher
@@ -46,6 +46,7 @@ import ru.turbovadim.events.PlayerSwapOriginEvent
 import ru.turbovadim.events.PlayerSwapOriginEvent.SwapReason
 import ru.turbovadim.geysermc.GeyserSwapper
 import ru.turbovadim.packetsenders.NMSInvoker
+import ru.turbovadim.utils.CustomGuiFactory
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
@@ -53,7 +54,35 @@ import kotlin.math.min
 class OriginSwapper : Listener {
 
     @EventHandler
+    fun onInventoryClose(event: InventoryCloseEvent) {
+        if (event.reason in listOf(InventoryCloseEvent.Reason.OPEN_NEW, InventoryCloseEvent.Reason.CANT_USE, InventoryCloseEvent.Reason.PLUGIN)) return
+        if (event.inventory.holder !is CustomGuiFactory) return
+        val player = event.player as Player
+
+        runBlocking {
+            val displayItem = event.inventory.getItem(1)
+            if (displayItem != null) {
+                val layer = displayItem.itemMeta.persistentDataContainer
+                    .getOrDefault(layerKey, PersistentDataType.STRING, "origin")
+
+                val reason = getReason(displayItem)
+
+                val shouldPreventClose = reason == SwapReason.ORB_OF_ORIGIN || hasNotSelectedAllOrigins(player)
+
+                if (shouldPreventClose) {
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(instance, {
+                        if (player.isOnline) {
+                            openOriginSwapper(player, reason, 0, 0, layer)
+                        }
+                    }, 1L)
+                }
+            }
+        }
+    }
+
+    @EventHandler
     fun onInventoryClick(event: InventoryClickEvent) {
+        if (event.clickedInventory?.holder !is CustomGuiFactory?) return
         runBlocking {
             val config = OriginsReforged.mainConfig
             val item = event.whoClicked.openInventory.getItem(1)
@@ -186,8 +215,8 @@ class OriginSwapper : Listener {
                         }
                     } else {
                         withContext(bukkitDispatcher) {
-                        openOriginSwapper(player, SwapReason.INITIAL, 0, 0, layer)
-                            }
+                            openOriginSwapper(player, SwapReason.INITIAL, 0, 0, layer)
+                        }
                     }
                 }
             }
@@ -326,7 +355,6 @@ class OriginSwapper : Listener {
             Bukkit.dispatchCommand(console, parsedCommand)
         }
     }
-
 
 
     private val lastRespawnReasons: MutableMap<Player?, MutableSet<PlayerRespawnEvent.RespawnFlag?>?> =
@@ -668,17 +696,12 @@ class OriginSwapper : Listener {
                     getOriginByFilename(s)?.getName()
                 }
                 icon = OrbOfOrigin.orb.clone()
-                name = getTextFor("origin.origins.random.name", "Random")
-                nameForDisplay = getTextFor("origin.origins.random.name", "Random")
+                name = "Random"
+                nameForDisplay = "Random"
                 impact = '\uE002'
 
                 val descriptionText = StringBuilder(
-                    "${
-                        getTextFor(
-                            "origin.origins.random.description",
-                            "You'll be assigned one of the following:"
-                        )
-                    }\n\n"
+                    "You'll be assigned one of the following:\n\n"
                 )
                 origins.forEach { origin ->
                     if (!excludedOriginNames.contains(origin.getName())) {
@@ -737,7 +760,13 @@ class OriginSwapper : Listener {
                 ShortcutUtils.getColored(config.originSelection.screenTitle.suffix),
                 Key.key("minecraft:default")
             )
-            val swapperInventory = Bukkit.createInventory(null, 54, prefix.append(component).append(suffix))
+
+            val invHolder = CustomGuiFactory(
+                CustomGuiFactory.CustomInventoryType.ORIGINS_SWAPPER,
+                54,
+                prefix.append(component).append(suffix)
+            )
+            val swapperInventory = invHolder.inventory
 
             // Настраиваем метаданные и сохраняем данные в persistentDataContainer
             val meta = icon.itemMeta
@@ -1055,7 +1084,9 @@ class OriginSwapper : Listener {
             runCatching { AuthMeApi.getInstance().isAuthenticated(player) }
                 .getOrNull()?.let { return !it }
             val worldId = player.world.name
-            return !shouldOpenSwapMenu(player, reason) || OriginsReforged.mainConfig.worlds.disabledWorlds.contains(worldId)
+            return !shouldOpenSwapMenu(player, reason) || OriginsReforged.mainConfig.worlds.disabledWorlds.contains(
+                worldId
+            )
         }
 
 
@@ -1084,7 +1115,7 @@ class OriginSwapper : Listener {
 
         suspend fun getStoredOrigin(player: Player, layer: String): Origin? {
             val playerId = player.uniqueId.toString()
-            
+
             val originName = DatabaseManager.getOriginForLayer(playerId, layer) ?: "null"
             return AddonLoader.getOrigin(originName)
         }
@@ -1123,7 +1154,13 @@ class OriginSwapper : Listener {
             setOrigin(player, origin, reason, resetPlayer, "origin")
         }
 
-        suspend fun setOrigin(player: Player, origin: Origin?, reason: SwapReason?, resetPlayer: Boolean, layer: String) {
+        suspend fun setOrigin(
+            player: Player,
+            origin: Origin?,
+            reason: SwapReason?,
+            resetPlayer: Boolean,
+            layer: String
+        ) {
             val uuid = player.uniqueId.toString()
             val swapOriginEvent = PlayerSwapOriginEvent(player, reason, resetPlayer, getOrigin(player, layer), origin)
 

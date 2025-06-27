@@ -11,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.bukkit.Bukkit
+import org.bukkit.GameMode
 import org.bukkit.entity.Player
 import org.endera.enderalib.utils.async.ioDispatcher
 import ru.turbovadim.OriginSwapper.Companion.getOrigins
@@ -28,7 +29,7 @@ abstract class ParticleAbility : Ability {
         fun initParticlesSender() {
             CoroutineScope(ioDispatcher).launch {
                 while (true) {
-                    val onlinePlayers = Bukkit.getOnlinePlayers().toList()
+                    val onlinePlayers = Bukkit.getOnlinePlayers().toList().filter { it.gameMode != GameMode.SPECTATOR}
                     onlinePlayers.forEach { player ->
                         getOrigins(player)
                             .flatMap { it.getAbilities() }

@@ -273,19 +273,25 @@ class OriginCommand : CommandExecutor, TabCompleter {
     }
 
     private fun handleOrbCommand(sender: CommandSender, args: Array<String>): Boolean {
-        val player: Player = when {
+        val players: List<Player> = when {
+            args.size == 2 -> {
+                if (args[1] == "all") {
+                    sender.sendMessage(Component.text("Giving orb to all players...").color(NamedTextColor.AQUA))
+                    Bukkit.getOnlinePlayers().toList()
+                } else {
+                    val player = Bukkit.getPlayer(args[1]) ?: run {
+                        sender.sendMessage(Component.text(MSG_PLAYER_ONLY).color(NamedTextColor.RED))
+                        return true
+                    }
+                    listOf(player)
+                }
+            }
             sender is Player -> {
                 if (!sender.hasPermission("originsreforged.admin")) {
                     sender.sendMessage(Component.text(MSG_NO_PERMISSION).color(NamedTextColor.RED))
                     return true
                 }
-                sender
-            }
-            args.size == 2 -> {
-                Bukkit.getPlayer(args[1]) ?: run {
-                    sender.sendMessage(Component.text(MSG_PLAYER_ONLY).color(NamedTextColor.RED))
-                    return true
-                }
+                listOf(sender)
             }
             else -> {
                 sender.sendMessage(Component.text(MSG_PLAYER_ONLY).color(NamedTextColor.RED))
@@ -293,7 +299,7 @@ class OriginCommand : CommandExecutor, TabCompleter {
             }
         }
 
-        player.inventory.addItem(OrbOfOrigin.orb)
+        players.forEach { it.inventory.addItem(OrbOfOrigin.orb)}
         return true
     }
 
@@ -423,7 +429,7 @@ class OriginCommand : CommandExecutor, TabCompleter {
 
     private fun getSecondArgumentCompletions(firstArg: String): List<String?> {
         return when (firstArg) {
-            CMD_SET, CMD_ORB, CMD_EXCHANGE -> Bukkit.getOnlinePlayers().map { it.name }
+            CMD_SET, CMD_ORB, CMD_EXCHANGE -> listOf("all") + Bukkit.getOnlinePlayers().map { it.name }
             CMD_EXPORT -> ArrayList(AddonLoader.originFiles.keys)
             CMD_CHECK, CMD_SWAP -> ArrayList(AddonLoader.layers)
             CMD_IMPORT -> getImportFileNames()

@@ -2,8 +2,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("java")
-    kotlin("jvm") version "2.1.20"
-    kotlin("plugin.serialization") version "2.1.20" apply true
+    kotlin("jvm") version "2.2.0"
+    kotlin("plugin.serialization") version "2.2.0" apply true
 }
 
 repositories {

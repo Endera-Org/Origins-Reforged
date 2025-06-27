@@ -2,11 +2,11 @@ plugins {
     id("java")
     id("com.gradleup.shadow") version "8.3.6"
     id("io.papermc.paperweight.userdev") version "2.0.0-beta.17" apply false
-    kotlin("jvm") version "2.1.20"
+    kotlin("jvm") version "2.2.0"
 }
 
 group = "ru.turbovadim"
-version = "3.0.0-beta1"
+version = "3.0.0-beta3"
 
 repositories {
     mavenCentral()

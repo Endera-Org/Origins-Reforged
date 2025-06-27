@@ -24,6 +24,8 @@ class CreeperAlly : VisibleAbility, Listener {
     @EventHandler
     fun onEntityTargetLivingEntity(event: EntityTargetLivingEntityEvent) {
         if (event.entityType != EntityType.CREEPER) return
-        runForAbility(event.target as LivingEntity) { event.isCancelled = true }
+        val target = event.target
+        if (target == null) return
+        runForAbility(target) { event.isCancelled = true }
     }
 }
