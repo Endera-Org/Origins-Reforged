@@ -52,6 +52,7 @@ dependencies {
     compileOnly(project(":1.21.4"))
     compileOnly(project(":1.21.5"))
     compileOnly(project(":1.21.6"))
+    compileOnly(project(":1.21.7"))
     compileOnly(files("libs/worldguard.jar"))
     compileOnly(files("libs/worldedit.jar"))
     implementation(kotlin("stdlib-jdk8"))
