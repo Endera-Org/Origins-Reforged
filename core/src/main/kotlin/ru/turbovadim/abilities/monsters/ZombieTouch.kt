@@ -18,10 +18,7 @@ class ZombieTouch : VisibleAbility, Listener {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Zombie Touch", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override val key: Key
-        get() {
-            return Key.key("monsterorigins:zombie_touch")
-        }
+    override val key: Key = Key.key("monsterorigins:zombie_touch")
 
     @EventHandler
     fun onEntityDeathEvent(event: EntityDeathEvent) {

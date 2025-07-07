@@ -30,10 +30,7 @@ class HuskTransformIntoZombie : VisibleAbility, Listener {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Metamorphosis", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override val key: Key
-        get() {
-            return Key.key("monsterorigins:husk_transform_into_zombie")
-        }
+    override val key: Key = Key.key("monsterorigins:husk_transform_into_zombie")
 
     private val lastOutOfAirTime: MutableMap<Player, Int> = HashMap()
 

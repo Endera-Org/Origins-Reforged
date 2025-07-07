@@ -49,8 +49,7 @@ class MetamorphosisTemperature : CooldownAbility, Listener {
         ) setTemperature(event.getPlayer(), 50)
     }
 
-    override val cooldownInfo: Cooldowns.CooldownInfo
-        get() = Cooldowns.CooldownInfo(100, "metamorphosis_temperature", true, true)
+    override val cooldownInfo: Cooldowns.CooldownInfo = Cooldowns.CooldownInfo(100, "metamorphosis_temperature", true, true)
 
     companion object {
         private val playerTemperatureKey: NamespacedKey =

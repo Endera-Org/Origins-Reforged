@@ -16,8 +16,5 @@ class WaterBreathingMonsters : Ability, Listener {
         }
     }
 
-    override val key: Key
-        get() {
-            return Key.key("monsterorigins:water_breathing")
-        }
+    override val key: Key = Key.key("monsterorigins:water_breathing")
 }

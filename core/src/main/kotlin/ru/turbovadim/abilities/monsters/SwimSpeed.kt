@@ -91,6 +91,5 @@ class SwimSpeedMonsters : Listener, VisibleAbility {
             OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
         )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor("Fast Swimmer", OriginSwapper.LineData.LineComponent.LineType.TITLE)
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor("Fast Swimmer", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 }

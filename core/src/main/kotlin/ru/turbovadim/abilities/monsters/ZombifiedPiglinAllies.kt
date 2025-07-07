@@ -21,10 +21,7 @@ class ZombifiedPiglinAllies : VisibleAbility, Listener {
             OriginSwapper.LineData.LineComponent.LineType.TITLE
         )
 
-    override val key: Key
-        get() {
-            return Key.key("monsterorigins:zombified_piglin_allies")
-        }
+    override val key: Key = Key.key("monsterorigins:zombified_piglin_allies")
 
     @EventHandler
     fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {

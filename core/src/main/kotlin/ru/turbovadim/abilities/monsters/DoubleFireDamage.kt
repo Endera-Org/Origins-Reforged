@@ -27,10 +27,7 @@ class DoubleFireDamage : VisibleAbility, Listener {
         }
     }
 
-    override val key: Key
-        get() {
-            return Key.key("monsterorigins:double_fire_damage")
-        }
+    override val key: Key = Key.key("monsterorigins:double_fire_damage")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "You take double damage from all sources of fire.",

@@ -8,10 +8,7 @@ import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.abilities.types.Ability
 
 class WitherImmunity : Ability, Listener {
-    override val key: Key
-        get() {
-            return Key.key("monsterorigins:wither_immunity")
-        }
+    override val key: Key = Key.key("monsterorigins:wither_immunity")
 
     @EventHandler
     fun onEntityPotionEffect(event: EntityPotionEffectEvent) {

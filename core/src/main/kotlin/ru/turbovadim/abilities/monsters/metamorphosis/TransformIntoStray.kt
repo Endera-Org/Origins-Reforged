@@ -30,8 +30,7 @@ class TransformIntoStray : VisibleAbility, Listener {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Metamorphosis", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override val key: Key
-        get() = Key.key("monsterorigins:transform_into_stray")
+    override val key: Key = Key.key("monsterorigins:transform_into_stray")
 
     private val lastHadLowFreezeTime: MutableMap<Player, Int> = HashMap()
 

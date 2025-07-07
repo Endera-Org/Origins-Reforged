@@ -56,6 +56,5 @@ class SonicBoom : VisibleAbility, Listener, CooldownAbility {
     val damageAmount: Int
         get() = 15
 
-    override val cooldownInfo: Cooldowns.CooldownInfo
-        get() = Cooldowns.CooldownInfo(600, "sonic_boom")
+    override val cooldownInfo: Cooldowns.CooldownInfo = Cooldowns.CooldownInfo(600, "sonic_boom")
 }

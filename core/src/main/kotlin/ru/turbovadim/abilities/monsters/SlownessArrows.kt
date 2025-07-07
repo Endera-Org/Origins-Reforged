@@ -21,10 +21,7 @@ class SlownessArrows : VisibleAbility, Listener {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Frozen Arrows", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override val key: Key
-        get() {
-            return Key.key("monsterorigins:slowness_arrows")
-        }
+    override val key: Key = Key.key("monsterorigins:slowness_arrows")
 
     @EventHandler
     fun onEntityShootBow(event: EntityShootBowEvent) {
