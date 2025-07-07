@@ -8,17 +8,15 @@ import ru.turbovadim.OriginSwapper
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class DoubleDamage : VisibleAbility, Listener {
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "You deal twice as much damage as a normal player.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "You deal twice as much damage as a normal player.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Powerful Swings",
-            OriginSwapper.LineData.LineComponent.LineType.TITLE
-        )
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Powerful Swings",
+        OriginSwapper.LineData.LineComponent.LineType.TITLE
+    )
 
     override val key = Key.key("monsterorigins:double_damage")
 

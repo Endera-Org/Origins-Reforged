@@ -215,95 +215,54 @@ class NMSInvokerV1_20_4 : NMSInvoker() {
         return true
     }
 
-    override val miningEfficiencyAttribute: Attribute?
-        get() = null
-
-    override val sneakingSpeedAttribute: Attribute?
-        get() = null
-
-    override val submergedMiningSpeedAttribute: Attribute?
-        get() = null
-
-    override val sweepingDamageRatioAttribute: Attribute?
-        get() = null
-
-    override fun setCustomModelData(meta: ItemMeta, cmd: Int): ItemMeta {
-        meta.setCustomModelData(cmd)
-        return meta
-    }
-
-    override val flyingSpeedAttribute: Attribute
-        get() = Attribute.GENERIC_FLYING_SPEED
-
-    override val attackKnockbackAttribute: Attribute
-        get() = Attribute.GENERIC_ATTACK_KNOCKBACK
-
-    override val attackSpeedAttribute: Attribute
-        get() = Attribute.GENERIC_ATTACK_SPEED
-
-    override val armorToughnessAttribute: Attribute
-        get() = Attribute.GENERIC_ARMOR_TOUGHNESS
-
-    override val luckAttribute: Attribute
-        get() = Attribute.GENERIC_LUCK
-
-    override val horseJumpStrengthAttribute: Attribute
-        get() = Attribute.HORSE_JUMP_STRENGTH
-
-    override val spawnReinforcementsAttribute: Attribute
-        get() = Attribute.ZOMBIE_SPAWN_REINFORCEMENTS
-
-    override val followRangeAttribute: Attribute
-        get() = Attribute.GENERIC_FOLLOW_RANGE
-
-    override val knockbackResistanceAttribute: Attribute
-        get() = Attribute.GENERIC_KNOCKBACK_RESISTANCE
-
-    override val fallDamageMultiplierAttribute: Attribute?
-        get() = null
-
-    override val maxAbsorptionAttribute: Attribute?
-        get() = Attribute.GENERIC_MAX_ABSORPTION
-
-    override val safeFallDistanceAttribute: Attribute?
-        get() = null
-
-    override val scaleAttribute: Attribute?
-        get() = null
-
-    override val stepHeightAttribute: Attribute?
-        get() = null
-
-    override val gravityAttribute: Attribute?
-        get() = null
-
-    override val jumpStrengthAttribute: Attribute?
-        get() = null
-
-    override val burningTimeAttribute: Attribute?
-        get() = null
-
-    override val explosionKnockbackResistanceAttribute: Attribute?
-        get() = null
-
-    override val movementEfficiencyAttribute: Attribute?
-        get() = null
-
-    override val oxygenBonusAttribute: Attribute?
-        get() = null
-
-    override val waterMovementEfficiencyAttribute: Attribute?
-        get() = null
-
-    override val temptRangeAttribute: Attribute?
-        get() = null
+    override val miningEfficiencyAttribute: Attribute? = null
+    override val sneakingSpeedAttribute: Attribute? = null
+    override val submergedMiningSpeedAttribute: Attribute? = null
+    override val sweepingDamageRatioAttribute: Attribute? = null
+    override val flyingSpeedAttribute: Attribute = Attribute.GENERIC_FLYING_SPEED
+    override val attackKnockbackAttribute: Attribute = Attribute.GENERIC_ATTACK_KNOCKBACK
+    override val attackSpeedAttribute: Attribute = Attribute.GENERIC_ATTACK_SPEED
+    override val armorToughnessAttribute: Attribute = Attribute.GENERIC_ARMOR_TOUGHNESS
+    override val luckAttribute: Attribute = Attribute.GENERIC_LUCK
+    override val horseJumpStrengthAttribute: Attribute = Attribute.HORSE_JUMP_STRENGTH
+    override val spawnReinforcementsAttribute: Attribute = Attribute.ZOMBIE_SPAWN_REINFORCEMENTS
+    override val followRangeAttribute: Attribute = Attribute.GENERIC_FOLLOW_RANGE
+    override val knockbackResistanceAttribute: Attribute = Attribute.GENERIC_KNOCKBACK_RESISTANCE
+    override val fallDamageMultiplierAttribute: Attribute? = null
+    override val maxAbsorptionAttribute: Attribute? = Attribute.GENERIC_MAX_ABSORPTION
+    override val safeFallDistanceAttribute: Attribute? = null
+    override val scaleAttribute: Attribute? = null
+    override val stepHeightAttribute: Attribute? = null
+    override val gravityAttribute: Attribute? = null
+    override val jumpStrengthAttribute: Attribute? = null
+    override val burningTimeAttribute: Attribute? = null
+    override val explosionKnockbackResistanceAttribute: Attribute? = null
+    override val movementEfficiencyAttribute: Attribute? = null
+    override val oxygenBonusAttribute: Attribute? = null
+    override val waterMovementEfficiencyAttribute: Attribute? = null
+    override val temptRangeAttribute: Attribute? = null
+    override val respirationEnchantment: Enchantment = Enchantment.OXYGEN
+    override val armorAttribute: Attribute = Attribute.GENERIC_ARMOR
+    override val maxHealthAttribute: Attribute = Attribute.GENERIC_MAX_HEALTH
+    override val movementSpeedAttribute: Attribute = Attribute.GENERIC_MOVEMENT_SPEED
+    override val attackDamageAttribute: Attribute = Attribute.GENERIC_ATTACK_DAMAGE
+    override val nauseaEffect: PotionEffectType = PotionEffectType.CONFUSION
+    override val miningFatigueEffect: PotionEffectType = PotionEffectType.SLOW_DIGGING
+    override val hasteEffect: PotionEffectType = PotionEffectType.FAST_DIGGING
+    override val jumpBoostEffect: PotionEffectType = PotionEffectType.JUMP
+    override val unbreakingEnchantment: Enchantment = Enchantment.DURABILITY
+    override val efficiencyEnchantment: Enchantment = Enchantment.DIG_SPEED
+    override val aquaAffinityEnchantment: Enchantment = Enchantment.WATER_WORKER
+    override val slownessEffect: PotionEffectType = PotionEffectType.SLOW
+    override val baneOfArthropodsEnchantment: Enchantment = Enchantment.DAMAGE_ARTHROPODS
+    override val strengthEffect: PotionEffectType = PotionEffectType.INCREASE_DAMAGE
+    override val blockInteractionRangeAttribute: Attribute? = null
+    override val entityInteractionRangeAttribute: Attribute? = null
+    override val blockBreakSpeedAttribute: Attribute? = null
 
     override fun dealDrowningDamage(entity: LivingEntity, amount: Int) {
         entity.damage(amount.toDouble(), DamageSource.builder(DamageType.DROWN).build())
     }
-
-    override val respirationEnchantment: Enchantment
-        get() = Enchantment.OXYGEN
 
     override fun applyFont(component: Component, font: Key): Component {
         return component.font(font)
@@ -313,18 +272,6 @@ class NMSInvokerV1_20_4 : NMSInvoker() {
     fun onBlockDamageAbort(event: BlockDamageAbortEvent) {
         OriginsReforgedBlockDamageAbortEvent(event.player, event.getBlock(), event.itemInHand).callEvent()
     }
-
-    override val armorAttribute: Attribute
-        get() = Attribute.GENERIC_ARMOR
-
-    override val maxHealthAttribute: Attribute
-        get() = Attribute.GENERIC_MAX_HEALTH
-
-    override val movementSpeedAttribute: Attribute
-        get() = Attribute.GENERIC_MOVEMENT_SPEED
-
-    override val attackDamageAttribute: Attribute
-        get() = Attribute.GENERIC_ATTACK_DAMAGE
 
     override fun sendEntityData(player: Player, entity: Entity, bytes: Byte) {
         val serverPlayer = (player as CraftPlayer).handle
@@ -440,36 +387,6 @@ class NMSInvokerV1_20_4 : NMSInvoker() {
         }
     }
 
-    override val nauseaEffect: PotionEffectType
-        get() = PotionEffectType.CONFUSION
-
-    override val miningFatigueEffect: PotionEffectType
-        get() = PotionEffectType.SLOW_DIGGING
-
-    override val hasteEffect: PotionEffectType
-        get() = PotionEffectType.FAST_DIGGING
-
-    override val jumpBoostEffect: PotionEffectType
-        get() = PotionEffectType.JUMP
-
-    override val unbreakingEnchantment: Enchantment
-        get() = Enchantment.DURABILITY
-
-    override val efficiencyEnchantment: Enchantment
-        get() = Enchantment.DIG_SPEED
-
-    override val aquaAffinityEnchantment: Enchantment
-        get() = Enchantment.WATER_WORKER
-
-    override val slownessEffect: PotionEffectType
-        get() = PotionEffectType.SLOW
-
-    override val baneOfArthropodsEnchantment: Enchantment
-        get() = Enchantment.DAMAGE_ARTHROPODS
-
-    override val strengthEffect: PotionEffectType
-        get() = PotionEffectType.INCREASE_DAMAGE
-
     override fun getRespawnLocation(player: Player): Location? {
         return player.respawnLocation
     }
@@ -530,14 +447,10 @@ class NMSInvokerV1_20_4 : NMSInvoker() {
         player.sendBlockDamage(location, damage, entity)
     }
 
-    override val blockInteractionRangeAttribute: Attribute?
-        get() = null
-
-    override val entityInteractionRangeAttribute: Attribute?
-        get() = null
-
-    override val blockBreakSpeedAttribute: Attribute?
-        get() = null
+    override fun setCustomModelData(meta: ItemMeta, cmd: Int): ItemMeta {
+        meta.setCustomModelData(cmd)
+        return meta
+    }
 
     override fun setWorldBorderOverlay(player: Player, show: Boolean) {
         if (show) {

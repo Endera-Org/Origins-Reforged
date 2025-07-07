@@ -20,14 +20,13 @@ import ru.turbovadim.abilities.types.VisibleAbility
 import ru.turbovadim.events.PlayerSwapOriginEvent
 
 class TransformIntoPiglin : VisibleAbility, Listener {
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "You transform into a Piglin if you eat a golden apple when under the effect of a weakness potion.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "You transform into a Piglin if you eat a golden apple when under the effect of a weakness potion.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor("Metamorphosis", OriginSwapper.LineData.LineComponent.LineType.TITLE)
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> =
+        OriginSwapper.LineData.makeLineFor("Metamorphosis", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
     override val key: Key = Key.key("monsterorigins:transform_into_piglin")
 

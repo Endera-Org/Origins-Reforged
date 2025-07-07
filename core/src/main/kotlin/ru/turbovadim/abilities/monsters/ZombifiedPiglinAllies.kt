@@ -9,17 +9,15 @@ import ru.turbovadim.OriginSwapper
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class ZombifiedPiglinAllies : VisibleAbility, Listener {
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Nearby Zombified Piglins will attack anything that that attacks you or that you attack.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Nearby Zombified Piglins will attack anything that that attacks you or that you attack.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Terrifying Armies",
-            OriginSwapper.LineData.LineComponent.LineType.TITLE
-        )
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Terrifying Armies",
+        OriginSwapper.LineData.LineComponent.LineType.TITLE
+    )
 
     override val key: Key = Key.key("monsterorigins:zombified_piglin_allies")
 

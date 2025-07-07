@@ -30,20 +30,17 @@ import kotlin.math.sqrt
 
 class TridentExpert : VisibleAbility, Listener, AttributeModifierAbility, CooldownAbility {
 
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "You're a master of the trident, dealing +2 damage when you throw it, and +2 melee damage with it. You can also use channeling without thunder, and use riptide without rain/water at the price of extra durability.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "You're a master of the trident, dealing +2 damage when you throw it, and +2 melee damage with it. You can also use channeling without thunder, and use riptide without rain/water at the price of extra durability.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Trident Expert",
-            OriginSwapper.LineData.LineComponent.LineType.TITLE
-        )
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Trident Expert",
+        OriginSwapper.LineData.LineComponent.LineType.TITLE
+    )
 
-    override val key: Key
-        get() = Key.key("moborigins:trident_expert")
+    override val key: Key = Key.key("moborigins:trident_expert")
 
     private val riptideKey: NamespacedKey = NamespacedKey(OriginsReforged.instance, "riptide-trident")
 
@@ -129,11 +126,9 @@ class TridentExpert : VisibleAbility, Listener, AttributeModifierAbility, Cooldo
         }
     }
 
-    override val attribute: Attribute
-        get() = Attribute.GENERIC_ATTACK_DAMAGE
+    override val attribute: Attribute = Attribute.GENERIC_ATTACK_DAMAGE
 
-    override val amount: Double
-        get() = 0.0
+    override val amount: Double = 0.0
 
     override fun getChangedAmount(player: Player): Double {
         return (if (player.inventory.itemInMainHand
@@ -183,8 +178,7 @@ class TridentExpert : VisibleAbility, Listener, AttributeModifierAbility, Cooldo
         }
     }
 
-    override val operation: AttributeModifier.Operation
-        get() = AttributeModifier.Operation.ADD_NUMBER
+    override val operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER
 
     fun releaseUsing(stack: ItemStack, world: World, player: Player) {
         val k = stack.getEnchantmentLevel(Enchantment.RIPTIDE)
@@ -221,6 +215,5 @@ class TridentExpert : VisibleAbility, Listener, AttributeModifierAbility, Cooldo
         }
     }
 
-    override val cooldownInfo: Cooldowns.CooldownInfo
-        get() = Cooldowns.CooldownInfo(400, "trident_expert", true)
+    override val cooldownInfo: Cooldowns.CooldownInfo = Cooldowns.CooldownInfo(400, "trident_expert", true)
 }

@@ -8,14 +8,13 @@ import ru.turbovadim.OriginSwapper
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class ZombieHunger : VisibleAbility, Listener {
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Your constant hunger for flesh makes you exhaust quicker than a human.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Your constant hunger for flesh makes you exhaust quicker than a human.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor("Zombie Hunger", OriginSwapper.LineData.LineComponent.LineType.TITLE)
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> =
+        OriginSwapper.LineData.makeLineFor("Zombie Hunger", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
     override val key: Key = Key.key("monsterorigins:zombie_hunger")
 

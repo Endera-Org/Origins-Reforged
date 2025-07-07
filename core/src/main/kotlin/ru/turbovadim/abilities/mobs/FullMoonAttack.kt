@@ -9,8 +9,7 @@ import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.abilities.types.AttributeModifierAbility
 
 class FullMoonAttack : AttributeModifierAbility {
-    override val attribute: Attribute
-        get() = NMSInvoker.attackDamageAttribute
+    override val attribute: Attribute = NMSInvoker.attackDamageAttribute
 
     override val amount: Double = 0.0
 

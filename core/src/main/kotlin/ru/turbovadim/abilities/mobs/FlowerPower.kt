@@ -15,11 +15,10 @@ import ru.turbovadim.OriginSwapper.LineData.LineComponent.LineType
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class FlowerPower : VisibleAbility, Listener {
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor("When near multiple flowers, you gain regeneration.", LineType.DESCRIPTION)
+    override val description: MutableList<LineComponent> =
+        LineData.makeLineFor("When near multiple flowers, you gain regeneration.", LineType.DESCRIPTION)
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Flower Power", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Flower Power", LineType.TITLE)
 
     override val key: Key = Key.key("moborigins:flower_power")
 

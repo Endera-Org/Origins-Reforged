@@ -43,17 +43,14 @@ class LavaWalk : VisibleAbility, FlightAllowingAbility, AttributeModifierAbility
         return true
     }
 
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor(
-            "You have the ability to walk on lava source blocks! You are also quicker while walking on lava, and slower on land.",
-            LineType.DESCRIPTION
-        )
+    override val description: MutableList<LineComponent> = LineData.makeLineFor(
+        "You have the ability to walk on lava source blocks! You are also quicker while walking on lava, and slower on land.",
+        LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Lava Walker", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Lava Walker", LineType.TITLE)
 
-    override val attribute: Attribute
-        get() = NMSInvoker.movementSpeedAttribute
+    override val attribute: Attribute = NMSInvoker.movementSpeedAttribute
 
     override val amount: Double = 0.0
 

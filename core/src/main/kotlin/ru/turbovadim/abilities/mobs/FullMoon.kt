@@ -13,8 +13,7 @@ import ru.turbovadim.abilities.types.AttributeModifierAbility
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class FullMoon : VisibleAbility, AttributeModifierAbility {
-    override val attribute: Attribute
-        get() = NMSInvoker.movementSpeedAttribute
+    override val attribute: Attribute = NMSInvoker.movementSpeedAttribute
 
     override val amount: Double = 0.0
 

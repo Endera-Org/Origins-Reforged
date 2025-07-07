@@ -16,19 +16,15 @@ import ru.turbovadim.cooldowns.Cooldowns
 import ru.turbovadim.events.PlayerLeftClickEvent
 
 class SonicBoom : VisibleAbility, Listener, CooldownAbility {
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Every 30 seconds you can launch a sonic boom by hitting the air with your hand.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Every 30 seconds you can launch a sonic boom by hitting the air with your hand.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor("Sonic Boom", OriginSwapper.LineData.LineComponent.LineType.TITLE)
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> =
+        OriginSwapper.LineData.makeLineFor("Sonic Boom", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override val key: Key
-        get() {
-            return Key.key("monsterorigins:sonic_boom")
-        }
+    override val key: Key = Key.key("monsterorigins:sonic_boom")
 
     @EventHandler
     fun onPlayerLeftClick(event: PlayerLeftClickEvent) {
@@ -53,8 +49,7 @@ class SonicBoom : VisibleAbility, Listener, CooldownAbility {
         }
     }
 
-    val damageAmount: Int
-        get() = 15
+    val damageAmount: Int = 15
 
     override val cooldownInfo: Cooldowns.CooldownInfo = Cooldowns.CooldownInfo(600, "sonic_boom")
 }

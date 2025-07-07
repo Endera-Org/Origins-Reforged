@@ -55,10 +55,7 @@ class StrongArms : MultiAbility, VisibleAbility, Listener {
         }
 
 
-        override val key: Key
-            get() {
-                return Key.key("origins:strong_arms_drops")
-            }
+        override val key: Key = Key.key("origins:strong_arms_drops")
 
         companion object {
             var strongArmsDrops: StrongArmsDrops = StrongArmsDrops()
@@ -83,10 +80,8 @@ class StrongArms : MultiAbility, VisibleAbility, Listener {
     }
 
     class StrongArmsBreakSpeed : BreakSpeedModifierAbility, Listener {
-        override val key: Key
-            get() {
-                return Key.key("origins:strong_arms_break_speed")
-            }
+        override val key: Key = Key.key("origins:strong_arms_break_speed")
+
 
         override fun provideContextFor(player: Player): BlockMiningContext {
             var aquaAffinity = false

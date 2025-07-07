@@ -12,17 +12,15 @@ import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class SenseMovement : VisibleAbility, Listener {
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "You can see the outlines of nearby mobs, even through blocks.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "You can see the outlines of nearby mobs, even through blocks.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Heightened Senses",
-            OriginSwapper.LineData.LineComponent.LineType.TITLE
-        )
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Heightened Senses",
+        OriginSwapper.LineData.LineComponent.LineType.TITLE
+    )
 
     override val key: Key = Key.key("monsterorigins:sense_movement")
 

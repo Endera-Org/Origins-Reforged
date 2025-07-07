@@ -37,10 +37,7 @@ class ExtraReach : VisibleAbility, MultiAbility {
 
         override val operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER
 
-        override val key: Key
-            get() {
-                return Key.key("origins:extra_reach_entities")
-            }
+        override val key: Key = Key.key("origins:extra_reach_entities")
 
         companion object {
             var extraReachEntities: ExtraReachEntities = ExtraReachEntities()
@@ -55,10 +52,7 @@ class ExtraReach : VisibleAbility, MultiAbility {
 
         override val operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER
 
-        override val key: Key
-            get() {
-                return Key.key("origins:extra_reach_blocks")
-            }
+        override val key: Key = Key.key("origins:extra_reach_blocks")
 
         companion object {
             var extraReachBlocks: ExtraReachBlocks = ExtraReachBlocks()

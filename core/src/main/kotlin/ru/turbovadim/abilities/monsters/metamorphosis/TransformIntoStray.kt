@@ -20,15 +20,14 @@ import ru.turbovadim.abilities.types.VisibleAbility
 import ru.turbovadim.events.PlayerSwapOriginEvent
 
 class TransformIntoStray : VisibleAbility, Listener {
-    
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "You transform into a Stray if you're in the cold for too long.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor("Metamorphosis", OriginSwapper.LineData.LineComponent.LineType.TITLE)
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "You transform into a Stray if you're in the cold for too long.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
+
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> =
+        OriginSwapper.LineData.makeLineFor("Metamorphosis", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
     override val key: Key = Key.key("monsterorigins:transform_into_stray")
 

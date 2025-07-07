@@ -16,14 +16,12 @@ import ru.turbovadim.cooldowns.CooldownAbility
 import ru.turbovadim.cooldowns.Cooldowns.CooldownInfo
 
 class BeeWings : VisibleAbility, Listener, CooldownAbility {
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor(
-            "You can use your tiny bee wings to descend slower as an ability.",
-            LineType.DESCRIPTION
-        )
+    override val description: MutableList<LineComponent> = LineData.makeLineFor(
+        "You can use your tiny bee wings to descend slower as an ability.",
+        LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Bee Wings", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Bee Wings", LineType.TITLE)
 
     override val key: Key = Key.key("moborigins:bee_wings")
 
@@ -47,6 +45,5 @@ class BeeWings : VisibleAbility, Listener, CooldownAbility {
         }
     }
 
-    override val cooldownInfo: CooldownInfo
-        get() = CooldownInfo(300, "bee_wings")
+    override val cooldownInfo: CooldownInfo = CooldownInfo(300, "bee_wings")
 }

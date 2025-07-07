@@ -27,10 +27,7 @@ class Undead : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override val key: Key
-        get() {
-            return Key.key("moborigins:undead")
-        }
+    override val key: Key = Key.key("moborigins:undead")
 
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent?) {

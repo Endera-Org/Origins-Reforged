@@ -18,8 +18,8 @@ import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class PillagerAligned : VisibleAbility, Listener {
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Villagers don't like you, and pillagers like you!", LineType.DESCRIPTION)
+    override val description: MutableList<LineComponent> =
+        LineData.makeLineFor("Villagers don't like you, and pillagers like you!", LineType.DESCRIPTION)
 
     override val title: MutableList<LineComponent> = LineData.makeLineFor("Pillager Aligned", LineType.TITLE)
 

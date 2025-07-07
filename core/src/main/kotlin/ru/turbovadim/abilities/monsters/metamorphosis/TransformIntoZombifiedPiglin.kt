@@ -22,14 +22,13 @@ import ru.turbovadim.events.PlayerSwapOriginEvent
 
 class TransformIntoZombifiedPiglin : VisibleAbility, Listener {
 
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "You transform into a Zombified Piglin if you're out of the Nether for too long.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "You transform into a Zombified Piglin if you're out of the Nether for too long.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor("Metamorphosis", OriginSwapper.LineData.LineComponent.LineType.TITLE)
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> =
+        OriginSwapper.LineData.makeLineFor("Metamorphosis", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
     override val key: Key = Key.key("monsterorigins:transform_into_zombified_piglin")
 

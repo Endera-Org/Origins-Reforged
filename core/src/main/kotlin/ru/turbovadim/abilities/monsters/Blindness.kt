@@ -11,17 +11,15 @@ import ru.turbovadim.OriginSwapper
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class Blindness : VisibleAbility, Listener {
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "You can't see anything further than a few blocks away, though you can see further with night vision.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "You can't see anything further than a few blocks away, though you can see further with night vision.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor("Blindness", OriginSwapper.LineData.LineComponent.LineType.TITLE)
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> =
+        OriginSwapper.LineData.makeLineFor("Blindness", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override val key: Key
-        get() = Key.key("monsterorigins:blindness")
+    override val key: Key = Key.key("monsterorigins:blindness")
 
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent) {

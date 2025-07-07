@@ -12,8 +12,7 @@ import ru.turbovadim.abilities.types.AttributeModifierAbility
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class FrigidStrength : VisibleAbility, AttributeModifierAbility {
-    override val attribute: Attribute
-        get() = NMSInvoker.attackDamageAttribute
+    override val attribute: Attribute = NMSInvoker.attackDamageAttribute
 
     override val amount: Double = 0.0
 
@@ -23,11 +22,10 @@ class FrigidStrength : VisibleAbility, AttributeModifierAbility {
 
     override val operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER
 
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Deal more damage in cold areas.", LineType.DESCRIPTION)
+    override val description: MutableList<LineComponent> =
+        LineData.makeLineFor("Deal more damage in cold areas.", LineType.DESCRIPTION)
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Frigid Strength", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Frigid Strength", LineType.TITLE)
 
     override val key: Key = Key.key("moborigins:frigid_strength")
 }

@@ -8,10 +8,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 class Temperature : CooldownAbility {
-    override val key: Key
-        get() {
-            return Key.key("moborigins:temperature")
-        }
+    override val key: Key = Key.key("moborigins:temperature")
 
     fun getTemperature(player: Player?): Int {
         return playerTemperatureMap.getOrDefault(player, 0)!!
@@ -22,8 +19,7 @@ class Temperature : CooldownAbility {
         super.setCooldown(player, getTemperature(player))
     }
 
-    override val cooldownInfo: CooldownInfo
-        get() = CooldownInfo(100, "temperature", true, true)
+    override val cooldownInfo: CooldownInfo = CooldownInfo(100, "temperature", true, true)
 
     companion object {
         private val playerTemperatureMap: MutableMap<Player?, Int?> = HashMap()

@@ -24,8 +24,7 @@ class FearCats : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override val key: Key
-        get() = Key.key("monsterorigins:fear_cats")
+    override val key: Key = Key.key("monsterorigins:fear_cats")
 
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent) {

@@ -10,17 +10,15 @@ import ru.turbovadim.OriginSwapper
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class CreeperAlly : VisibleAbility, Listener {
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Creepers don't attack you!",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Creepers don't attack you!",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor("Creeper Ally", OriginSwapper.LineData.LineComponent.LineType.TITLE)
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> =
+        OriginSwapper.LineData.makeLineFor("Creeper Ally", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override val key: Key
-        get() = Key.key("monsterorigins:creeper_ally")
+    override val key: Key = Key.key("monsterorigins:creeper_ally")
 
     @EventHandler
     fun onEntityTargetLivingEntity(event: EntityTargetLivingEntityEvent) {

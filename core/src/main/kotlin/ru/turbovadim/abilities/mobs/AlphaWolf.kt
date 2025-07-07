@@ -14,12 +14,12 @@ import ru.turbovadim.abilities.types.VisibleAbility
 
 class AlphaWolf : VisibleAbility, Listener {
 
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor("Wolves you tame are stronger!", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION)
-    
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> =
+        OriginSwapper.LineData.makeLineFor("Wolves you tame are stronger!", OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION)
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor("Alpha Wolf", OriginSwapper.LineData.LineComponent.LineType.TITLE)
+
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> =
+        OriginSwapper.LineData.makeLineFor("Alpha Wolf", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
     override val key: Key = Key.key("moborigins:alpha_wolf")
 

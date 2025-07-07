@@ -10,17 +10,15 @@ import ru.turbovadim.abilities.types.VisibleAbility
 
 class BetterAim : VisibleAbility, Listener {
 
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Your aim is more accurate than humans.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Your aim is more accurate than humans.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor("Sniper", OriginSwapper.LineData.LineComponent.LineType.TITLE)
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> =
+        OriginSwapper.LineData.makeLineFor("Sniper", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override val key: Key
-        get() = Key.key("monsterorigins:better_aim")
+    override val key: Key = Key.key("monsterorigins:better_aim")
 
     @EventHandler
     fun onEntityShootBow(event: EntityShootBowEvent) {

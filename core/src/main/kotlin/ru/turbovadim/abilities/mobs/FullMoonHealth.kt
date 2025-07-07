@@ -9,8 +9,7 @@ import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.abilities.types.AttributeModifierAbility
 
 class FullMoonHealth : AttributeModifierAbility {
-    override val attribute: Attribute
-        get() = NMSInvoker.maxHealthAttribute
+    override val attribute: Attribute = NMSInvoker.maxHealthAttribute
 
     override val amount: Double = 0.0
 

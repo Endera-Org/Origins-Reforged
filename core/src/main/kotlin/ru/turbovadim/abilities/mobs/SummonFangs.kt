@@ -63,6 +63,5 @@ class SummonFangs : VisibleAbility, Listener, CooldownAbility {
 
     private val sentFromPlayerKey = NamespacedKey.fromString("sent-from-player")!!
 
-    override val cooldownInfo: CooldownInfo
-        get() = CooldownInfo(600, "summon_fangs")
+    override val cooldownInfo: CooldownInfo = CooldownInfo(600, "summon_fangs")
 }

@@ -9,20 +9,17 @@ import ru.turbovadim.abilities.types.VisibleAbility
 
 class WaterCombatant : VisibleAbility, Listener {
 
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "You deal more damage while in water.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "You deal more damage while in water.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Water Combatant",
-            OriginSwapper.LineData.LineComponent.LineType.TITLE
-        )
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Water Combatant",
+        OriginSwapper.LineData.LineComponent.LineType.TITLE
+    )
 
-    override val key: Key
-        get() = Key.key("moborigins:water_combatant")
+    override val key: Key = Key.key("moborigins:water_combatant")
 
     @EventHandler
     fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {

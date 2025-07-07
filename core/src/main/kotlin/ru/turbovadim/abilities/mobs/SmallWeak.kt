@@ -12,8 +12,7 @@ import ru.turbovadim.abilities.types.AttributeModifierAbility
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class SmallWeak : VisibleAbility, Listener, AttributeModifierAbility {
-    override val key: Key
-        get() = Key.key("moborigins:small_weak")
+    override val key: Key = Key.key("moborigins:small_weak")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "When at less than 2 hearts, you deal almost no damage, but your attacks have stronger knockback!",

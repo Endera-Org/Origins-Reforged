@@ -18,10 +18,8 @@ import ru.turbovadim.OriginSwapper.Companion.getOrigins
 
 abstract class ParticleAbility : Ability {
 
-    open val particleType: ParticleType<*>
-        get() = ParticleTypes.FLAME
-    open val frequency: Int
-        get() = 4
+    open val particleType: ParticleType<*> = ParticleTypes.FLAME
+    open val frequency: Int = 4
 
     companion object {
         private var particleTicks = 0

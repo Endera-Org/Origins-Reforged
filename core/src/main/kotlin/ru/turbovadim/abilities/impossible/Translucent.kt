@@ -13,12 +13,10 @@ class Translucent : VisibleAbility {
     // Starting after version 2.2.14 this ability is in the default phantom.json file however in earlier versions it will not have saved
     override val key: Key = Key.key("origins:translucent")
 
-    override val description: MutableList<LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Your skin is translucent.",
-            LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Your skin is translucent.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor("Translucent", LineComponent.LineType.TITLE)
+    override val title: MutableList<LineComponent> = OriginSwapper.LineData.makeLineFor("Translucent", LineComponent.LineType.TITLE)
 }

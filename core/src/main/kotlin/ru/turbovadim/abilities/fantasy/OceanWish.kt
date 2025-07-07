@@ -30,18 +30,15 @@ class OceanWish : VisibleAbility, MultiAbility {
     )
 
     class LandWeakness : AttributeModifierAbility {
-        override val attribute: Attribute
-            get() = nmsInvoker.attackDamageAttribute
+        override val attribute: Attribute = nmsInvoker.attackDamageAttribute
 
-        override val amount: Double
-            get() = 0.0
+        override val amount: Double = 0.0
 
         override fun getChangedAmount(player: Player): Double {
             return -0.4
         }
 
-        override val operation: AttributeModifier.Operation
-            get() = AttributeModifier.Operation.MULTIPLY_SCALAR_1
+        override val operation: AttributeModifier.Operation = AttributeModifier.Operation.MULTIPLY_SCALAR_1
 
         override val key: Key = Key.key("fantasyorigins:land_weakness")
 
@@ -53,11 +50,9 @@ class OceanWish : VisibleAbility, MultiAbility {
     class LandHealth : AttributeModifierAbility {
         override val key: Key = Key.key("fantasyorigins:land_health")
 
-        override val attribute: Attribute
-            get() = nmsInvoker.maxHealthAttribute
+        override val attribute: Attribute = nmsInvoker.maxHealthAttribute
 
-        override val amount: Double
-            get() = 0.0
+        override val amount: Double = 0.0
 
         override fun getChangedAmount(player: Player): Double {
             if (player.isInWaterOrRainOrBubbleColumn) {
@@ -66,8 +61,7 @@ class OceanWish : VisibleAbility, MultiAbility {
             return -12.0
         }
 
-        override val operation: AttributeModifier.Operation
-            get() = AttributeModifier.Operation.ADD_NUMBER
+        override val operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER
 
         companion object {
             val landHealth = LandHealth()
@@ -75,16 +69,11 @@ class OceanWish : VisibleAbility, MultiAbility {
     }
 
     class LandSlowness : AttributeModifierAbility {
-        override val key: Key
-            get() {
-                return Key.key("fantasyorigins:land_slowness")
-            }
+        override val key: Key = Key.key("fantasyorigins:land_slowness")
 
-        override val attribute: Attribute
-            get() = nmsInvoker.movementSpeedAttribute
+        override val attribute: Attribute = nmsInvoker.movementSpeedAttribute
 
-        override val amount: Double
-            get() = 0.0
+        override val amount: Double = 0.0
 
         override fun getChangedAmount(player: Player): Double {
             if (player.isInWaterOrRainOrBubbleColumn) {
@@ -93,8 +82,7 @@ class OceanWish : VisibleAbility, MultiAbility {
             return -0.4
         }
 
-        override val operation: AttributeModifier.Operation
-            get() = AttributeModifier.Operation.MULTIPLY_SCALAR_1
+        override val operation: AttributeModifier.Operation = AttributeModifier.Operation.MULTIPLY_SCALAR_1
 
         companion object {
             val landSlowness = LandSlowness()

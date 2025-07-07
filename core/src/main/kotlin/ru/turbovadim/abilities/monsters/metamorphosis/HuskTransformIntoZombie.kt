@@ -20,15 +20,14 @@ import ru.turbovadim.events.PlayerSwapOriginEvent
 import kotlin.math.min
 
 class HuskTransformIntoZombie : VisibleAbility, Listener {
-    
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "You transform into a Zombie if you're in water for too long.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor("Metamorphosis", OriginSwapper.LineData.LineComponent.LineType.TITLE)
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "You transform into a Zombie if you're in water for too long.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
+
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> =
+        OriginSwapper.LineData.makeLineFor("Metamorphosis", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
     override val key: Key = Key.key("monsterorigins:husk_transform_into_zombie")
 

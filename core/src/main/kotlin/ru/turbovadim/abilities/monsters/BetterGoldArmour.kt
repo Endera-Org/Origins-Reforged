@@ -17,11 +17,9 @@ import java.util.*
 
 class BetterGoldArmour : VisibleAbility, AttributeModifierAbility, Listener {
 
-    override val attribute: Attribute
-        get() = NMSInvoker.armorAttribute
+    override val attribute: Attribute = NMSInvoker.armorAttribute
 
-    override val amount: Double
-        get() = 0.0
+    override val amount: Double = 0.0
 
     override fun getChangedAmount(player: Player): Double {
         var amount = 0
@@ -40,23 +38,19 @@ class BetterGoldArmour : VisibleAbility, AttributeModifierAbility, Listener {
         return amount.toDouble()
     }
 
-    override val operation: AttributeModifier.Operation
-        get() = AttributeModifier.Operation.ADD_NUMBER
+    override val operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER
 
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Your adoration for gold unlocks its hidden power, making golden armor unbreakable and as strong as diamond.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Your adoration for gold unlocks its hidden power, making golden armor unbreakable and as strong as diamond.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Gold Worshipper",
-            OriginSwapper.LineData.LineComponent.LineType.TITLE
-        )
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Gold Worshipper",
+        OriginSwapper.LineData.LineComponent.LineType.TITLE
+    )
 
-    override val key: Key
-        get() = Key.key("monsterorigins:better_gold_armour")
+    override val key: Key = Key.key("monsterorigins:better_gold_armour")
 
     @EventHandler
     fun onPlayerItemDamage(event: PlayerItemDamageEvent) {

@@ -11,11 +11,10 @@ import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class Bouncy : VisibleAbility, Listener {
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor("All blocks act like slime blocks.", LineType.DESCRIPTION)
+    override val description: MutableList<LineComponent> =
+        LineData.makeLineFor("All blocks act like slime blocks.", LineType.DESCRIPTION)
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Bouncy", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Bouncy", LineType.TITLE)
 
     override val key: Key = Key.key("moborigins:bouncy")
 

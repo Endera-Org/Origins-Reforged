@@ -11,26 +11,21 @@ import ru.turbovadim.abilities.types.VisibleAbility
 
 class ColdSlowness : VisibleAbility, AttributeModifierAbility {
 
-    override val attribute: Attribute
-        get() = NMSInvoker.movementSpeedAttribute
+    override val attribute: Attribute = NMSInvoker.movementSpeedAttribute
 
-    override val amount: Double
-        get() = 0.0
+    override val amount: Double = 0.0
 
-    override val operation: AttributeModifier.Operation
-        get() = AttributeModifier.Operation.MULTIPLY_SCALAR_1
+    override val operation: AttributeModifier.Operation = AttributeModifier.Operation.MULTIPLY_SCALAR_1
 
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Your warm body conflicts with colder biomes, slowing you down.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Your warm body conflicts with colder biomes, slowing you down.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor("Warm Body", OriginSwapper.LineData.LineComponent.LineType.TITLE)
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> =
+        OriginSwapper.LineData.makeLineFor("Warm Body", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override val key: Key
-        get() = Key.key("monsterorigins:cold_slowness")
+    override val key: Key = Key.key("monsterorigins:cold_slowness")
 
     override fun getChangedAmount(player: Player): Double {
         val temp = player.location.block.temperature

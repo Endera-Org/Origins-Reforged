@@ -18,17 +18,15 @@ import ru.turbovadim.events.PlayerLeftClickEvent
 
 class WolfHowl : VisibleAbility, Listener, CooldownAbility {
 
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "You can use the left click key when holding nothing to howl, and give speed and strength to nearby wolves and yourself.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "You can use the left click key when holding nothing to howl, and give speed and strength to nearby wolves and yourself.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor("Howl", OriginSwapper.LineData.LineComponent.LineType.TITLE)
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> =
+        OriginSwapper.LineData.makeLineFor("Howl", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override val key: Key
-        get() = Key.key("moborigins:wolf_howl")
+    override val key: Key = Key.key("moborigins:wolf_howl")
 
     @EventHandler
     fun onPlayerLeftClick(event: PlayerLeftClickEvent) {
@@ -58,6 +56,5 @@ class WolfHowl : VisibleAbility, Listener, CooldownAbility {
         }
     }
 
-    override val cooldownInfo: Cooldowns.CooldownInfo
-        get() = Cooldowns.CooldownInfo(900, "wolf_howl")
+    override val cooldownInfo: Cooldowns.CooldownInfo = Cooldowns.CooldownInfo(900, "wolf_howl")
 }

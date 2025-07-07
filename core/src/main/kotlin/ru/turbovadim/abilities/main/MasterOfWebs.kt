@@ -180,8 +180,7 @@ class MasterOfWebs : CooldownAbility, FlightAllowingAbility, Listener, VisibleAb
         return 0.04f
     }
 
-    override val cooldownInfo: CooldownInfo
-        get() = CooldownInfo(120, "web")
+    override val cooldownInfo: CooldownInfo = CooldownInfo(120, "web")
 
     companion object {
         private fun getData(webStuck: Entity): Byte {

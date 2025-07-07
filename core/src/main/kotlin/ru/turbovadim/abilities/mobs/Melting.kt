@@ -12,19 +12,16 @@ import ru.turbovadim.abilities.types.AttributeModifierAbility
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class Melting : VisibleAbility, AttributeModifierAbility {
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor(
-            "As your temperature bar fills up, you'll slowly begin to melt in hot biomes, losing health and speed.",
-            LineType.DESCRIPTION
-        )
+    override val description: MutableList<LineComponent> = LineData.makeLineFor(
+        "As your temperature bar fills up, you'll slowly begin to melt in hot biomes, losing health and speed.",
+        LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Melting", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Melting", LineType.TITLE)
 
     override val key: Key = Key.key("moborigins:melting")
 
-    override val attribute: Attribute
-        get() = NMSInvoker.maxHealthAttribute
+    override val attribute: Attribute = NMSInvoker.maxHealthAttribute
 
     override val amount: Double = 0.0
 

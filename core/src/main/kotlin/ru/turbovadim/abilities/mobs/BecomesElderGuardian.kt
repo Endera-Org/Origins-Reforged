@@ -17,17 +17,15 @@ import ru.turbovadim.events.PlayerSwapOriginEvent.SwapReason
 
 class BecomesElderGuardian : VisibleAbility, Listener {
 
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Defeating an Elder Guardian will turn you into one!",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Defeating an Elder Guardian will turn you into one!",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Become Elder Guardian",
-            OriginSwapper.LineData.LineComponent.LineType.TITLE
-        )
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Become Elder Guardian",
+        OriginSwapper.LineData.LineComponent.LineType.TITLE
+    )
 
     override val key: Key = Key.key("moborigins:becomes_elder_guardian")
 

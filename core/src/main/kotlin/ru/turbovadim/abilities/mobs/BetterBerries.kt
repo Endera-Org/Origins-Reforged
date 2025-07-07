@@ -12,11 +12,10 @@ import ru.turbovadim.abilities.types.VisibleAbility
 import kotlin.math.min
 
 class BetterBerries : VisibleAbility, Listener {
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Berries taste extra delicious to you!", LineType.DESCRIPTION)
+    override val description: MutableList<LineComponent> =
+        LineData.makeLineFor("Berries taste extra delicious to you!", LineType.DESCRIPTION)
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Better Berries", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Better Berries", LineType.TITLE)
 
     override val key: Key = Key.key("moborigins:better_berries")
 

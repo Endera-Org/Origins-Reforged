@@ -13,20 +13,17 @@ import ru.turbovadim.abilities.types.VisibleAbility
 
 class BetterGoldWeapons : VisibleAbility, Listener {
 
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Your evil corruption of gold unlocks a dark power, making golden weapons unbreakable and much stronger.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Your evil corruption of gold unlocks a dark power, making golden weapons unbreakable and much stronger.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Gold Desecration",
-            OriginSwapper.LineData.LineComponent.LineType.TITLE
-        )
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Gold Desecration",
+        OriginSwapper.LineData.LineComponent.LineType.TITLE
+    )
 
-    override val key: Key
-        get() = Key.key("monsterorigins:better_gold_weapons")
+    override val key: Key = Key.key("monsterorigins:better_gold_weapons")
 
     @EventHandler
     fun onPlayerItemDamage(event: PlayerItemDamageEvent) {

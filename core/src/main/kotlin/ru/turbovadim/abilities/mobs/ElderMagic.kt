@@ -18,14 +18,12 @@ import ru.turbovadim.cooldowns.Cooldowns.CooldownInfo
 import ru.turbovadim.events.PlayerLeftClickEvent
 
 class ElderMagic : VisibleAbility, Listener, CooldownAbility {
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor(
-            "You can cast a spell on nearby players to slow down their mining speed.",
-            LineType.DESCRIPTION
-        )
+    override val description: MutableList<LineComponent> = LineData.makeLineFor(
+        "You can cast a spell on nearby players to slow down their mining speed.",
+        LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Elder Magic", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Elder Magic", LineType.TITLE)
 
     override val key: Key = Key.key("moborigins:elder_magic")
 
@@ -53,6 +51,5 @@ class ElderMagic : VisibleAbility, Listener, CooldownAbility {
         }
     }
 
-    override val cooldownInfo: CooldownInfo
-        get() = CooldownInfo(600, "elder_magic")
+    override val cooldownInfo: CooldownInfo = CooldownInfo(600, "elder_magic")
 }

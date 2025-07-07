@@ -147,8 +147,7 @@ abstract class NMSInvoker : Listener {
 
     abstract fun applyFont(component: Component, font: Key): Component
 
-    open val ominousBottle: Material?
-        get() = null
+    open val ominousBottle: Material? = null
 
     abstract val armorAttribute: Attribute
 

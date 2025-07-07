@@ -39,8 +39,8 @@ class PermanentHorse : VisibleAbility, Listener {
         )
 
 
-    override val title: List<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor("Half Horse", OriginSwapper.LineData.LineComponent.LineType.TITLE)
+    override val title: List<OriginSwapper.LineData.LineComponent> =
+        OriginSwapper.LineData.makeLineFor("Half Horse", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
     override val key = Key.key("fantasyorigins:permanent_horse")
 

@@ -15,18 +15,16 @@ import ru.turbovadim.abilities.types.VisibleAbility
 import kotlin.math.min
 
 class WarpedFungusEater : VisibleAbility, Listener {
-    
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "You can eat warped fungus to recover some hunger, along with a small speed boost.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor("Fungus Hunger", OriginSwapper.LineData.LineComponent.LineType.TITLE)
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "You can eat warped fungus to recover some hunger, along with a small speed boost.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
 
-    override val key: Key
-        get() = Key.key("moborigus:warped_fungus_eater")
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> =
+        OriginSwapper.LineData.makeLineFor("Fungus Hunger", OriginSwapper.LineData.LineComponent.LineType.TITLE)
+
+    override val key: Key = Key.key("moborigus:warped_fungus_eater")
 
     private val lastInteractedTicks: MutableMap<Player, Int> = HashMap()
 

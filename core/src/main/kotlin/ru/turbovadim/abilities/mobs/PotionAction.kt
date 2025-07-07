@@ -17,11 +17,10 @@ import ru.turbovadim.cooldowns.Cooldowns.CooldownInfo
 import ru.turbovadim.events.PlayerLeftClickEvent
 
 class PotionAction : VisibleAbility, Listener, CooldownAbility {
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor(
-            "Get a random potion effect, based on the situation you are in.",
-            LineType.DESCRIPTION
-        )
+    override val description: MutableList<LineComponent> = LineData.makeLineFor(
+        "Get a random potion effect, based on the situation you are in.",
+        LineType.DESCRIPTION
+    )
 
     override val title: MutableList<LineComponent> = LineData.makeLineFor("Perfect Potion", LineType.TITLE)
 
@@ -49,6 +48,5 @@ class PotionAction : VisibleAbility, Listener, CooldownAbility {
         }
     }
 
-    override val cooldownInfo: CooldownInfo
-        get() = CooldownInfo(600, "potion_action")
+    override val cooldownInfo: CooldownInfo = CooldownInfo(600, "potion_action")
 }

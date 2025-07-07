@@ -20,8 +20,7 @@ import ru.turbovadim.OriginsReforged.Companion.instance
 class PlayerLeftClickEvent(private val playerInteractEvent: PlayerInteractEvent) : PlayerEvent(
     playerInteractEvent.getPlayer()
 ) {
-    val interactionPoint: Location?
-        get() = playerInteractEvent.interactionPoint
+    val interactionPoint: Location? = playerInteractEvent.interactionPoint
 
     fun hasBlock(): Boolean {
         return playerInteractEvent.hasBlock()
@@ -31,17 +30,13 @@ class PlayerLeftClickEvent(private val playerInteractEvent: PlayerInteractEvent)
         return playerInteractEvent.hasItem()
     }
 
-    val item: ItemStack?
-        get() = playerInteractEvent.getItem()
+    val item: ItemStack? = playerInteractEvent.getItem()
 
-    val material: Material
-        get() = playerInteractEvent.getMaterial()
+    val material: Material = playerInteractEvent.getMaterial()
 
-    val clickedBlock: Block?
-        get() = playerInteractEvent.clickedBlock
+    val clickedBlock: Block? = playerInteractEvent.clickedBlock
 
-    val blockFace: BlockFace?
-        get() = playerInteractEvent.getBlockFace()
+    val blockFace: BlockFace? = playerInteractEvent.getBlockFace()
 
     override fun getHandlers(): HandlerList {
         return handlerList

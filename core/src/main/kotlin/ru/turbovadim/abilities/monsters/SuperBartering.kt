@@ -16,17 +16,15 @@ import ru.turbovadim.abilities.types.VisibleAbility
 import java.util.*
 
 class SuperBartering : VisibleAbility, Listener {
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "You're brilliant at bartering after a lifetime of experience, every time you barter you get between 2 and 5 times as many valuables.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "You're brilliant at bartering after a lifetime of experience, every time you barter you get between 2 and 5 times as many valuables.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Bartering Master",
-            OriginSwapper.LineData.LineComponent.LineType.TITLE
-        )
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Bartering Master",
+        OriginSwapper.LineData.LineComponent.LineType.TITLE
+    )
 
     override val key: Key = Key.key("monsterorigins:super_bartering")
 

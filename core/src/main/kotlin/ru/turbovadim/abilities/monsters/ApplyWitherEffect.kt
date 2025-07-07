@@ -12,17 +12,15 @@ import ru.turbovadim.abilities.types.VisibleAbility
 
 class ApplyWitherEffect : VisibleAbility, Listener {
 
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Anything you hit gets the Wither effect.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Anything you hit gets the Wither effect.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor("Wither", OriginSwapper.LineData.LineComponent.LineType.TITLE)
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> =
+        OriginSwapper.LineData.makeLineFor("Wither", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override val key: Key
-        get() = Key.key("monsterorigins:apply_wither_effect")
+    override val key: Key = Key.key("monsterorigins:apply_wither_effect")
 
     @EventHandler
     fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {

@@ -283,83 +283,50 @@ class NMSInvokerV1_21_3 : NMSInvoker() {
         return handle.getDestroySpeed(b)
     }
 
-    override val armorAttribute: Attribute
-        get() = Attribute.ARMOR
-
-    override val maxHealthAttribute: Attribute
-        get() = Attribute.MAX_HEALTH
-
-    override val movementSpeedAttribute: Attribute
-        get() = Attribute.MOVEMENT_SPEED
-
-    override val attackDamageAttribute: Attribute
-        get() = Attribute.ATTACK_DAMAGE
-
-    override val flyingSpeedAttribute: Attribute
-        get() = Attribute.FLYING_SPEED
-
-    override val attackKnockbackAttribute: Attribute
-        get() = Attribute.ATTACK_KNOCKBACK
-
-    override val attackSpeedAttribute: Attribute
-        get() = Attribute.ATTACK_SPEED
-
-    override val armorToughnessAttribute: Attribute
-        get() = Attribute.ARMOR_TOUGHNESS
-
-    override val luckAttribute: Attribute
-        get() = Attribute.LUCK
-
-    override val horseJumpStrengthAttribute: Attribute
-        get() = Attribute.JUMP_STRENGTH
-
-    override val spawnReinforcementsAttribute: Attribute
-        get() = Attribute.SPAWN_REINFORCEMENTS
-
-    override val followRangeAttribute: Attribute
-        get() = Attribute.FOLLOW_RANGE
-
-    override val knockbackResistanceAttribute: Attribute
-        get() = Attribute.KNOCKBACK_RESISTANCE
-
-    override val fallDamageMultiplierAttribute: Attribute?
-        get() = Attribute.FALL_DAMAGE_MULTIPLIER
-
-    override val maxAbsorptionAttribute: Attribute?
-        get() = Attribute.MAX_ABSORPTION
-
-    override val safeFallDistanceAttribute: Attribute?
-        get() = Attribute.SAFE_FALL_DISTANCE
-
-    override val scaleAttribute: Attribute?
-        get() = Attribute.SCALE
-
-    override val stepHeightAttribute: Attribute?
-        get() = Attribute.STEP_HEIGHT
-
-    override val gravityAttribute: Attribute?
-        get() = Attribute.GRAVITY
-
-    override val jumpStrengthAttribute: Attribute?
-        get() = Attribute.JUMP_STRENGTH
-
-    override val burningTimeAttribute: Attribute?
-        get() = Attribute.BURNING_TIME
-
-    override val explosionKnockbackResistanceAttribute: Attribute?
-        get() = Attribute.EXPLOSION_KNOCKBACK_RESISTANCE
-
-    override val movementEfficiencyAttribute: Attribute?
-        get() = Attribute.MOVEMENT_EFFICIENCY
-
-    override val oxygenBonusAttribute: Attribute?
-        get() = Attribute.OXYGEN_BONUS
-
-    override val waterMovementEfficiencyAttribute: Attribute?
-        get() = Attribute.WATER_MOVEMENT_EFFICIENCY
-
-    override val temptRangeAttribute: Attribute?
-        get() = Attribute.TEMPT_RANGE
+    override val armorAttribute: Attribute = Attribute.ARMOR
+    override val maxHealthAttribute: Attribute = Attribute.MAX_HEALTH
+    override val movementSpeedAttribute: Attribute = Attribute.MOVEMENT_SPEED
+    override val attackDamageAttribute: Attribute = Attribute.ATTACK_DAMAGE
+    override val flyingSpeedAttribute: Attribute = Attribute.FLYING_SPEED
+    override val attackKnockbackAttribute: Attribute = Attribute.ATTACK_KNOCKBACK
+    override val attackSpeedAttribute: Attribute = Attribute.ATTACK_SPEED
+    override val armorToughnessAttribute: Attribute = Attribute.ARMOR_TOUGHNESS
+    override val luckAttribute: Attribute = Attribute.LUCK
+    override val horseJumpStrengthAttribute: Attribute = Attribute.JUMP_STRENGTH
+    override val spawnReinforcementsAttribute: Attribute = Attribute.SPAWN_REINFORCEMENTS
+    override val followRangeAttribute: Attribute = Attribute.FOLLOW_RANGE
+    override val knockbackResistanceAttribute: Attribute = Attribute.KNOCKBACK_RESISTANCE
+    override val fallDamageMultiplierAttribute: Attribute? = Attribute.FALL_DAMAGE_MULTIPLIER
+    override val maxAbsorptionAttribute: Attribute? = Attribute.MAX_ABSORPTION
+    override val safeFallDistanceAttribute: Attribute? = Attribute.SAFE_FALL_DISTANCE
+    override val scaleAttribute: Attribute? = Attribute.SCALE
+    override val stepHeightAttribute: Attribute? = Attribute.STEP_HEIGHT
+    override val gravityAttribute: Attribute? = Attribute.GRAVITY
+    override val jumpStrengthAttribute: Attribute? = Attribute.JUMP_STRENGTH
+    override val burningTimeAttribute: Attribute? = Attribute.BURNING_TIME
+    override val explosionKnockbackResistanceAttribute: Attribute? = Attribute.EXPLOSION_KNOCKBACK_RESISTANCE
+    override val movementEfficiencyAttribute: Attribute? = Attribute.MOVEMENT_EFFICIENCY
+    override val oxygenBonusAttribute: Attribute? = Attribute.OXYGEN_BONUS
+    override val waterMovementEfficiencyAttribute: Attribute? = Attribute.WATER_MOVEMENT_EFFICIENCY
+    override val temptRangeAttribute: Attribute? = Attribute.TEMPT_RANGE
+    override val nauseaEffect: PotionEffectType = PotionEffectType.NAUSEA
+    override val miningFatigueEffect: PotionEffectType = PotionEffectType.MINING_FATIGUE
+    override val hasteEffect: PotionEffectType = PotionEffectType.HASTE
+    override val unbreakingEnchantment: Enchantment = Enchantment.UNBREAKING
+    override val efficiencyEnchantment: Enchantment = Enchantment.EFFICIENCY
+    override val respirationEnchantment: Enchantment = Enchantment.RESPIRATION
+    override val jumpBoostEffect: PotionEffectType = PotionEffectType.JUMP_BOOST
+    override val aquaAffinityEnchantment: Enchantment = Enchantment.AQUA_AFFINITY
+    override val slownessEffect: PotionEffectType = PotionEffectType.SLOWNESS
+    override val baneOfArthropodsEnchantment: Enchantment = Enchantment.BANE_OF_ARTHROPODS
+    override val strengthEffect: PotionEffectType = PotionEffectType.STRENGTH
+    override val blockInteractionRangeAttribute: Attribute? = Attribute.BLOCK_INTERACTION_RANGE
+    override val entityInteractionRangeAttribute: Attribute? = Attribute.ENTITY_INTERACTION_RANGE
+    override val blockBreakSpeedAttribute: Attribute? = Attribute.BLOCK_BREAK_SPEED
+    override val miningEfficiencyAttribute: Attribute? = Attribute.MINING_EFFICIENCY
+    override val sneakingSpeedAttribute: Attribute? = Attribute.SNEAKING_SPEED
+    override val submergedMiningSpeedAttribute: Attribute? = Attribute.SUBMERGED_MINING_SPEED
+    override val sweepingDamageRatioAttribute: Attribute? = Attribute.SWEEPING_DAMAGE_RATIO
 
     override fun setNoPhysics(player: Player, noPhysics: Boolean) {
         (player as CraftPlayer).handle.noPhysics = noPhysics
@@ -423,36 +390,6 @@ class NMSInvokerV1_21_3 : NMSInvoker() {
         }
     }
 
-    override val nauseaEffect: PotionEffectType
-        get() = PotionEffectType.NAUSEA
-
-    override val miningFatigueEffect: PotionEffectType
-        get() = PotionEffectType.MINING_FATIGUE
-
-    override val hasteEffect: PotionEffectType
-        get() = PotionEffectType.HASTE
-
-    override val unbreakingEnchantment: Enchantment
-        get() = Enchantment.UNBREAKING
-
-    override val efficiencyEnchantment: Enchantment
-        get() = Enchantment.EFFICIENCY
-
-    override val respirationEnchantment: Enchantment
-        get() = Enchantment.RESPIRATION
-
-    override val aquaAffinityEnchantment: Enchantment
-        get() = Enchantment.AQUA_AFFINITY
-
-    override val jumpBoostEffect: PotionEffectType
-        get() = PotionEffectType.JUMP_BOOST
-
-    override val slownessEffect: PotionEffectType
-        get() = PotionEffectType.SLOWNESS
-
-    override val baneOfArthropodsEnchantment: Enchantment
-        get() = Enchantment.BANE_OF_ARTHROPODS
-
     override fun getRespawnLocation(player: Player): Location? {
         return player.respawnLocation
     }
@@ -474,9 +411,6 @@ class NMSInvokerV1_21_3 : NMSInvoker() {
     ) {
         instance.addModifier(AttributeModifier(key, amount, operation, EquipmentSlotGroup.ANY))
     }
-
-    override val strengthEffect: PotionEffectType
-        get() = PotionEffectType.STRENGTH
 
     override fun dealDryOutDamage(entity: LivingEntity, amount: Int) {
         entity.damage(amount.toDouble(), DamageSource.builder(DamageType.DRY_OUT).build())
@@ -506,27 +440,6 @@ class NMSInvokerV1_21_3 : NMSInvoker() {
         player.sendBlockDamage(location, damage, entity)
     }
 
-    override val blockInteractionRangeAttribute: Attribute?
-        get() = Attribute.BLOCK_INTERACTION_RANGE
-
-    override val entityInteractionRangeAttribute: Attribute?
-        get() = Attribute.ENTITY_INTERACTION_RANGE
-
-    override val blockBreakSpeedAttribute: Attribute?
-        get() = Attribute.BLOCK_BREAK_SPEED
-
-    override val miningEfficiencyAttribute: Attribute?
-        get() = Attribute.MINING_EFFICIENCY
-
-    override val sneakingSpeedAttribute: Attribute?
-        get() = Attribute.SNEAKING_SPEED
-
-    override val submergedMiningSpeedAttribute: Attribute?
-        get() = Attribute.SUBMERGED_MINING_SPEED
-
-    override val sweepingDamageRatioAttribute: Attribute?
-        get() = Attribute.SWEEPING_DAMAGE_RATIO
-
     override fun setWorldBorderOverlay(player: Player, show: Boolean) {
         if (show) {
             val border = Bukkit.createWorldBorder()
@@ -546,6 +459,5 @@ class NMSInvokerV1_21_3 : NMSInvoker() {
         OriginsReforgedBlockDamageAbortEvent(event.player, event.getBlock(), event.itemInHand).callEvent()
     }
 
-    override val ominousBottle: Material?
-        get() = Material.OMINOUS_BOTTLE
+    override val ominousBottle: Material? = Material.OMINOUS_BOTTLE
 }

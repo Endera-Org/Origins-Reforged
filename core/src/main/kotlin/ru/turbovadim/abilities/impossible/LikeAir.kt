@@ -16,12 +16,10 @@ class LikeAir : VisibleAbility, Listener {
     // Starting after version 2.2.14 this ability is in the default avian.json file however in earlier versions it will not have saved
     override val key: Key = Key.key("origins:like_air")
 
-    override val description: MutableList<LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "Modifiers to your walking speed also apply while you're airborne.",
-            LineComponent.LineType.DESCRIPTION
-        )
+    override val description: MutableList<LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "Modifiers to your walking speed also apply while you're airborne.",
+        LineComponent.LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor("Like Air", LineComponent.LineType.TITLE)
+    override val title: MutableList<LineComponent> = OriginSwapper.LineData.makeLineFor("Like Air", LineComponent.LineType.TITLE)
 }

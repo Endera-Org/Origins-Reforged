@@ -12,11 +12,7 @@ import ru.turbovadim.abilities.types.VisibleAbility
 class NetherSpawn : DefaultSpawnAbility, VisibleAbility {
     override val key: Key = Key.key("origins:nether_spawn")
 
-    override val world: World?
-        get() {
-            val nether = OriginsReforged.mainConfig.worlds.worldNether
-            return Bukkit.getWorld(nether) ?: Bukkit.getWorld("world_nether")
-        }
+    override val world: World? = Bukkit.getWorld(OriginsReforged.mainConfig.worlds.worldNether) ?: Bukkit.getWorld("world_nether")
 
 
     override val description: MutableList<LineComponent> = makeLineFor("Your natural spawn will be in the Nether.", LineComponent.LineType.DESCRIPTION)

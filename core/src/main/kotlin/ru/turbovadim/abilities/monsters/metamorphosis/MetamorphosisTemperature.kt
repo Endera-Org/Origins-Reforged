@@ -18,10 +18,7 @@ import kotlin.math.min
 
 class MetamorphosisTemperature : CooldownAbility, Listener {
 
-    override val key: Key
-        get() {
-            return Key.key("monsterorigins:metamorphosis_temperature")
-        }
+    override val key: Key = Key.key("monsterorigins:metamorphosis_temperature")
 
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent) {

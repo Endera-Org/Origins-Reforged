@@ -18,15 +18,11 @@ class WolfPackAttack : AttributeModifierAbility {
         return (if (entities.size >= 4) 2 else 0).toDouble()
     }
 
-    override val attribute: Attribute
-        get() = NMSInvoker.attackDamageAttribute
+    override val attribute: Attribute = NMSInvoker.attackDamageAttribute
 
-    override val amount: Double
-        get() = 0.0
+    override val amount: Double = 0.0
 
-    override val operation: AttributeModifier.Operation
-        get() = AttributeModifier.Operation.ADD_NUMBER
+    override val operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER
 
-    override val key: Key
-        get() = Key.key("moborigins:wolf_pack_attack")
+    override val key: Key = Key.key("moborigins:wolf_pack_attack")
 }

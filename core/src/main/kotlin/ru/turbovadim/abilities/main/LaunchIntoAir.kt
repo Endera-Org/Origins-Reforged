@@ -37,6 +37,5 @@ class LaunchIntoAir : VisibleAbility, Listener, CooldownAbility {
         }
     }
 
-    override val cooldownInfo: CooldownInfo
-        get() = CooldownInfo(600, "launch")
+    override val cooldownInfo: CooldownInfo = CooldownInfo(600, "launch")
 }

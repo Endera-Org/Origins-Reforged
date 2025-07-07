@@ -27,8 +27,7 @@ class HeatSlowness : VisibleAbility, AttributeModifierAbility {
         LineComponent.LineType.TITLE
     )
 
-    override val key: Key
-        get() = Key.key("monsterorigins:heat_slowness")
+    override val key: Key = Key.key("monsterorigins:heat_slowness")
 
     override fun getChangedAmount(player: Player): Double {
         val temp = player.location.block.temperature

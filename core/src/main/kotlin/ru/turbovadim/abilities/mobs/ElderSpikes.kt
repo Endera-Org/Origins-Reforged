@@ -12,11 +12,10 @@ import ru.turbovadim.abilities.types.VisibleAbility
 import java.util.*
 
 class ElderSpikes : VisibleAbility, Listener {
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Spikes that have a chance to damage attackers!", LineType.DESCRIPTION)
+    override val description: MutableList<LineComponent> =
+        LineData.makeLineFor("Spikes that have a chance to damage attackers!", LineType.DESCRIPTION)
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Elder Spikes", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Elder Spikes", LineType.TITLE)
 
     override val key: Key = Key.key("moborigins:elder_spikes")
 

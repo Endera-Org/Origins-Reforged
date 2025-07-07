@@ -11,14 +11,12 @@ import ru.turbovadim.OriginSwapper.LineData.LineComponent.LineType
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class BetterPotions : VisibleAbility, Listener {
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor(
-            "You consume potions better than most, Potions will last longer when you drink them.",
-            LineType.DESCRIPTION
-        )
+    override val description: MutableList<LineComponent> = LineData.makeLineFor(
+        "You consume potions better than most, Potions will last longer when you drink them.",
+        LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Better Potions", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Better Potions", LineType.TITLE)
 
     override val key: Key = Key.key("moborigins:better_potions")
 

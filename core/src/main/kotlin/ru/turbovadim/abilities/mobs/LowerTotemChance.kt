@@ -14,11 +14,10 @@ import ru.turbovadim.abilities.types.VisibleAbility
 import java.util.*
 
 class LowerTotemChance : VisibleAbility, Listener {
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Totems have a 10% chance not to break on use.", LineType.DESCRIPTION)
+    override val description: MutableList<LineComponent> =
+        LineData.makeLineFor("Totems have a 10% chance not to break on use.", LineType.DESCRIPTION)
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Arcane Totems", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Arcane Totems", LineType.TITLE)
 
     override val key: Key = Key.key("moborigins:lower_totem_chance")
 

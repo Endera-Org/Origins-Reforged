@@ -11,15 +11,14 @@ import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class SlownessArrows : VisibleAbility, Listener {
-    
-    override val description: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor(
-            "All arrows you shoot have the slowness effect.",
-            OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
-        )
 
-    override val title: MutableList<OriginSwapper.LineData.LineComponent>
-        get() = OriginSwapper.LineData.makeLineFor("Frozen Arrows", OriginSwapper.LineData.LineComponent.LineType.TITLE)
+    override val description: MutableList<OriginSwapper.LineData.LineComponent> = OriginSwapper.LineData.makeLineFor(
+        "All arrows you shoot have the slowness effect.",
+        OriginSwapper.LineData.LineComponent.LineType.DESCRIPTION
+    )
+
+    override val title: MutableList<OriginSwapper.LineData.LineComponent> =
+        OriginSwapper.LineData.makeLineFor("Frozen Arrows", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
     override val key: Key = Key.key("monsterorigins:slowness_arrows")
 

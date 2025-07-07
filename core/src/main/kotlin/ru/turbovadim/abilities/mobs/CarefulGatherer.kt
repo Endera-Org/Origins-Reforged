@@ -11,11 +11,10 @@ import ru.turbovadim.OriginSwapper.LineData.LineComponent.LineType
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class CarefulGatherer : VisibleAbility, Listener {
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Sweet Berry Bushes don't hurt you at all.", LineType.DESCRIPTION)
+    override val description: MutableList<LineComponent> =
+        LineData.makeLineFor("Sweet Berry Bushes don't hurt you at all.", LineType.DESCRIPTION)
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Careful Gatherer", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Careful Gatherer", LineType.TITLE)
 
     override val key: Key = Key.key("moborigins:careful_gatherer")
 
