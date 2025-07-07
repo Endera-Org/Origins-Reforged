@@ -173,17 +173,13 @@ class NMSInvokerV1_21_4 : NMSInvoker() {
 
 
 
-    override fun getGenericScaleAttribute(): Attribute? {
-        return Attribute.SCALE
-    }
+    override val genericScaleAttribute: Attribute? = Attribute.SCALE
+
+    override val genericJumpStrengthAttribute: Attribute = Attribute.JUMP_STRENGTH
 
     @Suppress("UnstableApiUsage")
     override fun transferDamageEvent(entity: LivingEntity, event: EntityDamageEvent) {
         entity.damage(event.damage, event.damageSource)
-    }
-
-    override fun getGenericJumpStrengthAttribute(): Attribute {
-        return Attribute.JUMP_STRENGTH
     }
 
     @EventHandler

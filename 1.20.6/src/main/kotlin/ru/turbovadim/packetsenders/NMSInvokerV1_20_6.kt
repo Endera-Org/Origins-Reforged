@@ -161,23 +161,15 @@ class NMSInvokerV1_20_6 : NMSInvoker() {
         }
         lastVec3Map.put(player, p.deltaMovement)
     }
-
-
-
-
-
-    override fun getGenericScaleAttribute(): Attribute? {
-        return Attribute.GENERIC_SCALE
-    }
+    
+    override val genericScaleAttribute: Attribute? = Attribute.GENERIC_SCALE
 
     @Suppress("UnstableApiUsage")
     override fun transferDamageEvent(entity: LivingEntity, event: EntityDamageEvent) {
         entity.damage(event.damage, event.damageSource)
     }
 
-    override fun getGenericJumpStrengthAttribute(): Attribute {
-        return Attribute.GENERIC_JUMP_STRENGTH
-    }
+    override val genericJumpStrengthAttribute: Attribute = Attribute.GENERIC_JUMP_STRENGTH
 
     @EventHandler
     fun onEntityDismount(event: EntityDismountEvent) {

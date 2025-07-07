@@ -388,7 +388,7 @@ class OriginsReforged : OriginsAddon() {
             Stronger(),
             UndeadAlly()
         )
-        if (NMSInvoker.getGenericScaleAttribute() != null) {
+        if (NMSInvoker.genericScaleAttribute != null) {
             abilities.add(LargeBody())
             abilities.add(SmallBody())
         }

@@ -49,11 +49,11 @@ abstract class NMSInvoker : Listener {
 
     abstract fun bounce(player: Player)
 
-    abstract fun getGenericScaleAttribute(): Attribute?
+    abstract val genericScaleAttribute: Attribute?
 
     abstract fun transferDamageEvent(entity: LivingEntity, event: EntityDamageEvent)
 
-    abstract fun getGenericJumpStrengthAttribute(): Attribute
+    abstract val genericJumpStrengthAttribute: Attribute
 
     abstract fun getFortuneEnchantment(): Enchantment
 

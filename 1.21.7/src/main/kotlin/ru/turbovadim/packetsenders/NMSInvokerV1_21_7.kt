@@ -171,17 +171,12 @@ class NMSInvokerV1_21_7 : NMSInvoker() {
     }
 
 
-    override fun getGenericScaleAttribute(): Attribute? {
-        return Attribute.SCALE
-    }
+    override val genericScaleAttribute: Attribute? = Attribute.SCALE
+    override val genericJumpStrengthAttribute: Attribute = Attribute.JUMP_STRENGTH
 
     @Suppress("UnstableApiUsage")
     override fun transferDamageEvent(entity: LivingEntity, event: EntityDamageEvent) {
         entity.damage(event.damage, event.damageSource)
-    }
-
-    override fun getGenericJumpStrengthAttribute(): Attribute {
-        return Attribute.JUMP_STRENGTH
     }
 
     @EventHandler
@@ -285,8 +280,7 @@ class NMSInvokerV1_21_7 : NMSInvoker() {
         return handle.getDestroySpeed(b)
     }
 
-    override val armorAttribute: Attribute
-        get() = Attribute.ARMOR
+    override val armorAttribute: Attribute = Attribute.ARMOR
 
     override val maxHealthAttribute: Attribute
         get() = Attribute.MAX_HEALTH

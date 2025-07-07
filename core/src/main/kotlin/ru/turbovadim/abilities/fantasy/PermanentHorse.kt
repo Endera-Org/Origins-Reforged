@@ -107,7 +107,7 @@ class PermanentHorse : VisibleAbility, Listener {
                         if (player.persistentDataContainer.has(teleportingKey) || player.vehicle != null) return@runForAbilityAsync
 
                         val horse = player.world.spawnEntity(player.location, EntityType.HORSE) as Horse
-                        val jumpAttr = horse.getAttribute(NMSInvoker.getGenericJumpStrengthAttribute())
+                        val jumpAttr = horse.getAttribute(NMSInvoker.genericJumpStrengthAttribute)
                         val speedAttr = horse.getAttribute(NMSInvoker.movementSpeedAttribute)
 
                         OriginSwapper.getOrigin(player, "origin")?.let { origin ->
