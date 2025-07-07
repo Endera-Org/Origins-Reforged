@@ -6,9 +6,7 @@ import ru.turbovadim.abilities.types.ParticleAbility
 
 class FlameParticles : ParticleAbility() {
 
-    override fun getKey(): Key {
-        return Key.key("origins:flame_particles")
-    }
+    override val key: Key = Key.key("origins:flame_particles")
 
     // Using the new particleType property with PacketEvents ParticleType
     override val particleType = ParticleTypes.FLAME!!

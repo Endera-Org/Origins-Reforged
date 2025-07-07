@@ -9,9 +9,7 @@ import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.abilities.types.Ability
 
 class DamageFromSnowballs : Ability, Listener {
-    override fun getKey(): Key {
-        return Key.key("origins:damage_from_snowballs")
-    }
+    override val key: Key = Key.key("origins:damage_from_snowballs")
 
     @EventHandler
     fun onProjectileHit(event: ProjectileHitEvent) {

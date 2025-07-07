@@ -20,9 +20,7 @@ class SmallBody : VisibleAbility, AttributeModifierAbility {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:small_body")
-    }
+    override val key: Key = Key.key("fantasyorigins:small_body")
 
     override val attribute: Attribute = NMSInvoker.scaleAttribute!!
 

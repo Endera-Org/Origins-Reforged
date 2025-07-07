@@ -41,5 +41,6 @@ class TimidCreature : VisibleAbility, AttributeModifierAbility {
             OriginSwapper.LineData.LineComponent.LineType.TITLE
         )
 
-    override fun getKey(): Key = Key.key("moborigins:timid_creature")
+    override val key: Key
+        get() = Key.key("moborigins:timid_creature")
 }

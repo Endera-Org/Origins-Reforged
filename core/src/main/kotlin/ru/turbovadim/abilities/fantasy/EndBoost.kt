@@ -24,9 +24,7 @@ class EndBoost : VisibleAbility, MultiAbility {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:end_boost")
-    }
+    override val key: Key = Key.key("fantasyorigins:end_boost")
 
     override val abilities: MutableList<Ability> = mutableListOf(EndStrength, EndHealth)
 
@@ -42,11 +40,11 @@ class EndBoost : VisibleAbility, MultiAbility {
             if (player.world.environment == World.Environment.THE_END) 1.6 else 0.0
 
         override val operation: AttributeModifier.Operation = AttributeModifier.Operation.MULTIPLY_SCALAR_1
-        override fun getKey(): Key = Key.key("fantasyorigins:end_strength")
+        override val key: Key = Key.key("fantasyorigins:end_strength")
     }
 
     class EndHealthImpl : AttributeModifierAbility {
-        override fun getKey(): Key = Key.key("fantasyorigins:end_health")
+        override val key: Key = Key.key("fantasyorigins:end_health")
         override val attribute: Attribute = NMSInvoker.maxHealthAttribute
         override val amount: Double = 0.0
         override fun getChangedAmount(player: Player): Double =

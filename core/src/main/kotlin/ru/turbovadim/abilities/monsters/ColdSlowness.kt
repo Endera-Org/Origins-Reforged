@@ -29,7 +29,8 @@ class ColdSlowness : VisibleAbility, AttributeModifierAbility {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Warm Body", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override fun getKey(): Key = Key.key("monsterorigins:cold_slowness")
+    override val key: Key
+        get() = Key.key("monsterorigins:cold_slowness")
 
     override fun getChangedAmount(player: Player): Double {
         val temp = player.location.block.temperature

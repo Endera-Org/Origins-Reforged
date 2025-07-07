@@ -28,9 +28,7 @@ import ru.turbovadim.abilities.types.VisibleAbility
 import java.util.function.Predicate
 
 class Phasing : DependantAbility, VisibleAbility, FlightAllowingAbility, BreakSpeedModifierAbility, Listener {
-    override fun getKey(): Key {
-        return Key.key("origins:phasing")
-    }
+    override val key: Key = Key.key("origins:phasing")
 
     override val dependencyKey: Key = Key.key("origins:phantomize")
 

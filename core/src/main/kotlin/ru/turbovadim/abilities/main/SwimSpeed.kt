@@ -83,9 +83,7 @@ class SwimSpeed : Listener, VisibleAbility {
         }
     }
 
-    override fun getKey(): Key {
-        return Key.key("origins:swim_speed")
-    }
+    override val key: Key = Key.key("origins:swim_speed")
 
     override val description: MutableList<LineComponent> = makeLineFor("Your underwater speed is increased.", LineComponent.LineType.DESCRIPTION)
 

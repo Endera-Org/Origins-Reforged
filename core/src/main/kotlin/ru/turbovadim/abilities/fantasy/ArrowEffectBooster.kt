@@ -22,9 +22,8 @@ class ArrowEffectBooster : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:arrow_effect_booster")
-    }
+    override val key: Key = Key.key("fantasyorigins:arrow_effect_booster")
+
 
     @EventHandler
     fun onEntityShootBow(event: EntityShootBowEvent) {

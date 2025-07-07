@@ -15,9 +15,7 @@ import ru.turbovadim.abilities.types.DependantAbility
 
 class PhantomizeOverlay : DependantAbility, Listener {
 
-    override fun getKey(): Key {
-        return Key.key("origins:phantomize_overlay")
-    }
+    override val key: Key = Key.key("origins:phantomize_overlay")
 
     override val dependencyKey: Key = Key.key("origins:phantomize")
 

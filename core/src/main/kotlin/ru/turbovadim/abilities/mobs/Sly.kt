@@ -26,5 +26,5 @@ class Sly : VisibleAbility, AttributeModifierAbility {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key = Key.key("moborigins:sly")
+    override val key: Key = Key.key("moborigins:sly")
 }

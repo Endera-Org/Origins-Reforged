@@ -53,9 +53,7 @@ class FreshAir : VisibleAbility, Listener {
     }
 
 
-    override fun getKey(): Key {
-        return Key.key("origins:fresh_air")
-    }
+    override val key: Key = Key.key("origins:fresh_air")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "When sleeping, your bed needs to be at an altitude of at least ${OriginsReforged.mainConfig.extraSettings.freshAirRequiredSleepHeight} blocks, so you can breathe fresh air.",

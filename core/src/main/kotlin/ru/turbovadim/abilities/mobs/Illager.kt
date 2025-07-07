@@ -8,9 +8,7 @@ import org.bukkit.event.entity.EntityTargetLivingEntityEvent
 import ru.turbovadim.abilities.types.Ability
 
 class Illager : Ability, Listener {
-    override fun getKey(): Key {
-        return Key.key("moborigins:illager")
-    }
+    override val key: Key = Key.key("moborigins:illager")
 
     private val ILLAGERS = listOf(
         EntityType.ILLUSIONER,

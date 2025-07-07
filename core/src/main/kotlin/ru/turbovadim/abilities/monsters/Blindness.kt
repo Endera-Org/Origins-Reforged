@@ -20,7 +20,8 @@ class Blindness : VisibleAbility, Listener {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Blindness", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override fun getKey(): Key = Key.key("monsterorigins:blindness")
+    override val key: Key
+        get() = Key.key("monsterorigins:blindness")
 
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent) {

@@ -20,7 +20,5 @@ class FullMoonAttack : AttributeModifierAbility {
 
     override val operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:full_moon_attack")
-    }
+    override val key: Key = Key.key("moborigins:full_moon_attack")
 }

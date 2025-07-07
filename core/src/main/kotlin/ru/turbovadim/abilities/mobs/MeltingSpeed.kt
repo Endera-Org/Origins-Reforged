@@ -8,12 +8,9 @@ import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.abilities.types.AttributeModifierAbility
 
 class MeltingSpeed : AttributeModifierAbility {
-    override fun getKey(): Key {
-        return Key.key("moborigins:melting_speed")
-    }
+    override val key: Key = Key.key("moborigins:melting_speed")
 
-    override val attribute: Attribute
-        get() = NMSInvoker.movementSpeedAttribute
+    override val attribute: Attribute = NMSInvoker.movementSpeedAttribute
 
     override val amount: Double = 0.0
 

@@ -21,9 +21,7 @@ class Melting : VisibleAbility, AttributeModifierAbility {
     override val title: MutableList<LineComponent>
         get() = LineData.makeLineFor("Melting", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:melting")
-    }
+    override val key: Key = Key.key("moborigins:melting")
 
     override val attribute: Attribute
         get() = NMSInvoker.maxHealthAttribute

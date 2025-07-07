@@ -94,9 +94,7 @@ open class CatVision : VisibleAbility, Listener {
         }
     }
 
-    override fun getKey(): Key {
-        return Key.key("origins:cat_vision")
-    }
+    override val key: Key = Key.key("origins:cat_vision")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "You can slightly see in the dark when not in water.",

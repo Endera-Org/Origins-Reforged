@@ -19,5 +19,5 @@ class SmallWeakKnockback : Listener, AttributeModifierAbility {
 
     override val operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER
 
-    override fun getKey(): Key = Key.key("moborigins:small_weak_knockback")
+    override val key: Key = Key.key("moborigins:small_weak_knockback")
 }

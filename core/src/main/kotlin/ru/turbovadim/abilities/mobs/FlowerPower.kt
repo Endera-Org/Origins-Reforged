@@ -21,9 +21,7 @@ class FlowerPower : VisibleAbility, Listener {
     override val title: MutableList<LineComponent>
         get() = LineData.makeLineFor("Flower Power", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:flower_power")
-    }
+    override val key: Key = Key.key("moborigins:flower_power")
 
     private val sphereOffsets: List<Vector> = (-3..3).flatMap { x ->
         (-3..3).flatMap { y ->

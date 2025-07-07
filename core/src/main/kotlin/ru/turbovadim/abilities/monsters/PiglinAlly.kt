@@ -24,7 +24,8 @@ class PiglinAlly : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key = Key.key("monsterorigins:piglin_ally")
+    override val key: Key
+        get() = Key.key("monsterorigins:piglin_ally")
 
     private val attackedEntities: MutableMap<Player, MutableList<Entity>> = mutableMapOf()
 

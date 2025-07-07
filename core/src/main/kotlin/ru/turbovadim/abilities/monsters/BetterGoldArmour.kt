@@ -55,7 +55,8 @@ class BetterGoldArmour : VisibleAbility, AttributeModifierAbility, Listener {
             OriginSwapper.LineData.LineComponent.LineType.TITLE
         )
 
-    override fun getKey(): Key = Key.key("monsterorigins:better_gold_armour")
+    override val key: Key
+        get() = Key.key("monsterorigins:better_gold_armour")
 
     @EventHandler
     fun onPlayerItemDamage(event: PlayerItemDamageEvent) {

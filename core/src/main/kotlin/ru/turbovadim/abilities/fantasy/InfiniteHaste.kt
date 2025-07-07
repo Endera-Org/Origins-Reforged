@@ -22,9 +22,7 @@ class InfiniteHaste : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:infinite_haste")
-    }
+    override val key: Key = Key.key("fantasyorigins:infinite_haste")
 
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent) {

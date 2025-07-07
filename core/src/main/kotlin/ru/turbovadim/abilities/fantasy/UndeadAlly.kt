@@ -14,9 +14,7 @@ import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class UndeadAlly : VisibleAbility, Listener {
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:undead_ally")
-    }
+    override val key: Key = Key.key("fantasyorigins:undead_ally")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "As an undead monster, other undead creatures will not attack you unprovoked.",

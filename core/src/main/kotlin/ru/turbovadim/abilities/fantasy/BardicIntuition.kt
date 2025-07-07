@@ -25,9 +25,7 @@ class BardicIntuition : VisibleAbility, Listener {
 
     private val random = Random()
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:bardic_intuition")
-    }
+    override val key: Key = Key.key("fantasyorigins:bardic_intuition")
 
     @EventHandler
     fun onEntityDeath(event: EntityDeathEvent) {

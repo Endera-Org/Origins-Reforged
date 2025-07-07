@@ -24,9 +24,7 @@ class DragonFireball : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:dragon_fireball")
-    }
+    override val key: Key = Key.key("fantasyorigins:dragon_fireball")
 
     @EventHandler
     fun onPlayerInteract(event: PlayerInteractEvent) {

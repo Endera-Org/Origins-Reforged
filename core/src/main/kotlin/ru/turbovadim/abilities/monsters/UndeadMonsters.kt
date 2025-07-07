@@ -9,9 +9,10 @@ import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.abilities.types.Ability
 
 class UndeadMonsters : Ability, Listener {
-    override fun getKey(): Key {
-        return Key.key("monsterorigins:undead")
-    }
+    override val key: Key
+        get() {
+            return Key.key("monsterorigins:undead")
+        }
 
     @EventHandler
     fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {

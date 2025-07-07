@@ -12,9 +12,7 @@ import ru.turbovadim.abilities.types.DependantAbility
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class HungerOverTime : DependantAbility, VisibleAbility, Listener {
-    override fun getKey(): Key {
-        return Key.key("origins:hunger_over_time")
-    }
+    override val key: Key = Key.key("origins:hunger_over_time")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "Being phantomized causes you to become hungry.",

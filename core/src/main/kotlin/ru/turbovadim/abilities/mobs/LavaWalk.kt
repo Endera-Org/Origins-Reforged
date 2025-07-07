@@ -79,7 +79,5 @@ class LavaWalk : VisibleAbility, FlightAllowingAbility, AttributeModifierAbility
         return 0.1f
     }
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:lava_walk")
-    }
+    override val key: Key = Key.key("moborigins:lava_walk")
 }

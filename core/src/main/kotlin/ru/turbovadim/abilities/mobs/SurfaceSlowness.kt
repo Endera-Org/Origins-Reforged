@@ -8,9 +8,7 @@ import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.abilities.types.AttributeModifierAbility
 
 class SurfaceSlowness : AttributeModifierAbility, Listener {
-    override fun getKey(): Key {
-        return Key.key("moborigins:surface_slowness")
-    }
+    override val key: Key = Key.key("moborigins:surface_slowness")
 
     override val attribute: Attribute = NMSInvoker.movementSpeedAttribute
 

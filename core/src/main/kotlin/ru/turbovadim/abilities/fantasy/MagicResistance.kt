@@ -21,9 +21,7 @@ class MagicResistance : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:magic_resistance")
-    }
+    override val key: Key = Key.key("fantasyorigins:magic_resistance")
 
     @EventHandler
     fun onEntityDamage(event: EntityDamageEvent) {

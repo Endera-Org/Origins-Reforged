@@ -23,9 +23,7 @@ class NoteBlockPower : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:note_block_power")
-    }
+    override val key: Key = Key.key("fantasyorigins:note_block_power")
 
     @EventHandler
     fun onNotePlay(event: NotePlayEvent) {

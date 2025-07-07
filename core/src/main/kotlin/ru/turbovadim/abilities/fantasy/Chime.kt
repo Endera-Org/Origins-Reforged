@@ -23,7 +23,7 @@ class Chime : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key = Key.key("fantasyorigins:chime")
+    override val key: Key = Key.key("fantasyorigins:chime")
 
     @EventHandler
     fun onPlayerInteract(event: PlayerInteractEvent) {

@@ -17,9 +17,7 @@ class Bouncy : VisibleAbility, Listener {
     override val title: MutableList<LineComponent>
         get() = LineData.makeLineFor("Bouncy", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:bouncy")
-    }
+    override val key: Key = Key.key("moborigins:bouncy")
 
     @EventHandler
     fun onPlayerMove(event: PlayerMoveEvent) {

@@ -15,9 +15,7 @@ import ru.turbovadim.abilities.types.VisibleAbility
 import ru.turbovadim.commands.FlightToggleCommand
 
 class Elytra : VisibleAbility, FlightAllowingAbility, Listener {
-    override fun getKey(): Key {
-        return Key.key("origins:elytra")
-    }
+    override val key: Key = Key.key("origins:elytra")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "You have Elytra wings without needing to equip any.",

@@ -25,7 +25,8 @@ class WarpedFungusEater : VisibleAbility, Listener {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Fungus Hunger", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override fun getKey(): Key = Key.key("moborigus:warped_fungus_eater")
+    override val key: Key
+        get() = Key.key("moborigus:warped_fungus_eater")
 
     private val lastInteractedTicks: MutableMap<Player, Int> = HashMap()
 

@@ -10,9 +10,7 @@ import ru.turbovadim.abilities.types.AttributeModifierAbility
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class Stronger : VisibleAbility, AttributeModifierAbility {
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:stronger")
-    }
+    override val key: Key = Key.key("fantasyorigins:stronger")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "Your vampiric nature makes you stronger than a regular human, making your physical attacks deal far more damage.",

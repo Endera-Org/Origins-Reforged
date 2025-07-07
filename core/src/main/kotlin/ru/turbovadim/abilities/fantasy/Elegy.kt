@@ -21,9 +21,7 @@ class Elegy : VisibleAbility, AttributeModifierAbility {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:elegy")
-    }
+    override val key: Key = Key.key("fantasyorigins:elegy")
 
     override val attribute: Attribute = NMSInvoker.attackDamageAttribute
 

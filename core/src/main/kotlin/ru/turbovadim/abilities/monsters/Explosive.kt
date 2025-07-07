@@ -15,7 +15,8 @@ import ru.turbovadim.cooldowns.Cooldowns
 
 class Explosive : VisibleAbility, Listener, CooldownAbility {
 
-    override fun getKey(): Key = Key.key("monsterorigins:explosive")
+    override val key: Key
+        get() = Key.key("monsterorigins:explosive")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "You can sacrifice some of your health to create an explosion every 15 seconds.",

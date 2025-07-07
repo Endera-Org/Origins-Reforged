@@ -8,9 +8,7 @@ import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.abilities.types.Ability
 
 class MiningFatigueImmune : Ability, Listener {
-    override fun getKey(): Key {
-        return Key.key("moborigins:mining_fatigue_immune")
-    }
+    override val key: Key = Key.key("moborigins:mining_fatigue_immune")
 
     @EventHandler
     fun onEntityPotionEffect(event: EntityPotionEffectEvent) {

@@ -21,7 +21,7 @@ class OceansGrace : VisibleAbility, MultiAbility {
         "Ocean's Grace",
         LineComponent.LineType.TITLE
     )
-    override fun getKey(): Key = Key.key("fantasyorigins:oceans_grace")
+    override val key: Key = Key.key("fantasyorigins:oceans_grace")
     override val abilities: MutableList<Ability> = mutableListOf(WaterStrengthImpl, WaterHealthImpl)
 
     companion object {
@@ -34,7 +34,7 @@ class OceansGrace : VisibleAbility, MultiAbility {
         override val amount: Double = 0.0
         override fun getChangedAmount(player: Player): Double = if (player.isInWaterOrRainOrBubbleColumn) 4.0 else 0.0
         override val operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER
-        override fun getKey(): Key = Key.key("fantasyorigins:water_health")
+        override val key: Key = Key.key("fantasyorigins:water_health")
     }
 
     class WaterStrength : AttributeModifierAbility {
@@ -42,6 +42,6 @@ class OceansGrace : VisibleAbility, MultiAbility {
         override val amount: Double = 0.0
         override fun getChangedAmount(player: Player): Double = if (player.isInWaterOrRainOrBubbleColumn) 1.4 else 0.0
         override val operation: AttributeModifier.Operation = AttributeModifier.Operation.MULTIPLY_SCALAR_1
-        override fun getKey(): Key = Key.key("fantasyorigins:water_strength")
+        override val key: Key = Key.key("fantasyorigins:water_strength")
     }
 }

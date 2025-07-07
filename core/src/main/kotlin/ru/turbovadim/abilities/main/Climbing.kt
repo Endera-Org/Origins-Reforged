@@ -107,9 +107,7 @@ class Climbing : FlightAllowingAbility, Listener, VisibleAbility {
             .set(startedClimbingKey, PersistentDataType.LONG, Instant.now().epochSecond)
     }
 
-    override fun getKey(): Key {
-        return Key.key("origins:climbing")
-    }
+    override val key: Key = Key.key("origins:climbing")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "You are able to climb up any kind of wall, not just ladders.",

@@ -28,9 +28,10 @@ class SuperBartering : VisibleAbility, Listener {
             OriginSwapper.LineData.LineComponent.LineType.TITLE
         )
 
-    override fun getKey(): Key {
-        return Key.key("monsterorigins:super_bartering")
-    }
+    override val key: Key
+        get() {
+            return Key.key("monsterorigins:super_bartering")
+        }
 
     @EventHandler
     fun onPiglinBarter(event: PiglinBarterEvent) {

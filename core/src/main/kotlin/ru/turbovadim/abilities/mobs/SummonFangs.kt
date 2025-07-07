@@ -28,9 +28,7 @@ class SummonFangs : VisibleAbility, Listener, CooldownAbility {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:summon_fangs")
-    }
+    override val key: Key = Key.key("moborigins:summon_fangs")
 
     @EventHandler
     fun onPlayerLeftClick(event: PlayerLeftClickEvent) {

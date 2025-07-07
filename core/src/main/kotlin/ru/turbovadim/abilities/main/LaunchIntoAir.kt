@@ -13,9 +13,7 @@ import ru.turbovadim.cooldowns.Cooldowns.CooldownInfo
 
 class LaunchIntoAir : VisibleAbility, Listener, CooldownAbility {
 
-    override fun getKey(): Key {
-        return Key.key("origins:launch_into_air")
-    }
+    override val key: Key = Key.key("origins:launch_into_air")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "Every 30 seconds, you are able to launch about 20 blocks up into the air.",

@@ -22,9 +22,7 @@ class MoonStrength : VisibleAbility, AttributeModifierAbility {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:moon_strength")
-    }
+    override val key: Key = Key.key("fantasyorigins:moon_strength")
 
     override val attribute: Attribute = NMSInvoker.attackDamageAttribute
     override val amount: Double = 0.0

@@ -21,7 +21,8 @@ import ru.turbovadim.OriginsReforged.Companion.instance
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class ScareVillagers : VisibleAbility, Listener {
-    override fun getKey(): Key = Key.key("monsterorigins:scare_villagers")
+    override val key: Key
+        get() = Key.key("monsterorigins:scare_villagers")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "Villagers are scared of you and refuse to trade with you.",

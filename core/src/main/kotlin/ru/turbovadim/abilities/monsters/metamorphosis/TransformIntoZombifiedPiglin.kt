@@ -31,7 +31,8 @@ class TransformIntoZombifiedPiglin : VisibleAbility, Listener {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Metamorphosis", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override fun getKey(): Key = Key.key("monsterorigins:transform_into_zombified_piglin")
+    override val key: Key
+        get() = Key.key("monsterorigins:transform_into_zombified_piglin")
 
     private val overworldTime: MutableMap<Player, Int> = HashMap()
     private val nether: World? = Bukkit.getWorld(OriginsReforged.mainConfig.worlds.worldNether)

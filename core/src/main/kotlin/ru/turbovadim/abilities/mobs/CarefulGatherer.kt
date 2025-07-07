@@ -17,9 +17,7 @@ class CarefulGatherer : VisibleAbility, Listener {
     override val title: MutableList<LineComponent>
         get() = LineData.makeLineFor("Careful Gatherer", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:careful_gatherer")
-    }
+    override val key: Key = Key.key("moborigins:careful_gatherer")
 
     @EventHandler
     fun onEntityDamage(event: EntityDamageByBlockEvent) {

@@ -23,22 +23,20 @@ class IncreasedArrowDamage : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:increased_arrow_damage")
-    }
+    override val key: Key = Key.key("fantasyorigins:increased_arrow_damage")
 
-    private val key = NamespacedKey(OriginsReforged.instance, "increased-arrow-damage-key")
+    private val arrowKey = NamespacedKey(OriginsReforged.instance, "increased-arrow-damage-key")
 
     @EventHandler
     fun onEntityShootBow(event: EntityShootBowEvent) {
         runForAbility(event.entity) { _ ->
-            event.projectile.persistentDataContainer.set(key, PersistentDataType.BOOLEAN, true)
+            event.projectile.persistentDataContainer.set(arrowKey, PersistentDataType.BOOLEAN, true)
         }
     }
 
     @EventHandler
     fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {
-        if (event.damager.persistentDataContainer.has(key)) {
+        if (event.damager.persistentDataContainer.has(arrowKey)) {
             event.damage += 3.0
         }
     }

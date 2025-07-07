@@ -17,7 +17,8 @@ class ZombieHunger : VisibleAbility, Listener {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Zombie Hunger", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override fun getKey(): Key = Key.key("moborigins:zombie_hunger")
+    override val key: Key
+        get() = Key.key("moborigins:zombie_hunger")
 
     @EventHandler
     fun onEntityExhaustion(event: EntityExhaustionEvent) {

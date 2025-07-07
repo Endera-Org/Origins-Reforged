@@ -20,7 +20,7 @@ class DoubleDamage : VisibleAbility, Listener {
             OriginSwapper.LineData.LineComponent.LineType.TITLE
         )
 
-    override fun getKey() = Key.key("monsterorigins:double_damage")
+    override val key get() = Key.key("monsterorigins:double_damage")
 
     @EventHandler
     fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {

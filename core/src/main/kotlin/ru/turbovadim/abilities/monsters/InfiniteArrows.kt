@@ -21,7 +21,8 @@ class InfiniteArrows : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key = Key.key("monsterorigins:infinite_arrows")
+    override val key: Key
+        get() = Key.key("monsterorigins:infinite_arrows")
 
     @EventHandler
     fun onPlayerLaunchProjectile(event: EntityShootBowEvent) {

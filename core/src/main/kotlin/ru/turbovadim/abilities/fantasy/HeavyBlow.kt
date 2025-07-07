@@ -21,7 +21,7 @@ class HeavyBlow : VisibleAbility, MultiAbility {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key = Key.key("fantasyorigins:heavy_blow")
+    override val key: Key = Key.key("fantasyorigins:heavy_blow")
     override val abilities: MutableList<Ability> = mutableListOf(IncreasedDamage, IncreasedCooldown)
 
     companion object {
@@ -33,13 +33,13 @@ class HeavyBlow : VisibleAbility, MultiAbility {
         override val attribute: Attribute = NMSInvoker.attackDamageAttribute
         override val amount: Double = 1.2
         override val operation: AttributeModifier.Operation = AttributeModifier.Operation.MULTIPLY_SCALAR_1
-        override fun getKey(): Key = Key.key("fantasyorigins:increased_damage")
+        override val key: Key = Key.key("fantasyorigins:increased_damage")
     }
 
     class IncreasedCooldownImpl : AttributeModifierAbility {
         override val attribute: Attribute = NMSInvoker.attackSpeedAttribute
         override val amount: Double = -0.4
         override val operation: AttributeModifier.Operation = AttributeModifier.Operation.MULTIPLY_SCALAR_1
-        override fun getKey(): Key = Key.key("fantasyorigins:increased_cooldown")
+        override val key: Key = Key.key("fantasyorigins:increased_cooldown")
     }
 }

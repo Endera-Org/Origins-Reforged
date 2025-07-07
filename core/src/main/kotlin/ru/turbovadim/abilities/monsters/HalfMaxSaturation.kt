@@ -29,5 +29,6 @@ class HalfMaxSaturation : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key = Key.key("monsterorigins:half_max_saturation")
+    override val key: Key
+        get() = Key.key("monsterorigins:half_max_saturation")
 }

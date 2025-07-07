@@ -14,9 +14,7 @@ class LikeAir : VisibleAbility, Listener {
     // intentionally later - and use 'disable avian update notifications' flag to never check if true
     // should be faster for both speed and general walking
     // Starting after version 2.2.14 this ability is in the default avian.json file however in earlier versions it will not have saved
-    override fun getKey(): Key {
-        return Key.key("origins:like_air")
-    }
+    override val key: Key = Key.key("origins:like_air")
 
     override val description: MutableList<LineComponent>
         get() = OriginSwapper.LineData.makeLineFor(

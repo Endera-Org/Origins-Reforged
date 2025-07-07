@@ -26,9 +26,7 @@ class StrongerSnowballs : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:stronger_snowballs")
-    }
+    override val key: Key = Key.key("moborigins:stronger_snowballs")
 
     private val strongSnowballKey = NamespacedKey.fromString("strong-snowball")!!
 

@@ -19,9 +19,7 @@ class IncreasedArrowSpeed : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:increased_arrow_speed")
-    }
+    override val key: Key = Key.key("fantasyorigins:increased_arrow_speed")
 
     @EventHandler
     fun onEntityShootBow(event: EntityShootBowEvent) {

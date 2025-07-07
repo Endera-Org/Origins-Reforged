@@ -19,7 +19,8 @@ class CreeperAlly : VisibleAbility, Listener {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Creeper Ally", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override fun getKey(): Key = Key.key("monsterorigins:creeper_ally")
+    override val key: Key
+        get() = Key.key("monsterorigins:creeper_ally")
 
     @EventHandler
     fun onEntityTargetLivingEntity(event: EntityTargetLivingEntityEvent) {

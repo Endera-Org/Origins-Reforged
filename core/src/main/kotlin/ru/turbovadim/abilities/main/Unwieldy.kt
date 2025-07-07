@@ -65,9 +65,7 @@ class Unwieldy : VisibleAbility, Listener, PacketListener {
     }
 
 
-    override fun getKey(): Key {
-        return Key.key("origins:no_shield")
-    }
+    override val key: Key = Key.key("origins:no_shield")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "The way your hands are formed provide no way of holding a shield upright.",

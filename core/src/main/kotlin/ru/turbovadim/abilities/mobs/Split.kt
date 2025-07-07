@@ -23,15 +23,12 @@ import java.util.*
 
 class Split : VisibleAbility, Listener, CooldownAbility {
 
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Turn your food points into a small slime to defend you!", LineType.DESCRIPTION)
+    override val description: MutableList<LineComponent> =
+        LineData.makeLineFor("Turn your food points into a small slime to defend you!", LineType.DESCRIPTION)
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Split Ability", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Split Ability", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:split")
-    }
+    override val key: Key = Key.key("moborigins:split")
 
     @EventHandler
     fun onPlayerLeftClick(event: PlayerLeftClickEvent) {

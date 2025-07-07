@@ -10,9 +10,7 @@ import ru.turbovadim.abilities.types.AttributeModifierAbility
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class Fragile : AttributeModifierAbility, VisibleAbility {
-    override fun getKey(): Key {
-        return Key.key("origins:fragile")
-    }
+    override val key: Key = Key.key("origins:fragile")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "You have 3 less hearts of health than humans.",

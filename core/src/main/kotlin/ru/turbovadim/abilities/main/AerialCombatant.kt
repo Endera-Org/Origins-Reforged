@@ -18,9 +18,7 @@ class AerialCombatant : VisibleAbility, Listener {
         })
     }
 
-    override fun getKey(): Key {
-        return Key.key("origins:aerial_combatant")
-    }
+    override val key: Key = Key.key("origins:aerial_combatant")
 
     override val description: MutableList<LineComponent> = makeLineFor(
             "You deal substantially more damage while in Elytra flight.",

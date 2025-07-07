@@ -21,7 +21,8 @@ class LandSlowness : VisibleAbility, AttributeModifierAbility {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key = Key.key("monsterorigins:land_slowness")
+    override val key: Key
+        get() = Key.key("monsterorigins:land_slowness")
 
     override val attribute: Attribute = NMSInvoker.movementSpeedAttribute
 

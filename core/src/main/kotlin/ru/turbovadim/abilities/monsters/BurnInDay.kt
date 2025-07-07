@@ -44,6 +44,7 @@ class BurnInDay : VisibleAbility, Listener {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Photoallergic", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override fun getKey(): Key = Key.key("monsterorigins:burn_in_day")
+    override val key: Key
+        get() = Key.key("monsterorigins:burn_in_day")
 
 }

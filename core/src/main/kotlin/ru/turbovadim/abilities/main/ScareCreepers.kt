@@ -23,9 +23,7 @@ import ru.turbovadim.abilities.types.VisibleAbility
 
 class ScareCreepers : VisibleAbility, Listener {
 
-    override fun getKey(): Key {
-        return Key.key("origins:scare_creepers")
-    }
+    override val key: Key = Key.key("origins:scare_creepers")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "Creepers are scared of you and will only explode if you attack them first.",

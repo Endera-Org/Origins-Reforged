@@ -78,9 +78,7 @@ class WaterVision : VisibleAbility, Listener {
         }
     }
 
-    override fun getKey(): Key {
-        return Key.key("origins:water_vision")
-    }
+    override val key: Key = Key.key("origins:water_vision")
 
     override val description: MutableList<LineComponent> = makeLineFor("Your vision underwater is perfect.", LineComponent.LineType.DESCRIPTION)
 

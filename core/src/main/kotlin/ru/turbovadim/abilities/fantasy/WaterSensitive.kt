@@ -16,7 +16,5 @@ class WaterSensitive : VisibleAbility {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:water_sensitive")
-    }
+    override val key: Key = Key.key("fantasyorigins:water_sensitive")
 }

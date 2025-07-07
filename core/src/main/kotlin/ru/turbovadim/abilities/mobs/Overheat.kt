@@ -15,18 +15,14 @@ import ru.turbovadim.abilities.types.VisibleAbility
 import ru.turbovadim.events.PlayerSwapOriginEvent
 
 class Overheat : VisibleAbility, Listener {
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor(
-            "You have a temperature bar that slowly begins to fill in hot biomes, and cool in other biomes.",
-            LineType.DESCRIPTION
-        )
+    override val description: MutableList<LineComponent> = LineData.makeLineFor(
+        "You have a temperature bar that slowly begins to fill in hot biomes, and cool in other biomes.",
+        LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Overheat", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Overheat", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:overheat")
-    }
+    override val key: Key = Key.key("moborigins:overheat")
 
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent) {

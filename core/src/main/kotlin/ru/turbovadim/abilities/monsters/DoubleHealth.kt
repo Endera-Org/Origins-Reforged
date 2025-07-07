@@ -26,7 +26,8 @@ class DoubleHealth : VisibleAbility, AttributeModifierAbility {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("monsterorigins:double_health")
-    }
+    override val key: Key
+        get() {
+            return Key.key("monsterorigins:double_health")
+        }
 }

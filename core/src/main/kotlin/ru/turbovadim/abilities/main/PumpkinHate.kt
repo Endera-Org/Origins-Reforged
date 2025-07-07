@@ -69,7 +69,5 @@ class PumpkinHate : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("origins:pumpkin_hate")
-    }
+    override val key: Key = Key.key("origins:pumpkin_hate")
 }

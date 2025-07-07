@@ -20,9 +20,7 @@ class DoubleHealthFantasy : VisibleAbility, AttributeModifierAbility {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:double_health")
-    }
+    override val key: Key = Key.key("fantasyorigins:double_health")
 
     override val attribute: Attribute = NMSInvoker.maxHealthAttribute
 

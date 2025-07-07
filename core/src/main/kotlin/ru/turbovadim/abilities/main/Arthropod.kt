@@ -11,9 +11,7 @@ import ru.turbovadim.abilities.types.Ability
 import java.util.*
 
 class Arthropod : Ability, Listener {
-    override fun getKey(): Key {
-        return Key.key("origins:arthropod")
-    }
+    override val key: Key = Key.key("origins:arthropod")
 
     private val random = Random()
 

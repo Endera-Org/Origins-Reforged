@@ -12,7 +12,7 @@ import ru.turbovadim.cooldowns.Cooldowns.CooldownInfo
 @Suppress("unused") // Some functions here are unused but are useful in addons
 interface CooldownAbility : Ability {
     val cooldownKey: NamespacedKey
-        get() = NamespacedKey(instance, getKey().asString().replace(":", "-"))
+        get() = NamespacedKey(instance, key.asString().replace(":", "-"))
 
     fun setCooldown(player: Player) {
         if (OriginsReforged.mainConfig.cooldowns.disableAllCooldowns) return

@@ -35,12 +35,12 @@ object AbilityRegister {
 
     fun registerAbility(ability: Ability, instance: JavaPlugin) {
         if (ability is DependencyAbility) {
-            dependencyAbilityMap[ability.getKey()] = ability
+            dependencyAbilityMap[ability.key] = ability
         }
 
         if (ability is MultiAbility) {
             ability.abilities.forEach { a ->
-                multiAbilityMap.getOrPut(a.getKey()) { mutableListOf() }.add(ability)
+                multiAbilityMap.getOrPut(a.key) { mutableListOf() }.add(ability)
             }
         }
 
@@ -57,11 +57,11 @@ object AbilityRegister {
         }
 
         if (ability is AttributeModifierAbility) {
-            val formattedValueKey = "${ability.getKey()}.value"
-            val formattedOperationKey = "${ability.getKey()}.operation"
+            val formattedValueKey = "${ability.key}.value"
+            val formattedOperationKey = "${ability.key}.operation"
             var changed = false
 
-            if (!attributeModifierAbilityFileConfig.contains(ability.getKey().toString())) {
+            if (!attributeModifierAbilityFileConfig.contains(ability.key.toString())) {
                 attributeModifierAbilityFileConfig.set(formattedValueKey, "x")
                 attributeModifierAbilityFileConfig.set(formattedOperationKey, "default")
                 changed = true
@@ -81,7 +81,7 @@ object AbilityRegister {
             }
         }
 
-        abilityMap[ability.getKey()] = ability
+        abilityMap[ability.key] = ability
     }
 
     fun canFly(player: Player, disabledWorld: Boolean): Boolean {

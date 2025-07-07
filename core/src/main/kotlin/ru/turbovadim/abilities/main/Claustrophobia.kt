@@ -66,10 +66,8 @@ class Claustrophobia : VisibleAbility, Listener {
         }
     }
 
-    @NotNull
-    override fun getKey(): Key {
-        return Key.key("origins:claustrophobia")
-    }
+    override val key = Key.key("origins:claustrophobia")
+
 
     override val description: MutableList<OriginSwapper.LineData.LineComponent> =
         makeLineFor(

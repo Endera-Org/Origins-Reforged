@@ -27,5 +27,6 @@ class WolfPackAttack : AttributeModifierAbility {
     override val operation: AttributeModifier.Operation
         get() = AttributeModifier.Operation.ADD_NUMBER
 
-    override fun getKey(): Key = Key.key("moborigins:wolf_pack_attack")
+    override val key: Key
+        get() = Key.key("moborigins:wolf_pack_attack")
 }

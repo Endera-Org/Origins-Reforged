@@ -23,9 +23,7 @@ class BowBurst : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:bow_burst")
-    }
+    override val key: Key = Key.key("fantasyorigins:bow_burst")
 
     @EventHandler
     fun onPlayerInteract(event: PlayerInteractEvent) {

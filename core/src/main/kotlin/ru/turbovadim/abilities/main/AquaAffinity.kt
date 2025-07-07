@@ -11,9 +11,7 @@ import ru.turbovadim.abilities.types.BreakSpeedModifierAbility.BlockMiningContex
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class AquaAffinity : VisibleAbility, BreakSpeedModifierAbility {
-    override fun getKey(): Key {
-        return Key.key("origins:aqua_affinity")
-    }
+    override val key: Key = Key.key("origins:aqua_affinity")
 
     override val description: MutableList<LineComponent> = makeLineFor("You may break blocks underwater as others do on land.", LineComponent.LineType.DESCRIPTION)
 

@@ -11,9 +11,7 @@ class Translucent : VisibleAbility {
     // disable notifications about it or to automatically add it to phantom, if the avian origin exists and is missing it
     // Auto disable these notifications if phantom is ever detected with it so the notification never shows if someone removes it
     // Starting after version 2.2.14 this ability is in the default phantom.json file however in earlier versions it will not have saved
-    override fun getKey(): Key {
-        return Key.key("origins:translucent")
-    }
+    override val key: Key = Key.key("origins:translucent")
 
     override val description: MutableList<LineComponent>
         get() = OriginSwapper.LineData.makeLineFor(

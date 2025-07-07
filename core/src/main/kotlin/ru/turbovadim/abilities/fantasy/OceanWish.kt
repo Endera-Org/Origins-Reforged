@@ -21,9 +21,7 @@ class OceanWish : VisibleAbility, MultiAbility {
 
     override val title: List<LineComponent> = LineData.makeLineFor("Ocean Wish", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:ocean_wish")
-    }
+    override val key: Key = Key.key("fantasyorigins:ocean_wish")
 
     override val abilities: MutableList<Ability> = mutableListOf(
         LandSlowness.landSlowness,
@@ -45,9 +43,7 @@ class OceanWish : VisibleAbility, MultiAbility {
         override val operation: AttributeModifier.Operation
             get() = AttributeModifier.Operation.MULTIPLY_SCALAR_1
 
-        override fun getKey(): Key {
-            return Key.key("fantasyorigins:land_weakness")
-        }
+        override val key: Key = Key.key("fantasyorigins:land_weakness")
 
         companion object {
             val landWeakness = LandWeakness()
@@ -55,9 +51,7 @@ class OceanWish : VisibleAbility, MultiAbility {
     }
 
     class LandHealth : AttributeModifierAbility {
-        override fun getKey(): Key {
-            return Key.key("fantasyorigins:land_health")
-        }
+        override val key: Key = Key.key("fantasyorigins:land_health")
 
         override val attribute: Attribute
             get() = nmsInvoker.maxHealthAttribute
@@ -81,9 +75,10 @@ class OceanWish : VisibleAbility, MultiAbility {
     }
 
     class LandSlowness : AttributeModifierAbility {
-        override fun getKey(): Key {
-            return Key.key("fantasyorigins:land_slowness")
-        }
+        override val key: Key
+            get() {
+                return Key.key("fantasyorigins:land_slowness")
+            }
 
         override val attribute: Attribute
             get() = nmsInvoker.movementSpeedAttribute

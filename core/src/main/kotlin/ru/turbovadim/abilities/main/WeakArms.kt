@@ -74,10 +74,10 @@ class WeakArms : VisibleAbility, Listener {
                                 )
                             } else {
                                 val instance = player.getAttribute(attribute) ?: return@launch
-                                if (NMSInvoker.getAttributeModifier(instance, key) == null) {
+                                if (NMSInvoker.getAttributeModifier(instance, breakspeedKey) == null) {
                                     NMSInvoker.addAttributeModifier(
                                         instance,
-                                        key,
+                                        breakspeedKey,
                                         "weak-arms",
                                         -1.0,
                                         AttributeModifier.Operation.ADD_NUMBER
@@ -108,7 +108,7 @@ class WeakArms : VisibleAbility, Listener {
                                 }
                             } else {
                                 val instance = player.getAttribute(attribute) ?: return@launch
-                                NMSInvoker.getAttributeModifier(instance, key)
+                                NMSInvoker.getAttributeModifier(instance, breakspeedKey)
                                     ?.let { instance.removeModifier(it) }
                             }
                         }
@@ -118,7 +118,7 @@ class WeakArms : VisibleAbility, Listener {
         }
     }
 
-    private val key = NamespacedKey(instance, "break-speed-modifier")
+    private val breakspeedKey = NamespacedKey(instance, "break-speed-modifier")
 
     @EventHandler
     fun onPlayerItemConsume(event: PlayerItemConsumeEvent) {
@@ -127,9 +127,8 @@ class WeakArms : VisibleAbility, Listener {
         }
     }
 
-    override fun getKey(): Key {
-        return Key.key("origins:weak_arms")
-    }
+    override val key: Key = Key.key("origins:weak_arms")
+
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "When not under the effect of a strength potion, you can only mine natural stone if there are at most 2 other natural stone blocks adjacent to it.",

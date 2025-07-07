@@ -25,9 +25,7 @@ class FortuneIncreaser : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:fortune_increaser")
-    }
+    override val key: Key = Key.key("fantasyorigins:fortune_increaser")
 
     private val blocks = mutableMapOf<Player, MutableList<ItemStack>>()
 

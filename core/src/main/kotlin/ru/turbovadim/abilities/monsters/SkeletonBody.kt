@@ -28,7 +28,8 @@ class SkeletonBody : VisibleAbility, AttributeModifierAbility {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Skeletal Form", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("monsterorigins:skeleton_body")
-    }
+    override val key: Key
+        get() {
+            return Key.key("monsterorigins:skeleton_body")
+        }
 }

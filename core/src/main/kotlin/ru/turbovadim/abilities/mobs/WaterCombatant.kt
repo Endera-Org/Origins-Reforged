@@ -21,7 +21,8 @@ class WaterCombatant : VisibleAbility, Listener {
             OriginSwapper.LineData.LineComponent.LineType.TITLE
         )
 
-    override fun getKey(): Key = Key.key("moborigins:water_combatant")
+    override val key: Key
+        get() = Key.key("moborigins:water_combatant")
 
     @EventHandler
     fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {

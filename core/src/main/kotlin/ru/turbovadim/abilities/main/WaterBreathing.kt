@@ -152,9 +152,7 @@ class WaterBreathing : Listener, VisibleAbility {
         event.getPlayer().persistentDataContainer.set<Int?, Int?>(damageKey, PersistentDataType.INTEGER, -1)
     }
 
-    override fun getKey(): Key {
-        return Key.key("origins:water_breathing")
-    }
+    override val key: Key = Key.key("origins:water_breathing")
 
     override val description: MutableList<LineComponent> = makeLineFor("You can breathe underwater, but not on land.", LineComponent.LineType.DESCRIPTION)
 

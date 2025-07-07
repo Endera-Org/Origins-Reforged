@@ -12,9 +12,7 @@ import ru.turbovadim.abilities.types.Ability.AbilityRunner
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class VelvetPaws : VisibleAbility, Listener {
-    override fun getKey(): Key {
-        return Key.key("origins:velvet_paws")
-    }
+    override val key: Key = Key.key("origins:velvet_paws")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "Your footsteps don't cause any vibrations which could otherwise be picked up by nearby lifeforms.",

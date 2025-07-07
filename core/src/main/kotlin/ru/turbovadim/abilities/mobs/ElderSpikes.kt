@@ -18,9 +18,7 @@ class ElderSpikes : VisibleAbility, Listener {
     override val title: MutableList<LineComponent>
         get() = LineData.makeLineFor("Elder Spikes", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:elder_spikes")
-    }
+    override val key: Key = Key.key("moborigins:elder_spikes")
 
     private val random = Random()
 

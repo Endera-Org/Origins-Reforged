@@ -10,9 +10,7 @@ import ru.turbovadim.abilities.types.AttributeModifierAbility
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class Tailwind : AttributeModifierAbility, VisibleAbility {
-    override fun getKey(): Key {
-        return Key.key("origins:tailwind")
-    }
+    override val key: Key = Key.key("origins:tailwind")
 
     override val description: MutableList<LineComponent> = makeLineFor("You are a little bit quicker on foot than others.", LineComponent.LineType.DESCRIPTION)
 

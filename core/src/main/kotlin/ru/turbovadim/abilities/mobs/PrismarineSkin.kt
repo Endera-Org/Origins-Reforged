@@ -11,23 +11,18 @@ import ru.turbovadim.abilities.types.AttributeModifierAbility
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class PrismarineSkin : VisibleAbility, AttributeModifierAbility {
-    override val attribute: Attribute
-        get() = NMSInvoker.armorAttribute
+    override val attribute: Attribute = NMSInvoker.armorAttribute
 
     override val amount: Double = 2.0
 
     override val operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER
 
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor(
-            "Your skin is made of prismarine, and you get natural armor from it.",
-            LineType.DESCRIPTION
-        )
+    override val description: MutableList<LineComponent> = LineData.makeLineFor(
+        "Your skin is made of prismarine, and you get natural armor from it.",
+        LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Prismarine Skin", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Prismarine Skin", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:prismarine_skin")
-    }
+    override val key: Key = Key.key("moborigins:prismarine_skin")
 }

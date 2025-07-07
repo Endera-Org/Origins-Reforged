@@ -29,7 +29,8 @@ class WolfPack : VisibleAbility, AttributeModifierAbility {
     override val operation: AttributeModifier.Operation
         get() = AttributeModifier.Operation.ADD_NUMBER
 
-    override fun getKey(): Key = Key.key("moborigins:wolf_pack")
+    override val key: Key
+        get() = Key.key("moborigins:wolf_pack")
 
     override val description: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor(

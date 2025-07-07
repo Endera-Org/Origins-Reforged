@@ -9,7 +9,8 @@ import ru.turbovadim.abilities.types.Ability
 
 class WaterBreathing : Ability, Listener {
 
-    override fun getKey(): Key = Key.key("moborigins:water_breathing")
+    override val key: Key
+        get() = Key.key("moborigins:water_breathing")
 
     @EventHandler
     fun onEntityAirChange(event: EntityAirChangeEvent) {

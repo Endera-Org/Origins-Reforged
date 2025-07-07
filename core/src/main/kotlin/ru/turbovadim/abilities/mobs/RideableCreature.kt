@@ -12,15 +12,11 @@ import ru.turbovadim.abilities.types.VisibleAbility
 import ru.turbovadim.events.PlayerSwapOriginEvent
 
 class RideableCreature : VisibleAbility, Listener {
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Other players can ride you!", LineType.DESCRIPTION)
+    override val description: MutableList<LineComponent> = LineData.makeLineFor("Other players can ride you!", LineType.DESCRIPTION)
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Rideable Creature", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Rideable Creature", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:rideable_creature")
-    }
+    override val key: Key = Key.key("moborigins:rideable_creature")
 
     @EventHandler
     fun onPlayerInteract(event: PlayerInteractEntityEvent) {

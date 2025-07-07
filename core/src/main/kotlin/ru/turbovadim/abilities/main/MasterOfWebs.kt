@@ -141,9 +141,7 @@ class MasterOfWebs : CooldownAbility, FlightAllowingAbility, Listener, VisibleAb
         }
     }
 
-    override fun getKey(): Key {
-        return Key.key("origins:master_of_webs")
-    }
+    override val key: Key = Key.key("origins:master_of_webs")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "You navigate cobweb perfectly, and are able to climb in them. When you hit an enemy in melee, they get stuck in cobweb for a while. Non-arthropods stuck in cobweb will be sensed by you. You are able to craft cobweb from string.",

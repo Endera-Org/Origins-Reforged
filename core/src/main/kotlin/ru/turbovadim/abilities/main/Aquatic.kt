@@ -11,9 +11,7 @@ import ru.turbovadim.abilities.types.Ability
 import ru.turbovadim.abilities.types.Ability.AbilityRunner
 
 class Aquatic : Ability, Listener {
-    override fun getKey(): Key {
-        return Key.key("origins:aquatic")
-    }
+    override val key: Key = Key.key("origins:aquatic")
 
     @EventHandler
     fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {

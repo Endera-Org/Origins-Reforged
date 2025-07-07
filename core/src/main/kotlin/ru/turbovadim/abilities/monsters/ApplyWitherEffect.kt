@@ -21,7 +21,8 @@ class ApplyWitherEffect : VisibleAbility, Listener {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Wither", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override fun getKey(): Key = Key.key("monsterorigins:apply_wither_effect")
+    override val key: Key
+        get() = Key.key("monsterorigins:apply_wither_effect")
 
     @EventHandler
     fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {

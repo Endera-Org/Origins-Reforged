@@ -25,9 +25,10 @@ class SonicBoom : VisibleAbility, Listener, CooldownAbility {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Sonic Boom", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("monsterorigins:sonic_boom")
-    }
+    override val key: Key
+        get() {
+            return Key.key("monsterorigins:sonic_boom")
+        }
 
     @EventHandler
     fun onPlayerLeftClick(event: PlayerLeftClickEvent) {

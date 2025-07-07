@@ -10,9 +10,7 @@ import ru.turbovadim.abilities.types.AttributeModifierAbility
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class NineLives : AttributeModifierAbility, VisibleAbility {
-    override fun getKey(): Key {
-        return Key.key("origins:nine_lives")
-    }
+    override val key: Key = Key.key("origins:nine_lives")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "You have 1 less heart of health than humans.",

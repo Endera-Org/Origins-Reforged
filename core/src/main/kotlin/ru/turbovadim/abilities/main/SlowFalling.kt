@@ -65,9 +65,7 @@ class SlowFalling : VisibleAbility, Listener, PacketListener {
 //        }
 //    }
 
-    override fun getKey(): Key {
-        return Key.key("origins:slow_falling")
-    }
+    override val key: Key = Key.key("origins:slow_falling")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "You fall as gently to the ground as a feather would, unless you sneak.",

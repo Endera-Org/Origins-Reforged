@@ -32,7 +32,7 @@ object ToggleableAbilities {
     }
 
     fun registerAbility(ability: ToggleableAbility) {
-        val key = ability.getKey().toString()
+        val key = ability.key.toString()
         if (!fileConfiguration.contains(key)) {
             fileConfiguration.set(key, false)
             try {
@@ -44,6 +44,6 @@ object ToggleableAbilities {
     }
 
     fun isEnabled(ability: ToggleableAbility): Boolean {
-        return fileConfiguration.getBoolean(ability.getKey().toString(), false)
+        return fileConfiguration.getBoolean(ability.key.toString(), false)
     }
 }

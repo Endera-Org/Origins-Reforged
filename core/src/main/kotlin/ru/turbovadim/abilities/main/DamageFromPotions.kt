@@ -9,9 +9,7 @@ import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.abilities.types.Ability
 
 class DamageFromPotions : Ability, Listener {
-    override fun getKey(): Key {
-        return Key.key("origins:damage_from_potions")
-    }
+    override val key: Key = Key.key("origins:damage_from_potions")
 
     @EventHandler
     fun onPlayerItemConsume(event: PlayerItemConsumeEvent) {

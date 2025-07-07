@@ -23,9 +23,10 @@ class UndeadAllyMonsters : VisibleAbility, Listener {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Undead Ally", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("monsterorigins:undead_ally")
-    }
+    override val key: Key
+        get() {
+            return Key.key("monsterorigins:undead_ally")
+        }
 
     @EventHandler
     fun onEntityTargetLivingEntity(event: EntityTargetLivingEntityEvent) {

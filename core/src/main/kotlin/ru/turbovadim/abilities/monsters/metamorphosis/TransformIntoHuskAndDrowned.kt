@@ -30,9 +30,10 @@ class TransformIntoHuskAndDrowned : VisibleAbility, Listener {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Metamorphosis", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("monsterorigins:transform_into_husk_and_drowned")
-    }
+    override val key: Key
+        get() {
+            return Key.key("monsterorigins:transform_into_husk_and_drowned")
+        }
 
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent) {

@@ -29,9 +29,7 @@ class BecomesElderGuardian : VisibleAbility, Listener {
             OriginSwapper.LineData.LineComponent.LineType.TITLE
         )
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:becomes_elder_guardian")
-    }
+    override val key: Key = Key.key("moborigins:becomes_elder_guardian")
 
     @EventHandler
     fun onEntityDeath(event: EntityDeathEvent) {

@@ -16,7 +16,5 @@ class DaylightSensitive : VisibleAbility {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:daylight_sensitive")
-    }
+    override val key: Key = Key.key("fantasyorigins:daylight_sensitive")
 }

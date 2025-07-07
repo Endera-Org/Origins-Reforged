@@ -57,7 +57,5 @@ class Vegetarian : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("origins:vegetarian")
-    }
+    override val key: Key = Key.key("origins:vegetarian")
 }

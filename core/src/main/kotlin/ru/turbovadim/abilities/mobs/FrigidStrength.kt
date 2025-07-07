@@ -29,7 +29,5 @@ class FrigidStrength : VisibleAbility, AttributeModifierAbility {
     override val title: MutableList<LineComponent>
         get() = LineData.makeLineFor("Frigid Strength", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:frigid_strength")
-    }
+    override val key: Key = Key.key("moborigins:frigid_strength")
 }

@@ -27,9 +27,7 @@ class ElderMagic : VisibleAbility, Listener, CooldownAbility {
     override val title: MutableList<LineComponent>
         get() = LineData.makeLineFor("Elder Magic", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:elder_magic")
-    }
+    override val key: Key = Key.key("moborigins:elder_magic")
 
     @EventHandler
     fun onPlayerLeftClick(event: PlayerLeftClickEvent) {

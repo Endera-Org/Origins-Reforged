@@ -20,7 +20,8 @@ class GuardianAllyMosters : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key = Key.key("monsterorigins:guardian_ally")
+    override val key: Key
+        get() = Key.key("monsterorigins:guardian_ally")
 
     @EventHandler
     fun onEntityTargetLivingEntity(event: EntityTargetLivingEntityEvent) {

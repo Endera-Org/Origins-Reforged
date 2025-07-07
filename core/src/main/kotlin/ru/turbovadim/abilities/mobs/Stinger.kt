@@ -15,18 +15,14 @@ import ru.turbovadim.OriginSwapper.LineData.LineComponent.LineType
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class Stinger : VisibleAbility, Listener {
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor(
-            "When you punch someone with your fist, you poison them for a few seconds.",
-            LineType.DESCRIPTION
-        )
+    override val description: MutableList<LineComponent> = LineData.makeLineFor(
+        "When you punch someone with your fist, you poison them for a few seconds.",
+        LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Stinger", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Stinger", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:stinger")
-    }
+    override val key: Key = Key.key("moborigins:stinger")
 
     private val lastStungTicks: MutableMap<Player, Int> = HashMap()
 

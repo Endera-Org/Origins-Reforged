@@ -17,7 +17,7 @@ import ru.turbovadim.util.WorldGuardHook
 
 interface Ability {
 
-    fun getKey(): Key
+    val key: Key
 
     suspend fun runForAbilityAsync(entity: Entity, runner: AsyncAbilityRunner) {
         runForAbilityAsync(entity, runner, null)
@@ -49,7 +49,7 @@ interface Ability {
 
     suspend fun hasAbilityAsync(player: Player): Boolean = withContext(ioDispatcher) {
         for (keyStateGetter in AddonLoader.abilityOverrideChecks) {
-            val state = keyStateGetter?.get(player, getKey())
+            val state = keyStateGetter?.get(player, key)
             return@withContext when (state) {
                 OriginsAddon.State.DENY -> false
                 OriginsAddon.State.ALLOW -> true
@@ -65,7 +65,7 @@ interface Ability {
             val container = WorldGuard.getInstance().platform.regionContainer
             val query = container.createQuery()
             val regions = query.getApplicableRegions(loc)
-            val keyStr = getKey().toString()
+            val keyStr = key.toString()
             for (region in regions) {
                 for (sectionKey in section.keys) {
                     val abilities = section[sectionKey] ?: emptyList()
@@ -78,10 +78,10 @@ interface Ability {
         }
 
         val origins = OriginSwapper.getOrigins(player)
-        var hasAbility = origins.any { it.hasAbility(getKey()) }
+        var hasAbility = origins.any { it.hasAbility(key) }
 
-        if (abilityMap[getKey()] is DependantAbility) {
-            val dependantAbility = abilityMap[getKey()] as DependantAbility
+        if (abilityMap[key] is DependantAbility) {
+            val dependantAbility = abilityMap[key] as DependantAbility
             val dependencyEnabled = dependantAbility.dependency.isEnabled(player)
             val expected = (dependantAbility.dependencyType == DependantAbility.DependencyType.REGULAR)
             hasAbility = hasAbility && (dependencyEnabled == expected)
@@ -93,7 +93,7 @@ interface Ability {
 
     fun hasAbility(player: Player): Boolean {
         for (keyStateGetter in AddonLoader.abilityOverrideChecks) {
-            val state = keyStateGetter?.get(player, getKey())
+            val state = keyStateGetter?.get(player, key)
             return when (state) {
                 OriginsAddon.State.DENY -> false
                 OriginsAddon.State.ALLOW -> true
@@ -101,7 +101,7 @@ interface Ability {
             }
         }
 
-        if (OriginsReforged.Companion.isWorldGuardHookInitialized) {
+        if (OriginsReforged.isWorldGuardHookInitialized) {
             if (WorldGuardHook.isAbilityDisabled(player.location, this@Ability)) return false
 
             val section = OriginsReforged.mainConfig.preventAbilitiesIn
@@ -109,7 +109,7 @@ interface Ability {
             val container = WorldGuard.getInstance().platform.regionContainer
             val query = container.createQuery()
             val regions = query.getApplicableRegions(loc)
-            val keyStr = getKey().toString()
+            val keyStr = key.toString()
             for (region in regions) {
                 for (sectionKey in section.keys) {
                     val abilities = section[sectionKey] ?: emptyList()
@@ -122,10 +122,10 @@ interface Ability {
         }
 
         val origins = runBlocking { OriginSwapper.getOrigins(player)  }
-        var hasAbility = origins.any { it.hasAbility(getKey()) }
+        var hasAbility = origins.any { it.hasAbility(key) }
 
-        if (abilityMap[getKey()] is DependantAbility) {
-            val dependantAbility = abilityMap[getKey()] as DependantAbility
+        if (abilityMap[key] is DependantAbility) {
+            val dependantAbility = abilityMap[key] as DependantAbility
             val dependencyEnabled = dependantAbility.dependency.isEnabled(player)
             val expected = (dependantAbility.dependencyType == DependantAbility.DependencyType.REGULAR)
             hasAbility = hasAbility && (dependencyEnabled == expected)

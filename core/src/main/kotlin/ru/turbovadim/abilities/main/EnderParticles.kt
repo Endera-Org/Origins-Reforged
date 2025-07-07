@@ -6,9 +6,7 @@ import ru.turbovadim.abilities.types.ParticleAbility
 
 class EnderParticles : ParticleAbility() {
 
-    override fun getKey(): Key {
-        return Key.key("origins:ender_particles")
-    }
+    override val key: Key = Key.key("origins:ender_particles")
 
     // Using the new particleType property with PacketEvents ParticleType
     override val particleType = ParticleTypes.PORTAL!!

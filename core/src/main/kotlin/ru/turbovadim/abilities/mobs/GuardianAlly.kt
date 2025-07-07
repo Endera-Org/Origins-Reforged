@@ -11,15 +11,11 @@ import ru.turbovadim.OriginSwapper.LineData.LineComponent.LineType
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class GuardianAlly : VisibleAbility, Listener {
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Guardians don't attack you!", LineType.DESCRIPTION)
+    override val description: MutableList<LineComponent> = LineData.makeLineFor("Guardians don't attack you!", LineType.DESCRIPTION)
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Guardian Ally", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Guardian Ally", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:guardian_ally")
-    }
+    override val key: Key = Key.key("moborigins:guardian_ally")
 
     @EventHandler
     fun onEntityTargetLivingEntity(event: EntityTargetLivingEntityEvent) {

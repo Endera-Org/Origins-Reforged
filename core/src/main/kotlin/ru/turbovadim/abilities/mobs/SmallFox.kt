@@ -10,7 +10,7 @@ import ru.turbovadim.abilities.types.AttributeModifierAbility
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class SmallFox : VisibleAbility, AttributeModifierAbility {
-    override fun getKey(): Key = Key.key("moborigins:small_fox")
+    override val key: Key = Key.key("moborigins:small_fox")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "You have 2 less hearts of health than humans.",

@@ -9,9 +9,7 @@ import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class MoreExhaustion : VisibleAbility, Listener {
-    override fun getKey(): Key {
-        return Key.key("origins:more_exhaustion")
-    }
+    override val key: Key = Key.key("origins:more_exhaustion")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "You exhaust much quicker than others, thus requiring you to eat more.",

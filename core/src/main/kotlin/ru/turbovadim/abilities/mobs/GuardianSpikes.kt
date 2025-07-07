@@ -12,15 +12,12 @@ import ru.turbovadim.abilities.types.VisibleAbility
 import java.util.*
 
 class GuardianSpikes : VisibleAbility, Listener {
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Spikes that have a chance to damage attackers!", LineType.DESCRIPTION)
+    override val description: MutableList<LineComponent> =
+        LineData.makeLineFor("Spikes that have a chance to damage attackers!", LineType.DESCRIPTION)
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Guardian Spikes", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Guardian Spikes", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:guardian_spikes")
-    }
+    override val key: Key = Key.key("moborigins:guardian_spikes")
 
     private val random = Random()
 

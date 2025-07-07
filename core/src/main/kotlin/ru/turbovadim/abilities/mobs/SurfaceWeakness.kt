@@ -22,9 +22,7 @@ class SurfaceWeakness : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:surface_weakness")
-    }
+    override val key: Key = Key.key("moborigins:surface_weakness")
 
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent) {

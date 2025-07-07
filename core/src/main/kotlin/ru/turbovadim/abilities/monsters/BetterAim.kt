@@ -19,7 +19,8 @@ class BetterAim : VisibleAbility, Listener {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Sniper", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override fun getKey(): Key = Key.key("monsterorigins:better_aim")
+    override val key: Key
+        get() = Key.key("monsterorigins:better_aim")
 
     @EventHandler
     fun onEntityShootBow(event: EntityShootBowEvent) {

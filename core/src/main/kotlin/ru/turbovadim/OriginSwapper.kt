@@ -1032,7 +1032,7 @@ class OriginSwapper : Listener {
             AbilityRegister.abilityMap.values.filterIsInstance<AttributeModifierAbility>().forEach { ability ->
                 val instance = runCatching { player.getAttribute(ability.attribute) }.getOrNull() ?: return@forEach
 
-                val abilityKeyStr = ability.getKey().asString()
+                val abilityKeyStr = ability.key.asString()
                 val key = NamespacedKey(origins, abilityKeyStr.replace(":", "-"))
 
                 val requiredAmount = ability.getTotalAmount(player)

@@ -30,7 +30,8 @@ class Slowness : VisibleAbility, AttributeModifierAbility {
             OriginSwapper.LineData.LineComponent.LineType.TITLE
         )
 
-    override fun getKey(): Key {
-        return Key.key("monsterorigins:slowness")
-    }  
+    override val key: Key
+        get() {
+            return Key.key("monsterorigins:slowness")
+        }
 }

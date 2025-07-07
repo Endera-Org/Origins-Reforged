@@ -27,9 +27,7 @@ class EndCrystalHealing : VisibleAbility, Listener {
         OriginSwapper.LineData.LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:end_crystal_healing")
-    }
+    override val key: Key = Key.key("fantasyorigins:end_crystal_healing")
 
     companion object {
         const val SEARCH_RADIUS = 48.0

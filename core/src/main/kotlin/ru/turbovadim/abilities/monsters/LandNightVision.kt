@@ -6,7 +6,8 @@ import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.abilities.main.CatVision
 
 class LandNightVision : CatVision() {
-    override fun getKey(): Key = Key.key("monsterorigins:land_night_vision")
+    override val key: Key
+        get() = Key.key("monsterorigins:land_night_vision")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "You can see in the dark when on land.",

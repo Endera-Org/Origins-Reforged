@@ -19,9 +19,7 @@ import ru.turbovadim.cooldowns.Cooldowns.CooldownInfo
 import ru.turbovadim.events.PlayerLeftClickEvent
 
 class ThrowEnderPearl : VisibleAbility, Listener, CooldownAbility {
-    override fun getKey(): Key {
-        return Key.key("origins:throw_ender_pearl")
-    }
+    override val key: Key = Key.key("origins:throw_ender_pearl")
 
     override val description = makeLineFor(
         "Whenever you want, you may throw an ender pearl which deals no damage, allowing you to teleport.",

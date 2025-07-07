@@ -28,5 +28,6 @@ class WolfBody : VisibleAbility, AttributeModifierAbility {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Wolf Body", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override fun getKey(): Key = Key.key("moborigins:wolf_body")
+    override val key: Key
+        get() = Key.key("moborigins:wolf_body")
 }

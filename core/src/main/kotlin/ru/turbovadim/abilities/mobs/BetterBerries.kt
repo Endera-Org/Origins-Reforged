@@ -18,9 +18,7 @@ class BetterBerries : VisibleAbility, Listener {
     override val title: MutableList<LineComponent>
         get() = LineData.makeLineFor("Better Berries", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:better_berries")
-    }
+    override val key: Key = Key.key("moborigins:better_berries")
 
     @EventHandler
     fun onPlayerItemConsume(event: PlayerItemConsumeEvent) {

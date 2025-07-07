@@ -20,9 +20,7 @@ class LowerTotemChance : VisibleAbility, Listener {
     override val title: MutableList<LineComponent>
         get() = LineData.makeLineFor("Arcane Totems", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:lower_totem_chance")
-    }
+    override val key: Key = Key.key("moborigins:lower_totem_chance")
 
     @EventHandler
     fun onEntityResurrect(event: EntityResurrectEvent) {

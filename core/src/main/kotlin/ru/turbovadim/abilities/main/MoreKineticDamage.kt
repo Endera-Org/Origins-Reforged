@@ -7,9 +7,7 @@ import ru.turbovadim.OriginSwapper.LineData.LineComponent
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class MoreKineticDamage : VisibleAbility, Listener {
-    override fun getKey(): Key {
-        return Key.key("origins:more_kinetic_damage")
-    }
+    override val key: Key = Key.key("origins:more_kinetic_damage")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "You take more damage from falling and flying into blocks.",

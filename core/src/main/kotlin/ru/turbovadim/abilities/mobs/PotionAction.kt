@@ -23,12 +23,9 @@ class PotionAction : VisibleAbility, Listener, CooldownAbility {
             LineType.DESCRIPTION
         )
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Perfect Potion", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Perfect Potion", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:potion_action")
-    }
+    override val key: Key = Key.key("moborigins:potion_action")
 
     @EventHandler
     fun onPlayerLeftClick(event: PlayerLeftClickEvent) {

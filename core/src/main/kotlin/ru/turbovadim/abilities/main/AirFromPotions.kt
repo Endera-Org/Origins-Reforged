@@ -11,9 +11,7 @@ import ru.turbovadim.OriginsReforged.Companion.instance
 import ru.turbovadim.abilities.types.Ability
 
 class AirFromPotions : Ability, Listener {
-    override fun getKey(): Key {
-        return Key.key("origins:air_from_potions")
-    }
+    override val key: Key = Key.key("origins:air_from_potions")
 
     var dehydrationKey: NamespacedKey = NamespacedKey(instance, "dehydrating")
 

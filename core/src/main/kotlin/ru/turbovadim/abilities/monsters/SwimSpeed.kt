@@ -80,9 +80,10 @@ class SwimSpeedMonsters : Listener, VisibleAbility {
         }
     }
 
-    override fun getKey(): Key {
-        return Key.key("monsterorigins:swim_speed")
-    }
+    override val key: Key
+        get() {
+            return Key.key("monsterorigins:swim_speed")
+        }
 
     override val description: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor(

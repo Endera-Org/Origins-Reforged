@@ -33,9 +33,7 @@ class Phantomize : DependencyAbility, Listener {
         }
     }
 
-    override fun getKey(): Key {
-        return Key.key("origins:phantomize")
-    }
+    override val key: Key = Key.key("origins:phantomize")
 
     override fun isEnabled(player: Player): Boolean {
         return phantomizedPlayers.getOrDefault(player.uniqueId, false)

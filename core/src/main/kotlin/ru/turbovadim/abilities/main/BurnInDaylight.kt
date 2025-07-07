@@ -43,9 +43,7 @@ open class BurnInDaylight : VisibleAbility, DependantAbility, Listener {
     }
 
 
-    override fun getKey(): Key {
-        return Key.key("origins:burn_in_daylight")
-    }
+    override val key: Key = Key.key("origins:burn_in_daylight")
 
     override val description: MutableList<LineComponent> = makeLineFor(
             "You begin to burn in daylight if you are not invisible.",

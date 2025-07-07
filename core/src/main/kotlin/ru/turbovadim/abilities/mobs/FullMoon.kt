@@ -24,16 +24,12 @@ class FullMoon : VisibleAbility, AttributeModifierAbility {
         return if (!player.world.isDayTime && player.world.moonPhase == MoonPhase.FULL_MOON) 0.07 else 0.0
     }
 
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor(
-            "During a full moon you get Faster, Stronger, and Healthier.",
-            LineType.DESCRIPTION
-        )
+    override val description: MutableList<LineComponent> = LineData.makeLineFor(
+        "During a full moon you get Faster, Stronger, and Healthier.",
+        LineType.DESCRIPTION
+    )
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Werewolf-like", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Werewolf-like", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:full_moon")
-    }
+    override val key: Key = Key.key("moborigins:full_moon")
 }

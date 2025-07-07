@@ -12,9 +12,7 @@ import ru.turbovadim.abilities.types.MultiAbility
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class ExtraReach : VisibleAbility, MultiAbility {
-    override fun getKey(): Key {
-        return Key.key("origins:extra_reach")
-    }
+    override val key: Key = Key.key("origins:extra_reach")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "You can reach blocks and entities further away.",
@@ -39,9 +37,10 @@ class ExtraReach : VisibleAbility, MultiAbility {
 
         override val operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER
 
-        override fun getKey(): Key {
-            return Key.key("origins:extra_reach_entities")
-        }
+        override val key: Key
+            get() {
+                return Key.key("origins:extra_reach_entities")
+            }
 
         companion object {
             var extraReachEntities: ExtraReachEntities = ExtraReachEntities()
@@ -56,9 +55,10 @@ class ExtraReach : VisibleAbility, MultiAbility {
 
         override val operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER
 
-        override fun getKey(): Key {
-            return Key.key("origins:extra_reach_blocks")
-        }
+        override val key: Key
+            get() {
+                return Key.key("origins:extra_reach_blocks")
+            }
 
         companion object {
             var extraReachBlocks: ExtraReachBlocks = ExtraReachBlocks()

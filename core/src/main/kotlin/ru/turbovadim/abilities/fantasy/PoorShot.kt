@@ -21,9 +21,7 @@ class PoorShot : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:poor_shot")
-    }
+    override val key: Key = Key.key("fantasyorigins:poor_shot")
 
     @EventHandler
     fun onEntityShootBow(event: EntityShootBowEvent) {

@@ -21,9 +21,7 @@ import ru.turbovadim.abilities.types.FlightAllowingAbility
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class LikeWater : VisibleAbility, FlightAllowingAbility, Listener, PacketListener {
-    override fun getKey(): Key {
-        return Key.key("origins:like_water")
-    }
+    override val key: Key = Key.key("origins:like_water")
 
     override fun canFly(player: Player): Boolean {
         return player.isInWater && !player.isInBubbleColumn

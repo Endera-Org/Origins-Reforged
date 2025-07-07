@@ -14,15 +14,12 @@ import ru.turbovadim.OriginSwapper.LineData.LineComponent.LineType
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class ItemCollector : VisibleAbility, Listener {
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor("You have a larger item pickup radius.", LineType.DESCRIPTION)
+    override val description: MutableList<LineComponent> =
+        LineData.makeLineFor("You have a larger item pickup radius.", LineType.DESCRIPTION)
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Item Collector", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Item Collector", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:item_collector")
-    }
+    override val key: Key = Key.key("moborigins:item_collector")
 
     private fun pickUpItem(player: Player, item: Item) {
         val pickupEvent = EntityPickupItemEvent(player, item, 0)

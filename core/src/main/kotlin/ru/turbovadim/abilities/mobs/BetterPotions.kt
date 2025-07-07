@@ -20,9 +20,7 @@ class BetterPotions : VisibleAbility, Listener {
     override val title: MutableList<LineComponent>
         get() = LineData.makeLineFor("Better Potions", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:better_potions")
-    }
+    override val key: Key = Key.key("moborigins:better_potions")
 
     @EventHandler
     fun onEntityPotionEffect(event: EntityPotionEffectEvent) {

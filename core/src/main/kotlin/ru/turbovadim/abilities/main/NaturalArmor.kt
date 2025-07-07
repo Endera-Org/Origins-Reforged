@@ -10,9 +10,7 @@ import ru.turbovadim.abilities.types.AttributeModifierAbility
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class NaturalArmor : AttributeModifierAbility, VisibleAbility {
-    override fun getKey(): Key {
-        return Key.key("origins:natural_armor")
-    }
+    override val key: Key = Key.key("origins:natural_armor")
 
     override val attribute: Attribute = NMSInvoker.armorAttribute
 

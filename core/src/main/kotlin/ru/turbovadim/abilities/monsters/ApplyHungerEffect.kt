@@ -21,7 +21,7 @@ class ApplyHungerEffect : VisibleAbility, Listener {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Hunger", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override fun getKey(): Key = Key.key("monsterorigins:apply_hunger_effect")
+    override val key: Key = Key.key("monsterorigins:apply_hunger_effect")
 
     @EventHandler
     fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {

@@ -19,9 +19,7 @@ class PerfectShot : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:perfect_shot")
-    }
+    override val key: Key = Key.key("fantasyorigins:perfect_shot")
 
     @EventHandler
     fun onEntityShootBow(event: EntityShootBowEvent) {

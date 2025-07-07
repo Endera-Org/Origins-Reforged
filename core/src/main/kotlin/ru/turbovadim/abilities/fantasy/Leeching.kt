@@ -12,9 +12,7 @@ import ru.turbovadim.abilities.types.VisibleAbility
 import kotlin.math.min
 
 class Leeching : VisibleAbility, Listener {
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:leeching")
-    }
+    override val key: Key = Key.key("fantasyorigins:leeching")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "Upon killing a mob or player, you sap a portion of its health, healing you.",

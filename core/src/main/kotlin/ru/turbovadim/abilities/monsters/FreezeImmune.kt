@@ -8,9 +8,10 @@ import org.bukkit.event.Listener
 import ru.turbovadim.abilities.types.Ability
 
 class FreezeImmune : Ability, Listener {
-    override fun getKey(): Key {
-        return Key.key("monsterorigins:freeze_immune")
-    }
+    override val key: Key
+        get() {
+            return Key.key("monsterorigins:freeze_immune")
+        }
 
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent?) {

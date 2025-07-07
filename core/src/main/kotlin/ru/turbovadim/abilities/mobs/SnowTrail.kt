@@ -21,7 +21,7 @@ class SnowTrail : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key = Key.key("moborigins:snow_trail")
+    override val key: Key = Key.key("moborigins:snow_trail")
 
     @EventHandler
     fun onServerTickEnd(event: ServerTickEndEvent?) {

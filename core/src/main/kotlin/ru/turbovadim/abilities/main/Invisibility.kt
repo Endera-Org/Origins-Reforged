@@ -10,9 +10,7 @@ import ru.turbovadim.abilities.types.VisibleAbility
 
 class Invisibility : DependantAbility, VisibleAbility, VisibilityChangingAbility {
 
-    override fun getKey(): Key {
-        return Key.key("origins:invisibility")
-    }
+    override val key: Key = Key.key("origins:invisibility")
 
     override val dependencyKey: Key = Key.key("origins:phantomize")
 

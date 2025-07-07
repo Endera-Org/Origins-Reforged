@@ -28,9 +28,7 @@ import ru.turbovadim.events.PlayerLeftClickEvent
 
 class ShulkerInventory : VisibleAbility, Listener {
 
-    override fun getKey(): Key {
-        return Key.key("origins:shulker_inventory")
-    }
+    override val key: Key = Key.key("origins:shulker_inventory")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "You have access to an additional 9 slots of inventory, which keep the items on death.",

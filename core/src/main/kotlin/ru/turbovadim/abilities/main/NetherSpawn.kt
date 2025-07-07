@@ -10,9 +10,7 @@ import ru.turbovadim.abilities.types.DefaultSpawnAbility
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class NetherSpawn : DefaultSpawnAbility, VisibleAbility {
-    override fun getKey(): Key {
-        return Key.key("origins:nether_spawn")
-    }
+    override val key: Key = Key.key("origins:nether_spawn")
 
     override val world: World?
         get() {

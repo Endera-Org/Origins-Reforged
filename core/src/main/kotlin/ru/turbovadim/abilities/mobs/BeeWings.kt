@@ -25,9 +25,7 @@ class BeeWings : VisibleAbility, Listener, CooldownAbility {
     override val title: MutableList<LineComponent>
         get() = LineData.makeLineFor("Bee Wings", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:bee_wings")
-    }
+    override val key: Key = Key.key("moborigins:bee_wings")
 
     private val lastToggledSneak: MutableMap<Player, Int> = HashMap()
 

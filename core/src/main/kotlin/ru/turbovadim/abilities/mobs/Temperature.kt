@@ -8,9 +8,10 @@ import kotlin.math.max
 import kotlin.math.min
 
 class Temperature : CooldownAbility {
-    override fun getKey(): Key {
-        return Key.key("moborigins:temperature")
-    }
+    override val key: Key
+        get() {
+            return Key.key("moborigins:temperature")
+        }
 
     fun getTemperature(player: Player?): Int {
         return playerTemperatureMap.getOrDefault(player, 0)!!

@@ -21,9 +21,7 @@ class AlphaWolf : VisibleAbility, Listener {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Alpha Wolf", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:alpha_wolf")
-    }
+    override val key: Key = Key.key("moborigins:alpha_wolf")
 
     @EventHandler
     fun onEntityTame(event: EntityTameEvent) {

@@ -21,9 +21,7 @@ class BreathStorer : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:breath_storer")
-    }
+    override val key: Key = Key.key("fantasyorigins:breath_storer")
 
     @EventHandler
     fun onPlayerInteract(event: PlayerInteractEvent) {

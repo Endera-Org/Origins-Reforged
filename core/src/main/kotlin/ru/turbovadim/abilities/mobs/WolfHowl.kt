@@ -27,7 +27,8 @@ class WolfHowl : VisibleAbility, Listener, CooldownAbility {
     override val title: MutableList<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Howl", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override fun getKey(): Key = Key.key("moborigins:wolf_howl")
+    override val key: Key
+        get() = Key.key("moborigins:wolf_howl")
 
     @EventHandler
     fun onPlayerLeftClick(event: PlayerLeftClickEvent) {

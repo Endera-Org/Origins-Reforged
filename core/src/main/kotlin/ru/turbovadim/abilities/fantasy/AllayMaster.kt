@@ -23,9 +23,7 @@ class AllayMaster : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:allay_master")
-    }
+    override val key: Key = Key.key("fantasyorigins:allay_master")
 
     @EventHandler
     fun onPlayerInteractEntity(event: PlayerInteractEntityEvent) {

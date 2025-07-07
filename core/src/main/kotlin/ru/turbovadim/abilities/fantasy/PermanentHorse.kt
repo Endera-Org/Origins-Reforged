@@ -42,9 +42,8 @@ class PermanentHorse : VisibleAbility, Listener {
     override val title: List<OriginSwapper.LineData.LineComponent>
         get() = OriginSwapper.LineData.makeLineFor("Half Horse", OriginSwapper.LineData.LineComponent.LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:permanent_horse")
-    }
+    override val key = Key.key("fantasyorigins:permanent_horse")
+
 
     @EventHandler
     fun onEntityDismount(event: FantasyEntityDismountEvent) {
@@ -81,7 +80,7 @@ class PermanentHorse : VisibleAbility, Listener {
     fun onEntityMount(event: FantasyEntityMountEvent) {
         val entity = event.entity
         runForAbility(entity) {
-            val mountOwner = event.mount.persistentDataContainer.getOrDefault(key, PersistentDataType.STRING, "")
+            val mountOwner = event.mount.persistentDataContainer.getOrDefault(mountKey, PersistentDataType.STRING, "")
             if (mountOwner != entity.uniqueId.toString()) {
                 event.isCancelled = true
                 if (event.mount !is LivingEntity) {
@@ -93,7 +92,7 @@ class PermanentHorse : VisibleAbility, Listener {
         }
     }
 
-    private val key = NamespacedKey(OriginsReforged.instance, "mount-key")
+    private val mountKey = NamespacedKey(OriginsReforged.instance, "mount-key")
     private val teleportingKey = NamespacedKey(OriginsReforged.instance, "teleporting")
 
     @EventHandler
@@ -120,7 +119,7 @@ class PermanentHorse : VisibleAbility, Listener {
                             }
                         }
 
-                        horse.persistentDataContainer.set(key, PersistentDataType.STRING, player.uniqueId.toString())
+                        horse.persistentDataContainer.set(mountKey, PersistentDataType.STRING, player.uniqueId.toString())
                         horse.isTamed = true
                         horse.style = Horse.Style.NONE
 
@@ -128,7 +127,7 @@ class PermanentHorse : VisibleAbility, Listener {
                         launch(bukkitDispatcher) {
                             val saddle = ItemStack(Material.SADDLE).apply {
                                 itemMeta = itemMeta?.apply {
-                                    persistentDataContainer.set(key, OriginSwapper.BooleanPDT.BOOLEAN, true)
+                                    persistentDataContainer.set(mountKey, OriginSwapper.BooleanPDT.BOOLEAN, true)
                                 }
                             }
                             horse.inventory.saddle = saddle
@@ -144,21 +143,21 @@ class PermanentHorse : VisibleAbility, Listener {
     fun onInventoryClick(event: InventoryClickEvent) {
         if (event.getCurrentItem() == null) return
         if (event.getCurrentItem()!!.itemMeta == null) return
-        if (event.getCurrentItem()!!.itemMeta.persistentDataContainer.has(key)) event.isCancelled = true
+        if (event.getCurrentItem()!!.itemMeta.persistentDataContainer.has(mountKey)) event.isCancelled = true
     }
 
     @EventHandler
     fun onPlayerDeath(event: PlayerDeathEvent) {
         runForAbility(event.entity) {
             val vehicle = event.getEntity().vehicle
-            if (vehicle != null && vehicle.persistentDataContainer.has(key)) vehicle.remove()
+            if (vehicle != null && vehicle.persistentDataContainer.has(mountKey)) vehicle.remove()
         }
     }
 
     @EventHandler
     fun onPlayerSwapOrigin(event: PlayerSwapOriginEvent) {
         val vehicle = event.getPlayer().vehicle
-        if (vehicle != null && vehicle.persistentDataContainer.has(key)) vehicle.remove()
+        if (vehicle != null && vehicle.persistentDataContainer.has(mountKey)) vehicle.remove()
     }
 
     @EventHandler
@@ -170,7 +169,7 @@ class PermanentHorse : VisibleAbility, Listener {
 
     @EventHandler
     fun onEntityDamage(event: EntityDamageEvent) {
-        if (event.getEntity().persistentDataContainer.has(key)) {
+        if (event.getEntity().persistentDataContainer.has(mountKey)) {
             for (entity in event.getEntity().passengers) {
                 if (entity is LivingEntity) {
                     NMSInvoker.transferDamageEvent(entity, event)

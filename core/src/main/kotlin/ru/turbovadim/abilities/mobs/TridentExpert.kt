@@ -42,7 +42,8 @@ class TridentExpert : VisibleAbility, Listener, AttributeModifierAbility, Cooldo
             OriginSwapper.LineData.LineComponent.LineType.TITLE
         )
 
-    override fun getKey(): Key = Key.key("moborigins:trident_expert")
+    override val key: Key
+        get() = Key.key("moborigins:trident_expert")
 
     private val riptideKey: NamespacedKey = NamespacedKey(OriginsReforged.instance, "riptide-trident")
 

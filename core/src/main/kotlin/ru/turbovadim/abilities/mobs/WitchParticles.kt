@@ -7,11 +7,9 @@ import ru.turbovadim.abilities.types.ParticleAbility
 
 class WitchParticles : ParticleAbility() {
     
-    override val particleType: ParticleType<*>
-        get() = ParticleTypes.WITCH
+    override val particleType: ParticleType<*> = ParticleTypes.WITCH
 
-    override val frequency: Int
-        get() = 4
+    override val frequency: Int = 4
 
-    override fun getKey(): Key = Key.key("moborigins:witch_particles")
+    override val key: Key = Key.key("moborigins:witch_particles")
 }

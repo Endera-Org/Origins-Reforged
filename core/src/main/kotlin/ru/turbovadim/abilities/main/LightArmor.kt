@@ -19,9 +19,7 @@ import ru.turbovadim.abilities.types.VisibleAbility
 import ru.turbovadim.events.PlayerSwapOriginEvent
 
 class LightArmor : VisibleAbility, Listener {
-    override fun getKey(): Key {
-        return Key.key("origins:light_armor")
-    }
+    override val key: Key = Key.key("origins:light_armor")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "You can not wear any heavy armor (armor with protection values higher than chainmail).",
@@ -51,7 +49,7 @@ class LightArmor : VisibleAbility, Listener {
     @EventHandler
     fun onPlayerSwapOrigin(event: PlayerSwapOriginEvent) {
         val newOrigin = event.newOrigin ?: return
-        if (!newOrigin.hasAbility(getKey())) return
+        if (!newOrigin.hasAbility(key)) return
 
         val player = event.getPlayer()
         val inventory = player.inventory

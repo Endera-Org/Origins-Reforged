@@ -12,15 +12,12 @@ import ru.turbovadim.OriginSwapper.LineData.LineComponent.LineType
 import ru.turbovadim.abilities.types.VisibleAbility
 
 class QueenBee : VisibleAbility, Listener {
-    override val description: MutableList<LineComponent>
-        get() = LineData.makeLineFor("When you collect honey, the bees won't try to attack you.", LineType.DESCRIPTION)
+    override val description: MutableList<LineComponent> =
+        LineData.makeLineFor("When you collect honey, the bees won't try to attack you.", LineType.DESCRIPTION)
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Queen Bee", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Queen Bee", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:queen_bee")
-    }
+    override val key: Key = Key.key("moborigins:queen_bee")
 
     @EventHandler
     fun onEntityTargetLivingEntity(event: EntityTargetLivingEntityEvent) {

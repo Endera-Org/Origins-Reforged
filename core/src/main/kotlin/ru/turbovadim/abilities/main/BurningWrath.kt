@@ -17,9 +17,7 @@ class BurningWrath : VisibleAbility, Listener {
         }
     }
 
-    override fun getKey(): Key {
-        return Key.key("origins:burning_wrath")
-    }
+    override val key: Key = Key.key("origins:burning_wrath")
 
     override val description: MutableList<LineComponent> = makeLineFor(
             "When on fire, you deal additional damage with your attacks.",

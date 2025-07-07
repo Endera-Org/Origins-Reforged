@@ -108,7 +108,7 @@ class Origin(
 
     fun hasAbility(key: Key): Boolean {
         for (ability in AbilityRegister.multiAbilityMap.getOrDefault(key, listOf())) {
-            if (abilities.contains(ability.getKey())) return true
+            if (abilities.contains(ability.key)) return true
         }
         return abilities.contains(key)
     }

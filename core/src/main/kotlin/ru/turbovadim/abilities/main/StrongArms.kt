@@ -23,9 +23,7 @@ import ru.turbovadim.abilities.types.VisibleAbility
 
 class StrongArms : MultiAbility, VisibleAbility, Listener {
 
-    override fun getKey(): Key {
-        return Key.key("origins:strong_arms")
-    }
+    override val key: Key = Key.key("origins:strong_arms")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         "You are strong enough to break natural stones without using a pickaxe.",
@@ -57,9 +55,10 @@ class StrongArms : MultiAbility, VisibleAbility, Listener {
         }
 
 
-        override fun getKey(): Key {
-            return Key.key("origins:strong_arms_drops")
-        }
+        override val key: Key
+            get() {
+                return Key.key("origins:strong_arms_drops")
+            }
 
         companion object {
             var strongArmsDrops: StrongArmsDrops = StrongArmsDrops()
@@ -84,9 +83,10 @@ class StrongArms : MultiAbility, VisibleAbility, Listener {
     }
 
     class StrongArmsBreakSpeed : BreakSpeedModifierAbility, Listener {
-        override fun getKey(): Key {
-            return Key.key("origins:strong_arms_break_speed")
-        }
+        override val key: Key
+            get() {
+                return Key.key("origins:strong_arms_break_speed")
+            }
 
         override fun provideContextFor(player: Player): BlockMiningContext {
             var aquaAffinity = false

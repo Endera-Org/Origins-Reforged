@@ -22,9 +22,7 @@ class InfiniteNightVision : VisibleAbility, Listener {
         LineComponent.LineType.TITLE
     )
 
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:infinite_night_vision")
-    }
+    override val key: Key = Key.key("fantasyorigins:infinite_night_vision")
 
     private val nightVisionEffect = PotionEffect(PotionEffectType.NIGHT_VISION, 240, 0)
 

@@ -21,12 +21,9 @@ class PillagerAligned : VisibleAbility, Listener {
     override val description: MutableList<LineComponent>
         get() = LineData.makeLineFor("Villagers don't like you, and pillagers like you!", LineType.DESCRIPTION)
 
-    override val title: MutableList<LineComponent>
-        get() = LineData.makeLineFor("Pillager Aligned", LineType.TITLE)
+    override val title: MutableList<LineComponent> = LineData.makeLineFor("Pillager Aligned", LineType.TITLE)
 
-    override fun getKey(): Key {
-        return Key.key("moborigins:pillager_aligned")
-    }
+    override val key: Key = Key.key("moborigins:pillager_aligned")
 
     @EventHandler
     fun onEntityTargetLivingEntity(event: EntityTargetLivingEntityEvent) {

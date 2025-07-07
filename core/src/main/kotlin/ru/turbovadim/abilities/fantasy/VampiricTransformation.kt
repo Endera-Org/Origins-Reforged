@@ -19,9 +19,7 @@ import ru.turbovadim.events.PlayerSwapOriginEvent
 import java.util.*
 
 class VampiricTransformation : VisibleAbility, Listener {
-    override fun getKey(): Key {
-        return Key.key("fantasyorigins:vampiric_transformation")
-    }
+    override val key: Key = Key.key("fantasyorigins:vampiric_transformation")
 
     override val description: MutableList<LineComponent> = makeLineFor(
         if (OriginsReforged.instance.config.getDouble("vampire-transform-chance", 1.0) >= 1)

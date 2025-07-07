@@ -26,7 +26,7 @@ object WorldGuardHook {
                 val data = r.getFlag<StringFlag?, String?>(flag)
                 if (data != null) {
                     for (s in data.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()) {
-                        if (s == ability.getKey().toString()) return true
+                        if (s == ability.key.toString()) return true
                     }
                 }
             }
