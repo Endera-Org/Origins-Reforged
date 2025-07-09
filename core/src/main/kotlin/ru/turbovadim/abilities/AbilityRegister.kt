@@ -108,8 +108,10 @@ object AbilityRegister {
 
     fun updateFlight(player: Player, inDisabledWorld: Boolean) {
         if (player.gameMode == GameMode.CREATIVE || player.gameMode == GameMode.SPECTATOR) {
+            player.flySpeed = if (player.flySpeed < 0.1f) 0.1f else player.flySpeed
             return
         }
+
         if (FlightToggleCommand.canFly(player)) {
             player.flySpeed = 0.1f
             return

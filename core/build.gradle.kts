@@ -50,7 +50,6 @@ dependencies {
     compileOnly(project(":1.21.1"))
     compileOnly(project(":1.21.3"))
     compileOnly(project(":1.21.4"))
-    compileOnly(project(":1.21.5"))
     compileOnly(project(":1.21.6"))
     compileOnly(project(":1.21.7"))
     compileOnly(files("libs/worldguard.jar"))

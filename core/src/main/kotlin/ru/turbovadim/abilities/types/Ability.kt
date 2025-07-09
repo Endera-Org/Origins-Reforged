@@ -48,30 +48,43 @@ interface Ability {
     }
 
     suspend fun hasAbilityAsync(player: Player): Boolean = withContext(ioDispatcher) {
-        for (keyStateGetter in AddonLoader.abilityOverrideChecks) {
-            val state = keyStateGetter?.get(player, key)
-            return@withContext when (state) {
-                OriginsAddon.State.DENY -> false
-                OriginsAddon.State.ALLOW -> true
-                else -> false
+        computeHasAbility(player)
+    }
+
+    fun hasAbility(player: Player): Boolean {
+        return runBlocking { computeHasAbility(player) }
+    }
+
+    private suspend fun computeHasAbility(player: Player): Boolean {
+        AddonLoader.abilityOverrideChecks
+            .asSequence()
+            .mapNotNull { it?.get(player, key) }
+            .firstOrNull()
+            ?.let { state ->
+                return when (state) {
+                    OriginsAddon.State.DENY -> false
+                    OriginsAddon.State.ALLOW -> true
+                    else -> false
+                }
             }
-        }
 
         if (OriginsReforged.Companion.isWorldGuardHookInitialized) {
-            if (WorldGuardHook.isAbilityDisabled(player.location, this@Ability)) return@withContext false
+            if (WorldGuardHook.isAbilityDisabled(player.location, this@Ability)) return false
 
             val section = OriginsReforged.mainConfig.preventAbilitiesIn
-            val loc = BukkitAdapter.adapt(player.location)
-            val container = WorldGuard.getInstance().platform.regionContainer
-            val query = container.createQuery()
-            val regions = query.getApplicableRegions(loc)
-            val keyStr = key.toString()
-            for (region in regions) {
-                for (sectionKey in section.keys) {
-                    val abilities = section[sectionKey] ?: emptyList()
-                    if (!abilities.contains(keyStr) && !abilities.contains("all")) continue
-                    if (region.id.equals(sectionKey, ignoreCase = true)) {
-                        return@withContext false
+            if (section.isNotEmpty()) {
+                val loc = BukkitAdapter.adapt(player.location)
+                val container = WorldGuard.getInstance().platform.regionContainer
+                val query = container.createQuery()
+                val regions = query.getApplicableRegions(loc)
+                val keyStr = key.toString()
+
+                for (region in regions) {
+                    section[region.id]?.takeIf { it.contains("all") || it.contains(keyStr) }?.let {
+                        return false
+                    }
+                    section[region.id.lowercase()]?.takeIf { it.contains("all") || it.contains(keyStr) }?.let {
+                        return false
                     }
                 }
             }
@@ -80,56 +93,12 @@ interface Ability {
         val origins = OriginSwapper.getOrigins(player)
         var hasAbility = origins.any { it.hasAbility(key) }
 
-        if (abilityMap[key] is DependantAbility) {
-            val dependantAbility = abilityMap[key] as DependantAbility
+        (abilityMap[key] as? DependantAbility)?.let { dependantAbility ->
             val dependencyEnabled = dependantAbility.dependency.isEnabled(player)
-            val expected = (dependantAbility.dependencyType == DependantAbility.DependencyType.REGULAR)
+            val expected = dependantAbility.dependencyType == DependantAbility.DependencyType.REGULAR
             hasAbility = hasAbility && (dependencyEnabled == expected)
         }
-        return@withContext hasAbility
-    }
 
-
-
-    fun hasAbility(player: Player): Boolean {
-        for (keyStateGetter in AddonLoader.abilityOverrideChecks) {
-            val state = keyStateGetter?.get(player, key)
-            return when (state) {
-                OriginsAddon.State.DENY -> false
-                OriginsAddon.State.ALLOW -> true
-                else -> false
-            }
-        }
-
-        if (OriginsReforged.isWorldGuardHookInitialized) {
-            if (WorldGuardHook.isAbilityDisabled(player.location, this@Ability)) return false
-
-            val section = OriginsReforged.mainConfig.preventAbilitiesIn
-            val loc = BukkitAdapter.adapt(player.location)
-            val container = WorldGuard.getInstance().platform.regionContainer
-            val query = container.createQuery()
-            val regions = query.getApplicableRegions(loc)
-            val keyStr = key.toString()
-            for (region in regions) {
-                for (sectionKey in section.keys) {
-                    val abilities = section[sectionKey] ?: emptyList()
-                    if (!abilities.contains(keyStr) && !abilities.contains("all")) continue
-                    if (region.id.equals(sectionKey, ignoreCase = true)) {
-                        return false
-                    }
-                }
-            }
-        }
-
-        val origins = runBlocking { OriginSwapper.getOrigins(player)  }
-        var hasAbility = origins.any { it.hasAbility(key) }
-
-        if (abilityMap[key] is DependantAbility) {
-            val dependantAbility = abilityMap[key] as DependantAbility
-            val dependencyEnabled = dependantAbility.dependency.isEnabled(player)
-            val expected = (dependantAbility.dependencyType == DependantAbility.DependencyType.REGULAR)
-            hasAbility = hasAbility && (dependencyEnabled == expected)
-        }
         return hasAbility
     }
 
