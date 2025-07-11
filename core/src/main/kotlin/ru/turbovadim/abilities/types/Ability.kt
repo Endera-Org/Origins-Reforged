@@ -52,16 +52,20 @@ interface Ability {
     }
 
     fun hasAbility(player: Player): Boolean {
-        return runBlocking { computeHasAbility(player) }
+        return computeHasAbilitySync(player)
     }
 
-    private suspend fun computeHasAbility(player: Player): Boolean {
+    private suspend fun computeHasAbility(player: Player): Boolean = withContext(ioDispatcher) {
+        computeHasAbilitySync(player)
+    }
+
+    private fun computeHasAbilitySync(player: Player): Boolean {
         AddonLoader.abilityOverrideChecks
             .asSequence()
             .mapNotNull { it?.get(player, key) }
             .firstOrNull()
             ?.let { state ->
-                return when (state) {
+                return@computeHasAbilitySync when (state) {
                     OriginsAddon.State.DENY -> false
                     OriginsAddon.State.ALLOW -> true
                     else -> false
@@ -90,7 +94,7 @@ interface Ability {
             }
         }
 
-        val origins = OriginSwapper.getOrigins(player)
+        val origins = OriginSwapper.getOriginsSync(player)
         var hasAbility = origins.any { it.hasAbility(key) }
 
         (abilityMap[key] as? DependantAbility)?.let { dependantAbility ->

@@ -420,11 +420,8 @@ class NMSInvokerV1_20_1 : NMSInvoker() {
     }
 
     override fun getAttributeModifier(instance: AttributeInstance, key: NamespacedKey): AttributeModifier? {
-        val u = UUID.nameUUIDFromBytes(key.toString().toByteArray())
-        for (am in instance.modifiers) {
-            if (am.uniqueId == u) return am
-        }
-        return null
+        val uuid = UUID.nameUUIDFromBytes(key.toString().toByteArray())
+        return instance.modifiers.firstOrNull { it.uniqueId == uuid }
     }
 
     override fun addAttributeModifier(

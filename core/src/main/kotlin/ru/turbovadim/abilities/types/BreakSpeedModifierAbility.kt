@@ -332,7 +332,7 @@ interface BreakSpeedModifierAbility : Ability {
                 }
 
                 val d = NMSInvoker.getDestroySpeed(blockType)
-
+                if (d == 0.0f) return 0.0f
                 return f / d
             }
         }

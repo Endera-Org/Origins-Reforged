@@ -60,22 +60,20 @@ class StrongArms : MultiAbility, VisibleAbility, Listener {
         companion object {
             var strongArmsDrops: StrongArmsDrops = StrongArmsDrops()
 
-            private val naturalStones: MutableList<Material?> = object : ArrayList<Material?>() {
-                init {
-                    add(Material.STONE)
-                    add(Material.TUFF)
-                    add(Material.GRANITE)
-                    add(Material.DIORITE)
-                    add(Material.ANDESITE)
-                    add(Material.SANDSTONE)
-                    add(Material.SMOOTH_SANDSTONE)
-                    add(Material.RED_SANDSTONE)
-                    add(Material.SMOOTH_RED_SANDSTONE)
-                    add(Material.DEEPSLATE)
-                    add(Material.BLACKSTONE)
-                    add(Material.NETHERRACK)
-                }
-            }
+            private val naturalStones = listOf(
+                Material.STONE,
+                Material.TUFF,
+                Material.GRANITE,
+                Material.DIORITE,
+                Material.ANDESITE,
+                Material.SANDSTONE,
+                Material.SMOOTH_SANDSTONE,
+                Material.RED_SANDSTONE,
+                Material.SMOOTH_RED_SANDSTONE,
+                Material.DEEPSLATE,
+                Material.BLACKSTONE,
+                Material.NETHERRACK
+            )
         }
     }
 
@@ -110,22 +108,20 @@ class StrongArms : MultiAbility, VisibleAbility, Listener {
         companion object {
             var strongArmsBreakSpeed: StrongArmsBreakSpeed = StrongArmsBreakSpeed()
 
-            private val naturalStones: MutableList<Material?> = object : ArrayList<Material?>() {
-                init {
-                    add(Material.STONE)
-                    add(Material.TUFF)
-                    add(Material.GRANITE)
-                    add(Material.DIORITE)
-                    add(Material.ANDESITE)
-                    add(Material.SANDSTONE)
-                    add(Material.SMOOTH_SANDSTONE)
-                    add(Material.RED_SANDSTONE)
-                    add(Material.SMOOTH_RED_SANDSTONE)
-                    add(Material.DEEPSLATE)
-                    add(Material.BLACKSTONE)
-                    add(Material.NETHERRACK)
-                }
-            }
+            private val naturalStones = listOf(
+                Material.STONE,
+                Material.TUFF,
+                Material.GRANITE,
+                Material.DIORITE,
+                Material.ANDESITE,
+                Material.SANDSTONE,
+                Material.SMOOTH_SANDSTONE,
+                Material.RED_SANDSTONE,
+                Material.SMOOTH_RED_SANDSTONE,
+                Material.DEEPSLATE,
+                Material.BLACKSTONE,
+                Material.NETHERRACK
+            )
         }
     }
 }

@@ -95,15 +95,16 @@ class Origin(
         return result
     }
 
-    fun getAbilities(): List<Ability> {
-        val originAbilities = mutableListOf<Ability>()
-        for (key in abilities) {
-            val a = AbilityRegister.abilityMap[key]
-            if (a == null) continue
-            originAbilities.add(a)
-            if (a is MultiAbility) originAbilities.addAll(a.abilities)
+    fun getAbilities(): List<Ability> = cachedAbilities
+
+    private val cachedAbilities: List<Ability> by lazy {
+        buildList {
+            abilities.forEach { key ->
+                val ability = AbilityRegister.abilityMap[key] ?: return@forEach
+                add(ability)
+                if (ability is MultiAbility) addAll(ability.abilities)
+            }
         }
-        return originAbilities
     }
 
     fun hasAbility(key: Key): Boolean {
