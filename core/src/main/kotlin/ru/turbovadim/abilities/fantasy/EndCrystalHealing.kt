@@ -30,7 +30,7 @@ class EndCrystalHealing : VisibleAbility, Listener {
     override val key: Key = Key.key("fantasyorigins:end_crystal_healing")
 
     companion object {
-        const val SEARCH_RADIUS = 48.0
+        const val SEARCH_RADIUS = 20.0
         const val MAX_DISTANCE_SQ = 144.0
     }
 
@@ -44,7 +44,7 @@ class EndCrystalHealing : VisibleAbility, Listener {
                 runForAbilityAsync(
                     player,
                     { p ->
-                        withContext(bukkitDispatcher) {
+                        launch(bukkitDispatcher) {
                             p.getNearbyEntities(SEARCH_RADIUS, SEARCH_RADIUS, SEARCH_RADIUS)
                                 .filterIsInstance<EnderCrystal>()
                                 .filter { it.location.distanceSquared(playerLoc) <= MAX_DISTANCE_SQ }
@@ -55,7 +55,7 @@ class EndCrystalHealing : VisibleAbility, Listener {
                         }
                     },
                     { p ->
-                        withContext(bukkitDispatcher) {
+                        launch(bukkitDispatcher) {
                             p.getNearbyEntities(SEARCH_RADIUS, SEARCH_RADIUS, SEARCH_RADIUS)
                                 .filterIsInstance<EnderCrystal>()
                                 .forEach { it.beamTarget = null }

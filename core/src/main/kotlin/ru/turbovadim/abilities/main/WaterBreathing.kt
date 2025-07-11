@@ -63,8 +63,17 @@ class WaterBreathing : Listener, VisibleAbility {
     var dehydrationKey: NamespacedKey = NamespacedKey(instance, "dehydrating")
     var damageKey: NamespacedKey = NamespacedKey(instance, "ignore-item-damage")
 
+    private val breathingEffect = PotionEffect(
+        PotionEffectType.WATER_BREATHING,
+        200,
+        0,
+        false,
+        false,
+        true
+    )
+
     @EventHandler
-    fun onServerTickEnd(event: ServerTickEndEvent?) {
+    fun onServerTickEnd(event: ServerTickEndEvent) {
         Bukkit.getOnlinePlayers().toList().forEach { player ->
             runForAbility(
                 player,
@@ -77,16 +86,7 @@ class WaterBreathing : Listener, VisibleAbility {
                         player.inventory.helmet
                             ?.takeIf { underwater && it.type == Material.TURTLE_HELMET }
                             ?.let {
-                                player.addPotionEffect(
-                                    PotionEffect(
-                                        PotionEffectType.WATER_BREATHING,
-                                        200,
-                                        0,
-                                        false,
-                                        false,
-                                        true
-                                    )
-                                )
+                                player.addPotionEffect(breathingEffect)
                             }
 
                         if (player.persistentDataContainer.get(airKey, OriginSwapper.BooleanPDT.BOOLEAN) == true) {

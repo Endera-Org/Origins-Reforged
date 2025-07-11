@@ -210,11 +210,11 @@ class OriginSwapper : Listener {
                     } else if (ShortcutUtils.isBedrockPlayer(player.uniqueId)) {
                         val delayMillis = OriginsReforged.mainConfig.geyser.joinFormDelay.toLong()
                         delay(delayMillis)
-                        withContext(bukkitDispatcher) {
+                        launch(bukkitDispatcher) {
                             GeyserSwapper.openOriginSwapper(player, SwapReason.INITIAL, false, false, layer)
                         }
                     } else {
-                        withContext(bukkitDispatcher) {
+                        launch(bukkitDispatcher) {
                             openOriginSwapper(player, SwapReason.INITIAL, 0, 0, layer)
                         }
                     }
