@@ -37,7 +37,7 @@ dependencies {
     compileOnly("com.github.stleary:JSON-java:20241224")
     compileOnly("net.objecthunter:exp4j:0.4.8")
 
-    compileOnly("com.github.retrooper:packetevents-spigot:2.8.0-SNAPSHOT")
+    compileOnly("com.github.retrooper:packetevents-spigot:2.9.1-SNAPSHOT")
 
     compileOnly(project(":version"))
     compileOnly(project(":1.20"))

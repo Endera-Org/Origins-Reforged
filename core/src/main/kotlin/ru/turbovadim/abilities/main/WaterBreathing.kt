@@ -117,14 +117,13 @@ class WaterBreathing : Listener, VisibleAbility {
                             NMSInvoker.dealDrowningDamage(player, 2)
                         }
                     }
-                },
-                { player ->
-                    if (player.persistentDataContainer.has(airKey, OriginSwapper.BooleanPDT.BOOLEAN)) {
-                        player.remainingAir = player.maximumAir
-                        player.persistentDataContainer.remove(airKey)
-                    }
                 }
-            )
+            ) { player ->
+                if (player.persistentDataContainer.has(airKey, OriginSwapper.BooleanPDT.BOOLEAN)) {
+                    player.remainingAir = player.maximumAir
+                    player.persistentDataContainer.remove(airKey)
+                }
+            }
         }
     }
 

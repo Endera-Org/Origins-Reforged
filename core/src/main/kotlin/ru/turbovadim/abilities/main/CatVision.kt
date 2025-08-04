@@ -30,7 +30,7 @@ open class CatVision : VisibleAbility, Listener {
         CoroutineScope(ioDispatcher).launch {
             for (player in Bukkit.getOnlinePlayers().toList()) {
                 runForAbilityAsync(player) { player ->
-                    if (player.isUnderWater) {
+                    if (!player.isUnderWater) {
                         val currentEffect = withContext(OriginsReforged.bukkitDispatcher) {
                             player.getPotionEffect(PotionEffectType.NIGHT_VISION)
                         }

@@ -233,7 +233,7 @@ class OriginSwapper : Listener {
         }
     }
 
-    private suspend fun updateAllPlayers() = coroutineScope {
+    private suspend fun updateAllPlayers() = withContext(ioDispatcher) {
         val config = OriginsReforged.mainConfig
         val delay: Int = config.originSelection.delayBeforeRequired
         val currentTick = Bukkit.getCurrentTick()
@@ -241,10 +241,6 @@ class OriginSwapper : Listener {
         val originSelectionRandomize = config.originSelection.randomize
 
         val onlinePlayers = Bukkit.getOnlinePlayers().toList()
-
-        val disallowedPlayers = mutableListOf<Player>()
-        val allowedPlayers = mutableListOf<Player>()
-        val menuPlayers = mutableListOf<Pair<Player, SwapReason>>()
 
         for (player in onlinePlayers) {
             val lastJoinTick = lastJoinedTick.getOrPut(player) { currentTick }!!
@@ -257,11 +253,23 @@ class OriginSwapper : Listener {
             val shouldDisallow = shouldDisallowSelection(player, reason)
 
             if (shouldDisallow) {
-                disallowedPlayers.add(player)
+                launch(bukkitDispatcher) {
+                    player.allowFlight = AbilityRegister.canFly(player, true)
+                    AbilityRegister.updateFlight(player, true)
+                    resetAttributes(player)
+                }
                 continue
             }
 
-            allowedPlayers.add(player)
+            launch(bukkitDispatcher) {
+                if (!disableFlightStuff) {
+                    player.allowFlight = AbilityRegister.canFly(player, false)
+                    AbilityRegister.updateFlight(player, false)
+                }
+
+                player.isInvisible = AbilityRegister.isInvisible(player)
+                applyAttributeChanges(player)
+            }
 
             val layer = getFirstUnselectedLayer(player) ?: continue
 
@@ -278,38 +286,8 @@ class OriginSwapper : Listener {
             val isBedrockPlayer = ShortcutUtils.isBedrockPlayer(player.uniqueId)
 
             if (!shouldRandomize && !isBedrockPlayer) {
-                menuPlayers.add(Pair(player, reason))
-            }
-        }
-
-        if (disallowedPlayers.isNotEmpty()) {
-            launch(bukkitDispatcher) {
-                for (player in disallowedPlayers) {
-                    player.allowFlight = AbilityRegister.canFly(player, true)
-                    AbilityRegister.updateFlight(player, true)
-                    resetAttributes(player)
-                }
-            }
-        }
-
-        if (allowedPlayers.isNotEmpty()) {
-            launch(bukkitDispatcher) {
-                for (player in allowedPlayers) {
-                    if (!disableFlightStuff) {
-                        player.allowFlight = AbilityRegister.canFly(player, false)
-                        AbilityRegister.updateFlight(player, false)
-                    }
-
-                    player.isInvisible = AbilityRegister.isInvisible(player)
-                    applyAttributeChanges(player)
-                }
-            }
-        }
-
-        if (menuPlayers.isNotEmpty()) {
-            launch(bukkitDispatcher) {
-                for ((player, reason) in menuPlayers) {
-                    openOriginSwapper(player, reason, 0, 0, getFirstUnselectedLayer(player)!!)
+                launch(bukkitDispatcher) {
+                    openOriginSwapper(player, reason, 0, 0, layer)
                 }
             }
         }

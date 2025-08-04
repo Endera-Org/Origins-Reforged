@@ -196,7 +196,7 @@ interface BreakSpeedModifierAbility : Ability {
             }
         }
 
-        var storedEffects: MutableMap<Player?, SavedPotionEffect> = HashMap<Player?, SavedPotionEffect>()
+        var storedEffects = HashMap<Player, SavedPotionEffect>()
 
         @EventHandler
         fun onServerTickEnd(event: ServerTickEndEvent?) {
