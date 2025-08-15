@@ -2,7 +2,7 @@ package ru.turbovadim.database
 
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
-import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.v1.core.and
 import ru.turbovadim.database.schema.*
 import java.io.IOException
 

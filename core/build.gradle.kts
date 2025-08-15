@@ -21,7 +21,7 @@ repositories {
 }
 
 dependencies {
-    val exposedVersion = "0.61.0"
+    val exposedVersion = "1.0.0-beta-5"
 
     implementation("org.jetbrains:annotations:23.0.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
@@ -58,8 +58,8 @@ dependencies {
     implementation("com.github.Endera-Org:EnderaLib:1.4.5") {
         isTransitive = false
     }
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
     compileOnly("org.jetbrains.exposed:exposed-core:$exposedVersion")
     compileOnly("org.jetbrains.exposed:exposed-dao:$exposedVersion")

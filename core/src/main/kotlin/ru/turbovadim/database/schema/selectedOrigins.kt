@@ -1,18 +1,16 @@
 package ru.turbovadim.database.schema
 
-import org.jetbrains.exposed.dao.IntEntity
-import org.jetbrains.exposed.dao.IntEntityClass
-import org.jetbrains.exposed.dao.id.EntityID
-import org.jetbrains.exposed.dao.id.IntIdTable
+import org.jetbrains.exposed.v1.core.dao.id.EntityID
+import org.jetbrains.exposed.v1.core.dao.id.IntIdTable
+import org.jetbrains.exposed.v1.dao.IntEntity
+import org.jetbrains.exposed.v1.dao.IntEntityClass
 
-// Таблица для хранения пар ключ: значение, связанных с UUID через внешний ключ
 object OriginKeyValuePairs : IntIdTable("origin_key_value_pairs") {
     val parent = reference("parent_id", UUIDOrigins) // связь с UUIDOrigins
     val layer = varchar("layer", 128)
     val origin = varchar("origin", 512).nullable()
 }
 
-// Entity класс для работы с OriginKeyValuePairs
 class OriginKeyValuePairEntity(id: EntityID<Int>) : IntEntity(id) {
     companion object : IntEntityClass<OriginKeyValuePairEntity>(OriginKeyValuePairs)
 
@@ -28,7 +26,6 @@ class OriginKeyValuePairEntity(id: EntityID<Int>) : IntEntity(id) {
     )
 }
 
-// Data класс для работы с OriginKeyValuePairs
 data class OriginKeyValuePair(
     val id: Int,
     val parentId: Int,

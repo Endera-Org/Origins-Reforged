@@ -1,7 +1,7 @@
 package ru.turbovadim.database
 
-import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.v1.core.SortOrder
+import org.jetbrains.exposed.v1.core.and
 import ru.turbovadim.database.schema.*
 import java.util.*
 

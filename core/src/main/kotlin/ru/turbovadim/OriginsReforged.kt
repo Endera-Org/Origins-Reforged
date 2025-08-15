@@ -29,7 +29,6 @@ import ru.turbovadim.database.initDb
 import ru.turbovadim.events.PlayerLeftClickEvent.PlayerLeftClickEventListener
 import ru.turbovadim.packetsenders.*
 import ru.turbovadim.util.WorldGuardHook
-import ru.turbovadim.util.checkCompat
 import java.io.File
 
 class OriginsReforged : OriginsAddon() {
@@ -70,7 +69,7 @@ class OriginsReforged : OriginsAddon() {
                 "1.21.2", "1.21.3" -> NMSInvokerV1_21_3()
                 "1.21.4" -> NMSInvokerV1_21_4()
                 "1.21.5", "1.21.6" -> NMSInvokerV1_21_6()
-                "1.21.7" -> NMSInvokerV1_21_7()
+                "1.21.7", "1.21.8" -> NMSInvokerV1_21_7()
                 else -> throw IllegalStateException("Unsupported version: " + Bukkit.getMinecraftVersion())
             }
             Bukkit.getPluginManager().registerEvents(NMSInvoker, instance)
@@ -99,7 +98,6 @@ class OriginsReforged : OriginsAddon() {
         private set
 
     override fun onLoad() {
-        checkCompat()
         instance = this
         PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this))
         PacketEvents.getAPI().load()
