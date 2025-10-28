@@ -1,8 +1,8 @@
 plugins {
     id("java")
-    id("com.gradleup.shadow") version "8.3.6"
-    id("io.papermc.paperweight.userdev") version "2.0.0-beta.18" apply false
-    kotlin("jvm") version "2.2.0"
+    id("com.gradleup.shadow") version "9.2.2"
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.19" apply false
+    kotlin("jvm") version "2.2.21"
 }
 
 group = "ru.turbovadim"
@@ -10,11 +10,14 @@ version = "3.0.0-beta7"
 
 repositories {
     mavenCentral()
+
+    maven("https://repo.papermc.io/repository/maven-public/")
+
     maven { url = uri("https://jitpack.io") }
 }
 
 dependencies {
-    implementation("com.github.stleary:JSON-java:20241224")
+    implementation("org.json:json:20250517")
     implementation("net.objecthunter:exp4j:0.4.8")
     implementation(project(":core"))
     implementation(project(":version"))
@@ -24,12 +27,13 @@ dependencies {
     implementation(project(":1.20.3", "reobf"))
     implementation(project(":1.20.4", "reobf"))
     implementation(project(":1.20.6", "reobf"))
-    implementation(project(":1.21", "reobf"))
+//    implementation(project(":1.21", "reobf"))
     implementation(project(":1.21.1", "reobf"))
     implementation(project(":1.21.3", "reobf"))
     implementation(project(":1.21.4", "reobf"))
     implementation(project(":1.21.6", "reobf"))
     implementation(project(":1.21.7", "reobf"))
+    implementation(project(":1.21.10", "reobf"))
     implementation("net.kyori:adventure-platform-bukkit:4.3.4")
 }
 

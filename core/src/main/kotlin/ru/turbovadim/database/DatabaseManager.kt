@@ -2,6 +2,7 @@ package ru.turbovadim.database
 
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
+import org.jetbrains.exposed.v1.core.eq
 import ru.turbovadim.database.schema.*
 import java.util.*
 

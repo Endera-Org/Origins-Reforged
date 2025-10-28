@@ -64,12 +64,12 @@ class OriginsReforged : OriginsAddon() {
                 "1.20.3" -> NMSInvokerV1_20_3()
                 "1.20.4" -> NMSInvokerV1_20_4()
                 "1.20.5", "1.20.6" -> NMSInvokerV1_20_6()
-                "1.21" -> NMSInvokerV1_21()
                 "1.21.1" -> NMSInvokerV1_21_1()
                 "1.21.2", "1.21.3" -> NMSInvokerV1_21_3()
                 "1.21.4" -> NMSInvokerV1_21_4()
                 "1.21.5", "1.21.6" -> NMSInvokerV1_21_6()
                 "1.21.7", "1.21.8" -> NMSInvokerV1_21_7()
+                "1.21.9", "1.21.10" -> NMSInvokerV1_21_10()
                 else -> throw IllegalStateException("Unsupported version: " + Bukkit.getMinecraftVersion())
             }
             Bukkit.getPluginManager().registerEvents(NMSInvoker, instance)

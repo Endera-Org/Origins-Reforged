@@ -167,7 +167,7 @@ class NMSInvokerV1_21_7 : NMSInvoker() {
                 player.velocity = player.velocity.add(Vector(0.0, -dm.y, 0.0))
             }
         }
-        lastVec3Map.put(player, p.deltaMovement)
+        lastVec3Map[player] = p.deltaMovement
     }
 
 
