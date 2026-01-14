@@ -1,0 +1,25 @@
+# Elytrian Origin
+# Born to fly, uncomfortable in tight spaces
+
+display_name: Elytrian
+
+description: |
+  Often flying around in the winds, Elytrians
+  are uncomfortable when they don't have enough
+  space above their head.
+
+icon: ELYTRA
+
+layer: origin
+impact: 1
+order: 4
+choosable: true
+priority: 1
+
+abilities:
+  - origins:elytra
+  - origins:launch_into_air
+  - origins:aerial_combatant
+  - origins:light_armor
+  - origins:claustrophobia
+  - origins:more_kinetic_damage

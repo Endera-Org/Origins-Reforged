@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(btca ask:*)",
+      "Bash(./gradlew :core:compileKotlin:*)",
+      "Bash(./gradlew:*)",
+      "Bash(GRADLE_OPTS=\"-Xmx2g\" ./gradlew :core:compileKotlin:*)",
+      "Bash(GRADLE_OPTS=\"-Xmx2g\" ./gradlew:*)",
+      "Bash(GRADLE_OPTS=\"-Xmx2g\" ./gradlew shadowJar:*)"
+    ]
+  }
+}

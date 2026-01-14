@@ -1,0 +1,25 @@
+# Enderian Origin
+# Children of the Ender Dragon with teleportation abilities
+
+display_name: Enderian
+
+description: |
+  Born as children of the Ender Dragon,
+  Enderians are capable of teleporting
+  but are vulnerable to water.
+
+icon: ENDER_PEARL
+
+layer: origin
+impact: 2
+order: 5
+choosable: true
+priority: 1
+
+abilities:
+  - origins:throw_ender_pearl
+  - origins:water_vulnerability
+  - origins:pumpkin_hate
+  - origins:extra_reach
+  - origins:ender_particles
+  - origins:damage_from_potions

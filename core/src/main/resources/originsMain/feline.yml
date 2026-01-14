@@ -1,0 +1,26 @@
+# Feline Origin
+# Cat-like creatures with agility and night vision
+
+display_name: Feline
+
+description: |
+  With their cat-like appearance, the Feline
+  scare creepers away. With the dexterity of
+  cats, they always land safely on their feet.
+
+icon: ORANGE_WOOL
+
+layer: origin
+impact: 2
+order: 6
+choosable: true
+priority: 1
+
+abilities:
+  - origins:fall_immunity
+  - origins:sprint_jump
+  - origins:velvet_paws
+  - origins:nine_lives
+  - origins:weak_arms
+  - origins:scare_creepers
+  - origins:cat_vision

@@ -3,11 +3,9 @@ package ru.turbovadim
 import net.kyori.adventure.key.Key
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
-import ru.turbovadim.abilities.AbilityRegister
-import ru.turbovadim.abilities.custom.ToggleableAbility
-import ru.turbovadim.abilities.types.Ability
 import ru.turbovadim.events.PlayerSwapOriginEvent
 import ru.turbovadim.packetsenders.OriginsReforgedResourcePackInfo
+import ru.turbovadim.v2.ability.Ability
 import java.io.File
 
 abstract class OriginsAddon : JavaPlugin() {
@@ -42,11 +40,10 @@ abstract class OriginsAddon : JavaPlugin() {
         instance = this
         onOnEnable()
         onRegister()
-        AddonLoader.register(this)
-        for (ability in getAbilities()) {
-            if (ability is ToggleableAbility && !ability.shouldRegister()) continue
-            AbilityRegister.registerAbility(ability, this)
-        }
+
+        // v2 abilities are registered in onRegister() via the v2 container
+        // Addons should override onRegister() and use v2 container to register abilities
+
         getResourcePackInfo()?.let { PackApplier.addResourcePack(this, it) }
         afterRegister()
     }

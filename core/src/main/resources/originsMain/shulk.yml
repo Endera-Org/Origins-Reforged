@@ -1,0 +1,24 @@
+# Shulk Origin
+# Related to Shulkers with protective shell
+
+display_name: Shulk
+
+description: |
+  Related to Shulkers, the bodies of the
+  Shulk are outfitted with a protective
+  shell-like skin.
+
+icon: SHULKER_SHELL
+
+layer: origin
+impact: 1
+order: 9
+choosable: true
+priority: 1
+
+abilities:
+  - origins:shulker_inventory
+  - origins:natural_armor
+  - origins:strong_arms
+  - origins:unwieldy
+  - origins:more_exhaustion

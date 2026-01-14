@@ -1,7 +1,6 @@
 package ru.turbovadim
 
 import com.github.retrooper.packetevents.PacketEvents
-import com.github.retrooper.packetevents.event.PacketListenerPriority
 import com.noxcrew.interfaces.InterfacesListeners
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder
 import net.milkbowl.vault.economy.Economy
@@ -10,26 +9,11 @@ import org.endera.enderalib.bstats.MetricsLite
 import org.endera.enderalib.utils.async.BukkitDispatcher
 import org.endera.enderalib.utils.configuration.ConfigurationManager
 import org.endera.enderalib.utils.configuration.MultiConfigurationManager
-import ru.turbovadim.abilities.AbilityRegister
-import ru.turbovadim.abilities.custom.ToggleableAbilities
-import ru.turbovadim.abilities.fantasy.*
-import ru.turbovadim.abilities.main.*
-import ru.turbovadim.abilities.main.WaterBreathing
-import ru.turbovadim.abilities.mobs.*
-import ru.turbovadim.abilities.mobs.ZombieHunger
-import ru.turbovadim.abilities.monsters.*
-import ru.turbovadim.abilities.monsters.metamorphosis.*
-import ru.turbovadim.abilities.types.Ability
-import ru.turbovadim.abilities.types.BreakSpeedModifierAbility.BreakSpeedModifierAbilityListener
-import ru.turbovadim.abilities.types.ParticleAbility
-import ru.turbovadim.commands.FlightToggleCommand
-import ru.turbovadim.commands.OriginCommand
 import ru.turbovadim.config.*
-import ru.turbovadim.cooldowns.Cooldowns
 import ru.turbovadim.database.initDb
-import ru.turbovadim.events.PlayerLeftClickEvent.PlayerLeftClickEventListener
 import ru.turbovadim.packetsenders.*
-import ru.turbovadim.util.WorldGuardHook
+import ru.turbovadim.v2.V2Initializer
+import ru.turbovadim.v2.di.OriginsContainer
 import java.io.File
 
 class OriginsReforged : OriginsAddon() {
@@ -48,12 +32,6 @@ class OriginsReforged : OriginsAddon() {
 
         lateinit var NMSInvoker: NMSInvoker
             private set
-
-        private var cooldowns: Cooldowns? = null
-
-        fun getCooldowns(): Cooldowns {
-            return cooldowns!!
-        }
 
         private fun initializeNMSInvoker(instance: OriginsReforged) {
             val version =
@@ -77,7 +55,8 @@ class OriginsReforged : OriginsAddon() {
             Bukkit.getPluginManager().registerEvents(NMSInvoker, instance)
         }
 
-        var isWorldGuardHookInitialized: Boolean = false
+        /** v2 container - initialized in onRegister() */
+        var v2Container: OriginsContainer? = null
             private set
     }
 
@@ -103,17 +82,10 @@ class OriginsReforged : OriginsAddon() {
         instance = this
         PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this))
         PacketEvents.getAPI().load()
-
-        try {
-            if (Bukkit.getPluginManager().isPluginEnabled("WorldGuard")) {
-                isWorldGuardHookInitialized = WorldGuardHook.tryInitialize()
-            }
-        } catch (_: Throwable) {
-            isWorldGuardHookInitialized = false
-        }
     }
 
     override fun onDisable() {
+        v2Container?.shutdown()
         PacketEvents.getAPI().terminate()
     }
 
@@ -122,10 +94,6 @@ class OriginsReforged : OriginsAddon() {
         bukkitDispatcher = BukkitDispatcher(this)
         InterfacesListeners.install(this)
         initDb(dataFolder)
-        if (isWorldGuardHookInitialized) WorldGuardHook.completeInitialize()
-
-        ToggleableAbilities.initialize(this)
-
 
         val mainConfigManager = ConfigurationManager(
             configFile = File("${dataFolder}/config.yml"),
@@ -169,14 +137,14 @@ class OriginsReforged : OriginsAddon() {
         charactersConfig = ConfigRegistry.get(CharactersConfig::class)!!
         modulesConfig = ConfigRegistry.get(ModulesConfig::class)!!
 
-//        saveDefaultConfig()
         initializeNMSInvoker(this)
-        AbilityRegister.setupAMAF()
 
-
-        PacketEvents.getAPI().eventManager.registerListener(Unwieldy(), PacketListenerPriority.NORMAL)
-        PacketEvents.getAPI().eventManager.registerListener(SlowFalling(), PacketListenerPriority.NORMAL)
-        PacketEvents.getAPI().eventManager.registerListener(LikeWater(), PacketListenerPriority.NORMAL)
+        // Initialize v2 container
+        v2Container = OriginsContainer.create(this, NMSInvoker, bukkitDispatcher)
+        v2Container?.let { container ->
+            V2Initializer.registerAbilities(container)
+            container.initialize()
+        }
 
         PacketEvents.getAPI().init()
 
@@ -186,25 +154,13 @@ class OriginsReforged : OriginsAddon() {
                 logger.warning("Vault is missing, origin swaps will not cost currency")
             }
         } else this.isVaultEnabled = false
-        cooldowns = Cooldowns()
-        if (!mainConfig.cooldowns.disableAllCooldowns && mainConfig.cooldowns.showCooldownIcons) {
-            Bukkit.getPluginManager().registerEvents(cooldowns!!, this)
-        }
 
         MetricsLite(this, 24890)
 
-        val originSwapper = OriginSwapper()
-        ParticleAbility.initParticlesSender()
-        Bukkit.getPluginManager().registerEvents(originSwapper, this)
-        Bukkit.getPluginManager().registerEvents(OrbOfOrigin(), this)
+        // Register event listeners
         Bukkit.getPluginManager().registerEvents(PackApplier(), this)
-        Bukkit.getPluginManager().registerEvents(PlayerLeftClickEventListener(), this)
-        Bukkit.getPluginManager().registerEvents(BreakSpeedModifierAbilityListener(), this)
-        originSwapper.startScheduledTask()
 
-        val flightCommand = getCommand("fly")
-        flightCommand?.setExecutor(FlightToggleCommand())
-
+        // Create export/import directories
         val export = File(dataFolder, "export")
         if (!export.exists()) {
             export.mkdir()
@@ -213,259 +169,15 @@ class OriginsReforged : OriginsAddon() {
         if (!imports.exists()) {
             imports.mkdir()
         }
-
-        val command = getCommand("origin")
-        command?.setExecutor(OriginCommand())
     }
 
     override fun getNamespace(): String {
         return "origins"
     }
 
-    override fun getAbilities(): List<Ability> {
-        val abilities = mutableListOf<Ability>()
-        abilities.addAll(getMainModuleAbilities())
-        if (modulesConfig.fantasy) {
-            abilities.addAll(getFantasyModuleAbilities())
-        }
-        if (modulesConfig.mobs) {
-            abilities.addAll(getMobsModuleAbilities())
-        }
-        if (modulesConfig.monsters) {
-            abilities.addAll(getMonstersModuleAbilities())
-        }
-        return abilities.toList()
-    }
-
-    fun getMainModuleAbilities(): List<Ability> {
-        val abilities = mutableListOf(
-            PumpkinHate(),
-            FallImmunity(),
-            WeakArms(),
-            Fragile(),
-            SlowFalling(),
-            FreshAir(),
-            Vegetarian(),
-            LayEggs(),
-            Unwieldy(),
-            MasterOfWebs(),
-            Tailwind(),
-            Arthropod(),
-            Climbing(),
-            Carnivore(),
-            WaterBreathing(),
-            WaterVision(),
-            CatVision(),
-            NineLives(),
-            BurnInDaylight(),
-            WaterVulnerability(),
-            Phantomize(),
-            Invisibility(),
-            ThrowEnderPearl(),
-            PhantomizeOverlay(),
-            FireImmunity(),
-            AirFromPotions(),
-            SwimSpeed(),
-            LikeWater(),
-            LightArmor(),
-            MoreKineticDamage(),
-            DamageFromPotions(),
-            DamageFromSnowballs(),
-            Hotblooded(),
-            BurningWrath(),
-            SprintJump(),
-            AerialCombatant(),
-            Elytra(),
-            LaunchIntoAir(),
-            HungerOverTime(),
-            MoreExhaustion(),
-            Aquatic(),
-            NetherSpawn(),
-            Claustrophobia(),
-            VelvetPaws(),
-            AquaAffinity(),
-            FlameParticles(),
-            EnderParticles(),
-            Phasing(),
-            ScareCreepers(),
-            StrongArms(),
-            StrongArms.StrongArmsBreakSpeed.strongArmsBreakSpeed,
-            StrongArms.StrongArmsDrops.strongArmsDrops,
-            ShulkerInventory(),
-            NaturalArmor()
-        )
-
-        if (NMSInvoker.blockInteractionRangeAttribute != null && NMSInvoker.entityInteractionRangeAttribute != null) {
-            abilities.add(ExtraReach())
-            abilities.add(ExtraReach.ExtraReachBlocks.extraReachBlocks)
-            abilities.add(ExtraReach.ExtraReachEntities.extraReachEntities)
-        }
-        abilities.addAll(ToggleableAbilities.abilities)
-        return abilities
-    }
-
-    fun getFantasyModuleAbilities(): List<Ability> {
-        val abilities = mutableListOf(
-            AllayMaster(),
-            ArrowEffectBooster(),
-            BardicIntuition(),
-            BowBurst(),
-            BreathStorer(),
-            Chime(),
-            DoubleHealthFantasy(),
-            DragonFireball(),
-            Elegy(),
-            EndCrystalHealing(),
-            EndBoost(),
-            FortuneIncreaser(),
-            IncreasedArrowDamage(),
-            IncreasedArrowSpeed(),
-            HeavyBlow(),
-            HeavyBlow.IncreasedCooldown,
-            HeavyBlow.IncreasedDamage,
-            EndBoost.EndHealth,
-            EndBoost.EndStrength,
-            IncreasedSpeed(),
-            InfiniteHaste(),
-            InfiniteNightVision(),
-            OceanWish(),
-            OceanWish.LandWeakness.landWeakness,
-            OceanWish.LandHealth.landHealth,
-            OceanWish.LandSlowness.landSlowness,
-            MagicResistance(),
-            MoonStrength(),
-            NaturalArmor(),
-            NoteBlockPower(),
-            PerfectShot(),
-            PermanentHorse(),
-            PoorShot(),
-            StrongSkin(),
-            SuperJump(),
-            OceansGrace(),
-            OceansGrace.WaterHealthImpl,
-            OceansGrace.WaterStrengthImpl,
-            VampiricTransformation(),
-            DaylightSensitive(),
-            WaterSensitive(),
-            Leeching(),
-            Stronger(),
-            UndeadAlly()
-        )
-        if (NMSInvoker.genericScaleAttribute != null) {
-            abilities.add(LargeBody())
-            abilities.add(SmallBody())
-        }
-        return abilities
-    }
-
-    fun getMobsModuleAbilities(): List<Ability> {
-        return listOf(
-            SmallBug(),
-            SmallFox(),
-            LowerTotemChance(),
-            SnowTrail(),
-            StrongerSnowballs(),
-            BeeWings(),
-            Stinger(),
-            BecomesElderGuardian(),
-            WarpedFungusEater(),
-            WaterCombatant(),
-            QueenBee(),
-            Undead(),
-            Sly(),
-            TimidCreature(),
-            PillagerAligned(),
-            Illager(),
-            WitchParticles(),
-            MiningFatigueImmune(),
-            SmallWeak(),
-            SmallWeakKnockback(),
-            RideableCreature(),
-            GuardianAlly(),
-            SurfaceSlowness(),
-            SurfaceWeakness(),
-            GuardianSpikes(),
-            PrismarineSkin(),
-            CarefulGatherer(),
-            FrigidStrength(),
-            BetterBerries(),
-            WolfBody(),
-            AlphaWolf(),
-            ItemCollector(),
-            BetterPotions(),
-            ElderMagic(),
-            ElderSpikes(),
-            WaterVision(),
-            SummonFangs(),
-            FullMoon(),
-            FullMoonHealth(),
-            FullMoonAttack(),
-            WolfPack(),
-            WolfPackAttack(),
-            ZombieHunger(),
-            Temperature.INSTANCE,
-            Overheat(),
-            Melting(),
-            MeltingSpeed(),
-            WolfHowl(),
-            TridentExpert(),
-            FlowerPower(),
-            Bouncy(),
-            LavaWalk(),
-            Split(),
-            PotionAction()
-        )
-    }
-
-    fun getMonstersModuleAbilities(): List<Ability> {
-        return listOf(
-            CreeperAlly(),
-            Explosive(),
-            FearCats(),
-            DrownedTransformIntoZombie(),
-            HuskTransformIntoZombie(),
-            TransformIntoHuskAndDrowned(),
-            TransformIntoStray(),
-            TransformIntoSkeleton(),
-            MetamorphosisTemperature.INSTANCE,
-            Blindness(),
-            SenseMovement(),
-            DoubleHealth(),
-            DoubleDamage(),
-            SonicBoom(),
-            LandNightVision(),
-            DoubleFireDamage(),
-            BurnInDay(),
-            UndeadMonsters(),
-            TridentExpert(),
-            ZombieHunger(),
-            WitherImmunity(),
-            HalfMaxSaturation(),
-            GuardianAllyMosters(),
-            WaterCombatant(),
-            UndeadAllyMonsters(),
-            ApplyWitherEffect(),
-            InfiniteArrows(),
-            SlownessArrows(),
-            ApplyHungerEffect(),
-            SkeletonBody(),
-            Slowness(),
-            LandSlowness(),
-            WaterBreathingMonsters(),
-            SwimSpeedMonsters(),
-            FreezeImmune(),
-            HeatSlowness(),
-            BetterAim(),
-            ColdSlowness(),
-            ZombieTouch(),
-            ScareVillagers(),
-            TransformIntoZombifiedPiglin(),
-            TransformIntoPiglin(),
-            BetterGoldArmour(),
-            BetterGoldWeapons(),
-            ZombifiedPiglinAllies(),
-            SuperBartering(),
-            PiglinAlly()
-        )
+    override fun getAbilities(): List<ru.turbovadim.v2.ability.Ability> {
+        // v2 abilities are registered directly in V2Initializer
+        // Return empty list as legacy addons will use v2 registry
+        return emptyList()
     }
 }

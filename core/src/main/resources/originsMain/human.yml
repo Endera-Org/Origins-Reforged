@@ -1,0 +1,15 @@
+# Human Origin
+# A regular human with no special abilities
+
+description: |
+  A regular human with no special powers.
+  You are balanced in all aspects.
+
+icon: PLAYER_HEAD
+
+layer: origin
+impact: 0
+order: 0
+choosable: true
+
+abilities: []
