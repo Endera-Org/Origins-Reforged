@@ -40,7 +40,6 @@ dependencies {
     compileOnly("net.objecthunter:exp4j:0.4.8")
 
     implementation("com.noxcrew.interfaces:interfaces:2.0.2-SNAPSHOT")
-
     compileOnly("com.github.retrooper:packetevents-spigot:2.10.0-SNAPSHOT")
 
     compileOnly(project(":version"))
@@ -76,7 +75,7 @@ dependencies {
 
 tasks {
     compileJava {
-        options.release.set(17)
+        options.release.set(21)
     }
 }
 
@@ -84,7 +83,7 @@ tasks.test {
     useJUnitPlatform()
 }
 kotlin {
-    jvmToolchain(17)
+    jvmToolchain(21)
 }
 kotlin {
     compilerOptions {

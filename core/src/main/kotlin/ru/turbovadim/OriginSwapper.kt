@@ -7,29 +7,22 @@ import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
-import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.*
 import org.bukkit.attribute.Attribute
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageEvent
-import org.bukkit.event.inventory.InventoryClickEvent
-import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.event.player.PlayerChangedWorldEvent
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerRespawnEvent
-import org.bukkit.inventory.ItemStack
-import org.bukkit.inventory.meta.SkullMeta
 import org.bukkit.persistence.PersistentDataAdapterContext
 import org.bukkit.persistence.PersistentDataType
 import org.endera.enderalib.utils.async.ioDispatcher
 import ru.turbovadim.AddonLoader.getDefaultOrigin
-import ru.turbovadim.AddonLoader.getFirstOrigin
 import ru.turbovadim.AddonLoader.getFirstUnselectedLayer
-import ru.turbovadim.AddonLoader.getOriginByFilename
 import ru.turbovadim.AddonLoader.getRandomOrigin
 import ru.turbovadim.AddonLoader.shouldOpenSwapMenu
 import ru.turbovadim.OriginSwapper.LineData.LineComponent.LineType
@@ -40,142 +33,16 @@ import ru.turbovadim.abilities.AbilityRegister
 import ru.turbovadim.abilities.types.AttributeModifierAbility
 import ru.turbovadim.abilities.types.DefaultSpawnAbility
 import ru.turbovadim.abilities.types.VisibleAbility
-import ru.turbovadim.commands.OriginCommand
 import ru.turbovadim.database.DatabaseManager
 import ru.turbovadim.events.PlayerSwapOriginEvent
 import ru.turbovadim.events.PlayerSwapOriginEvent.SwapReason
 import ru.turbovadim.geysermc.GeyserSwapper
 import ru.turbovadim.packetsenders.NMSInvoker
-import ru.turbovadim.utils.CustomGuiFactory
+import ru.turbovadim.ui.OriginSwapperInterface
 import java.util.*
-import kotlin.math.max
 import kotlin.math.min
 
 class OriginSwapper : Listener {
-
-    @EventHandler
-    fun onInventoryClose(event: InventoryCloseEvent) {
-        if (event.reason in listOf(InventoryCloseEvent.Reason.OPEN_NEW, InventoryCloseEvent.Reason.CANT_USE, InventoryCloseEvent.Reason.PLUGIN)) return
-        if (event.inventory.holder !is CustomGuiFactory) return
-        val player = event.player as Player
-
-        runBlocking {
-            val displayItem = event.inventory.getItem(1)
-            if (displayItem != null) {
-                val layer = displayItem.itemMeta.persistentDataContainer
-                    .getOrDefault(layerKey, PersistentDataType.STRING, "origin")
-
-                val reason = getReason(displayItem)
-
-                val shouldPreventClose = reason == SwapReason.ORB_OF_ORIGIN || hasNotSelectedAllOrigins(player)
-
-                if (shouldPreventClose) {
-                    Bukkit.getScheduler().scheduleSyncDelayedTask(instance, {
-                        if (player.isOnline) {
-                            openOriginSwapper(player, reason, 0, 0, layer)
-                        }
-                    }, 1L)
-                }
-            }
-        }
-    }
-
-    @EventHandler
-    fun onInventoryClick(event: InventoryClickEvent) {
-        if (event.clickedInventory?.holder !is CustomGuiFactory?) return
-        runBlocking {
-            val config = OriginsReforged.mainConfig
-            val item = event.whoClicked.openInventory.getItem(1)
-            if (item != null) {
-                val meta = item.itemMeta
-                if (meta == null) return@runBlocking
-                val itemContainer = meta.persistentDataContainer
-                if (itemContainer.has(displayKey, BooleanPDT.Companion.BOOLEAN)) {
-                    event.isCancelled = true
-                }
-                val layer = itemContainer.getOrDefault(layerKey, PersistentDataType.STRING, "origin")
-                val player = event.whoClicked
-                if (player is Player) {
-                    val currentItem = event.currentItem
-                    if (currentItem == null || currentItem.itemMeta == null) return@runBlocking
-                    val currentItemMeta = currentItem.itemMeta
-                    val currentItemContainer = currentItemMeta.persistentDataContainer
-                    val page = currentItemContainer.get(pageSetKey, PersistentDataType.INTEGER)
-                    if (page != null) {
-                        val cost = currentItemContainer.getOrDefault(costKey, BooleanPDT.Companion.BOOLEAN, false)
-                        val allowUnchoosable = currentItemContainer.getOrDefault(
-                            displayOnlyKey,
-                            BooleanPDT.Companion.BOOLEAN,
-                            false
-                        )
-                        val scroll = currentItemContainer.get(pageScrollKey, PersistentDataType.INTEGER)
-                        if (scroll == null) return@runBlocking
-                        player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
-                        openOriginSwapper(player, getReason(item), page, scroll, cost, allowUnchoosable, layer)
-                    }
-                    if (currentItemContainer.has(confirmKey, BooleanPDT.Companion.BOOLEAN)) {
-                        var amount = config.swapCommand.vault.defaultCost
-
-                        if (!player.hasPermission(config.swapCommand.vault.bypassPermission) && currentItemContainer.has(
-                                costsCurrencyKey, PersistentDataType.INTEGER
-                            )
-                        ) {
-                            amount = currentItemContainer.getOrDefault(
-                                costsCurrencyKey,
-                                PersistentDataType.INTEGER,
-                                amount
-                            )
-                            if (!instance.economy!!.has(player, amount.toDouble())) {
-                                return@runBlocking
-                            } else {
-                                origins.economy!!.withdrawPlayer(player, amount.toDouble())
-                            }
-                        }
-                        val originName = item.itemMeta.persistentDataContainer
-                            .get(originKey, PersistentDataType.STRING)
-                        if (originName == null) return@runBlocking
-                        val origin = if (originName.equals("random", ignoreCase = true)) {
-                            val excludedOrigins = config.originSelection.randomOption.exclude
-
-                            val origins = AddonLoader.getOrigins(layer)
-                            val iterator = origins.iterator()
-                            while (iterator.hasNext()) {
-                                val origin1 = iterator.next()
-                                if (excludedOrigins.contains(origin1.getName()) || origin1.isUnchoosable(player)) {
-                                    iterator.remove()
-                                }
-                            }
-                            if (origins.isEmpty()) {
-                                getFirstOrigin(layer)
-                            } else {
-                                origins[random.nextInt(origins.size)]
-                            }
-                        } else {
-                            AddonLoader.getOrigin(originName)
-                        }
-
-                        val reason = getReason(item)
-
-                        player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
-                        player.closeInventory()
-
-                        if (reason == SwapReason.ORB_OF_ORIGIN) orbCooldown.put(player, System.currentTimeMillis())
-                        val resetPlayer: Boolean = shouldResetPlayer(reason)
-                        if (origin!!.isUnchoosable(player)) {
-                            openOriginSwapper(player, reason, 0, 0, layer)
-                            return@runBlocking
-                        }
-                        getCooldowns().setCooldown(player, OriginCommand.key)
-                        setOrigin(player, origin, reason, resetPlayer, layer)
-                    } else if (currentItemContainer.has(
-                            closeKey,
-                            BooleanPDT.Companion.BOOLEAN
-                        )
-                    ) event.whoClicked.closeInventory()
-                }
-            }
-        }
-    }
 
     @EventHandler
     fun onPlayerChangedWorld(event: PlayerChangedWorldEvent) {
@@ -392,12 +259,6 @@ class OriginSwapper : Listener {
         }
     }
 
-    fun getReason(icon: ItemStack): SwapReason {
-        return SwapReason.get(
-            icon.itemMeta.persistentDataContainer.get(swapTypeKey, PersistentDataType.STRING)
-        )
-    }
-
     private val invulnerableMode: String = OriginsReforged.mainConfig.originSelection.invulnerableMode
 
     class LineData {
@@ -566,18 +427,7 @@ class OriginSwapper : Listener {
     }
 
     companion object {
-        private val displayKey = NamespacedKey(instance, "displayed-item")
-        private val layerKey = NamespacedKey(instance, "layer")
-        private val confirmKey = NamespacedKey(instance, "confirm-select")
-        private val costsCurrencyKey = NamespacedKey(instance, "costs-currency")
         private val originKey = NamespacedKey(instance, "origin-name")
-        private val swapTypeKey = NamespacedKey(instance, "swap-type")
-        private val pageSetKey = NamespacedKey(instance, "page-set")
-        private val pageScrollKey = NamespacedKey(instance, "page-scroll")
-        private val costKey = NamespacedKey(instance, "enable-cost")
-        private val displayOnlyKey = NamespacedKey(instance, "display-only")
-        private val closeKey = NamespacedKey(instance, "close")
-        private val random = Random()
 
         var origins: OriginsReforged = instance
         var nmsInvoker: NMSInvoker = OriginsReforged.NMSInvoker
@@ -636,298 +486,18 @@ class OriginSwapper : Listener {
             displayOnly: Boolean,
             layer: String
         ) {
-            val config = OriginsReforged.mainConfig
-            var slotIndex = slot
-
-            if (shouldDisallowSelection(player, reason)) return
-
-            if (reason == SwapReason.INITIAL) {
-                config.originSelection.defaultOrigin.values.first().let { def ->
-                    getOriginByFilename(def)?.let { defaultOrigin ->
-                        CoroutineScope(ioDispatcher).launch {
-                            setOrigin(player, defaultOrigin, reason, false, layer)
-                        }
-                        return
-                    }
-                }
-            }
-
             lastSwapReasons[player] = reason
-            val enableRandom = config.originSelection.randomOption.enabled
-
-            val checkBedrockSwap = runBlocking {
-                !GeyserSwapper.checkBedrockSwap(player, reason, cost, displayOnly, layer)
-            }
-            if (checkBedrockSwap) return
-            val allOrigins = AddonLoader.getOrigins(layer)
-            if (allOrigins.isEmpty()) return
-
-            val origins = allOrigins.toMutableList()
-            if (!displayOnly) {
-                val iterator = origins.iterator()
-                while (iterator.hasNext()) {
-                    val origin = iterator.next()
-                    val isUnchoosable = runBlocking {
-                        origin.isUnchoosable(player)
-                    }
-                    if (isUnchoosable || (origin.hasPermission() && !player.hasPermission(origin.permission!!))) {
-                        iterator.remove()
-                    }
-                }
-            }
-
-            // Нормализуем индекс слота
-            while (slotIndex > origins.size || (slotIndex == origins.size && !enableRandom)) {
-                slotIndex -= origins.size + if (enableRandom) 1 else 0
-            }
-            while (slotIndex < 0) {
-                slotIndex += origins.size + if (enableRandom) 1 else 0
-            }
-
-            val icon: ItemStack
-            val name: String
-            val nameForDisplay: String
-            val impact: Char
-            var costAmount = config.swapCommand.vault.defaultCost
-            val data: LineData
-
-            if (slotIndex == origins.size) {
-                val excludedOriginNames = config.originSelection.randomOption.exclude.map { s ->
-                    getOriginByFilename(s)?.getName()
-                }
-                icon = OrbOfOrigin.orb.clone()
-                name = "Random"
-                nameForDisplay = "Random"
-                impact = '\uE002'
-
-                val descriptionText = StringBuilder(
-                    "You'll be assigned one of the following:\n\n"
-                )
-                origins.forEach { origin ->
-                    if (!excludedOriginNames.contains(origin.getName())) {
-                        descriptionText.append(origin.getName()).append("\n")
-                    }
-                }
-                data = LineData(LineData.makeLineFor(descriptionText.toString(), LineType.DESCRIPTION))
-            } else {
-                val origin = origins[slotIndex]
-                icon = origin.icon
-                name = origin.getName()
-                nameForDisplay = origin.getNameForDisplay()
-                impact = origin.impact
-                data = LineData(origin)
-                origin.cost?.let { costAmount = it }
-            }
-
-            val compressedName = buildString {
-                append("\uF001")
-                nameForDisplay.forEach { c ->
-                    append(c)
-                    append('\uF000')
-                }
-            }
-
-            val background = applyFont(
-                ShortcutUtils.getColored(config.originSelection.screenTitle.background),
-                Key.key("minecraft:default")
-            )
-            var component = applyFont(
-                Component.text("\uF000\uE000\uF001\uE001\uF002$impact"),
-                Key.key("minecraft:origin_selector")
-            )
-                .color(NamedTextColor.WHITE)
-                .append(background)
-                .append(
-                    applyFont(Component.text(compressedName), Key.key("minecraft:origin_title_text")).color(
-                        NamedTextColor.WHITE
-                    )
-                )
-                .append(
-                    applyFont(
-                        Component.text(getInverse(nameForDisplay) + "\uF000"),
-                        Key.key("minecraft:reverse_text")
-                    ).color(NamedTextColor.WHITE)
-                )
-            data.getLines(scrollAmount).forEach { line ->
-                component = component.append(line)
-            }
-
-            val prefix = applyFont(
-                ShortcutUtils.getColored(config.originSelection.screenTitle.prefix),
-                Key.key("minecraft:default")
-            )
-            val suffix = applyFont(
-                ShortcutUtils.getColored(config.originSelection.screenTitle.suffix),
-                Key.key("minecraft:default")
-            )
-
-            val invHolder = CustomGuiFactory(
-                CustomGuiFactory.CustomInventoryType.ORIGINS_SWAPPER,
-                54,
-                prefix.append(component).append(suffix)
-            )
-            val swapperInventory = invHolder.inventory
-
-            // Настраиваем метаданные и сохраняем данные в persistentDataContainer
-            val meta = icon.itemMeta
-            val container = meta.persistentDataContainer
-            container.set(originKey, PersistentDataType.STRING, name.lowercase(Locale.getDefault()))
-            if (meta is SkullMeta) {
-                meta.owningPlayer = player
-            }
-            container.set(displayKey, BooleanPDT.BOOLEAN, true)
-            container.set(swapTypeKey, PersistentDataType.STRING, reason.reason)
-            container.set(layerKey, PersistentDataType.STRING, layer)
-            icon.itemMeta = meta
-            swapperInventory.setItem(1, icon)
-
-            // Создаём предметы для подтверждения и «невидимого» подтверждения
-            val confirm = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
-            val invisibleConfirm = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
-            var confirmMeta = confirm.itemMeta
-            val confirmContainer = confirmMeta.persistentDataContainer
-            var invisibleConfirmMeta = invisibleConfirm.itemMeta
-            val invisibleConfirmContainer = invisibleConfirmMeta.persistentDataContainer
-
-            confirmMeta.displayName(
-                Component.text("Confirm")
-                    .color(NamedTextColor.WHITE)
-                    .decoration(TextDecoration.ITALIC, false)
-            )
-            confirmMeta = nmsInvoker.setCustomModelData(confirmMeta, 5)
-            if (!displayOnly) {
-                confirmContainer.set(confirmKey, BooleanPDT.BOOLEAN, true)
-            } else {
-                confirmContainer.set(closeKey, BooleanPDT.BOOLEAN, true)
-            }
-
-            invisibleConfirmMeta.displayName(
-                Component.text("Confirm")
-                    .color(NamedTextColor.WHITE)
-                    .decoration(TextDecoration.ITALIC, false)
-            )
-            invisibleConfirmMeta = nmsInvoker.setCustomModelData(invisibleConfirmMeta, 6)
-            if (!displayOnly) {
-                invisibleConfirmContainer.set(confirmKey, BooleanPDT.BOOLEAN, true)
-            } else {
-                invisibleConfirmContainer.set(closeKey, BooleanPDT.BOOLEAN, true)
-            }
-
-            // Если стоит опция стоимости – добавляем описание и сохраняем стоимость в метаданных
-            if (costAmount != 0 && cost && !player.hasPermission(config.swapCommand.vault.bypassPermission)) {
-                val vaultConfig = config.swapCommand.vault
-                CoroutineScope(ioDispatcher).launch {
-                    val canPurchase =
-                        !vaultConfig.permanentPurchases || !DatabaseManager.getUsedOrigins(player.uniqueId.toString())
-                            .contains(name)
-                    if (canPurchase) {
-                        val symbol = vaultConfig.currencySymbol
-                        val hasFunds = instance.economy!!.has(player, costAmount.toDouble())
-                        val costMessage = if (hasFunds)
-                            "This will cost $symbol$costAmount of your balance!"
-                        else
-                            "You need at least %s%s in your balance to do this!"
-                        val costLore = listOf(Component.text(costMessage))
-                        withContext(bukkitDispatcher) {
-                            confirmMeta.lore(costLore)
-                            invisibleConfirmMeta.lore(costLore)
-                            confirmContainer.set(costsCurrencyKey, PersistentDataType.INTEGER, costAmount)
-                            invisibleConfirmContainer.set(costsCurrencyKey, PersistentDataType.INTEGER, costAmount)
-                        }
-                    }
-                }
-            }
-
-            // Настраиваем кнопки прокрутки (Up и Down)
-            val up = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
-            val down = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
-            var upMeta = up.itemMeta
-            val upContainer = upMeta.persistentDataContainer
-            var downMeta = down.itemMeta
-            val downContainer = downMeta.persistentDataContainer
-
-            val scrollSize = config.originSelection.scrollAmount
-            upMeta.displayName(
-                Component.text("Up")
-                    .color(NamedTextColor.WHITE)
-                    .decoration(TextDecoration.ITALIC, false)
-            )
-            if (scrollAmount != 0) {
-                upContainer.set(pageSetKey, PersistentDataType.INTEGER, slotIndex)
-                upContainer.set(pageScrollKey, PersistentDataType.INTEGER, max(scrollAmount - scrollSize, 0))
-            }
-            upMeta = nmsInvoker.setCustomModelData(upMeta, 3 + if (scrollAmount == 0) 6 else 0)
-            upContainer.set(costKey, BooleanPDT.BOOLEAN, cost)
-            upContainer.set(displayOnlyKey, BooleanPDT.BOOLEAN, displayOnly)
-
-            val remainingSize = data.rawLines.size - scrollAmount - 6
-            val canGoDown = remainingSize > 0
-            downMeta.displayName(
-                Component.text("Down")
-                    .color(NamedTextColor.WHITE)
-                    .decoration(TextDecoration.ITALIC, false)
-            )
-            if (canGoDown) {
-                downContainer.set(pageSetKey, PersistentDataType.INTEGER, slotIndex)
-                downContainer.set(
-                    pageScrollKey,
-                    PersistentDataType.INTEGER,
-                    min(scrollAmount + scrollSize, scrollAmount + remainingSize)
+            CoroutineScope(ioDispatcher).launch {
+                OriginSwapperInterface.open(
+                    player = player,
+                    reason = reason,
+                    initialPage = slot,
+                    initialScroll = scrollAmount,
+                    cost = cost,
+                    displayOnly = displayOnly,
+                    layer = layer
                 )
             }
-            downMeta = nmsInvoker.setCustomModelData(downMeta, 4 + if (!canGoDown) 6 else 0)
-            downContainer.set(costKey, BooleanPDT.BOOLEAN, cost)
-            downContainer.set(displayOnlyKey, BooleanPDT.BOOLEAN, displayOnly)
-
-            up.itemMeta = upMeta
-            down.itemMeta = downMeta
-            swapperInventory.setItem(52, up)
-            swapperInventory.setItem(53, down)
-
-            // Если не только для отображения, добавляем навигационные кнопки (предыдущая/следующая опция)
-            if (!displayOnly) {
-                val left = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
-                val right = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
-                var leftMeta = left.itemMeta
-                val leftContainer = leftMeta.persistentDataContainer
-                var rightMeta = right.itemMeta
-                val rightContainer = rightMeta.persistentDataContainer
-
-                leftMeta.displayName(
-                    Component.text("Previous origin")
-                        .color(NamedTextColor.WHITE)
-                        .decoration(TextDecoration.ITALIC, false)
-                )
-                leftContainer.set(pageSetKey, PersistentDataType.INTEGER, slotIndex - 1)
-                leftContainer.set(pageScrollKey, PersistentDataType.INTEGER, 0)
-                leftMeta = nmsInvoker.setCustomModelData(leftMeta, 1)
-                leftContainer.set(costKey, BooleanPDT.BOOLEAN, cost)
-                leftContainer.set(displayOnlyKey, BooleanPDT.BOOLEAN, false)
-
-                rightMeta.displayName(
-                    Component.text("Next origin")
-                        .color(NamedTextColor.WHITE)
-                        .decoration(TextDecoration.ITALIC, false)
-                )
-                rightContainer.set(pageSetKey, PersistentDataType.INTEGER, slotIndex + 1)
-                rightContainer.set(pageScrollKey, PersistentDataType.INTEGER, 0)
-                rightMeta = nmsInvoker.setCustomModelData(rightMeta, 2)
-                rightContainer.set(costKey, BooleanPDT.BOOLEAN, cost)
-                rightContainer.set(displayOnlyKey, BooleanPDT.BOOLEAN, false)
-
-                left.itemMeta = leftMeta
-                right.itemMeta = rightMeta
-                swapperInventory.setItem(47, left)
-                swapperInventory.setItem(51, right)
-            }
-
-            confirm.itemMeta = confirmMeta
-            invisibleConfirm.itemMeta = invisibleConfirmMeta
-            swapperInventory.setItem(48, confirm)
-            swapperInventory.setItem(49, invisibleConfirm)
-            swapperInventory.setItem(50, invisibleConfirm)
-
-            player.openInventory(swapperInventory)
         }
 
 

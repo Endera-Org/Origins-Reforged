@@ -14,6 +14,8 @@ repositories {
     maven("https://repo.papermc.io/repository/maven-public/")
 
     maven { url = uri("https://jitpack.io") }
+
+    maven("https://maven.noxcrew.com/public")
 }
 
 dependencies {
@@ -39,7 +41,7 @@ dependencies {
 
 tasks {
     compileJava {
-        options.release.set(17)
+        options.release.set(21)
     }
 }
 
@@ -73,5 +75,5 @@ tasks {
 }
 
 java {
-    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+    toolchain.languageVersion.set(JavaLanguageVersion.of(21))
 }

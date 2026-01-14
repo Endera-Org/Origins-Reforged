@@ -2,6 +2,7 @@ package ru.turbovadim
 
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.event.PacketListenerPriority
+import com.noxcrew.interfaces.InterfacesListeners
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder
 import net.milkbowl.vault.economy.Economy
 import org.bukkit.Bukkit
@@ -119,6 +120,7 @@ class OriginsReforged : OriginsAddon() {
     override fun onRegister() {
 
         bukkitDispatcher = BukkitDispatcher(this)
+        InterfacesListeners.install(this)
         initDb(dataFolder)
         if (isWorldGuardHookInitialized) WorldGuardHook.completeInitialize()
 
