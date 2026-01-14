@@ -55,7 +55,7 @@ class OriginsReforged : OriginsAddon() {
         }
 
         private fun initializeNMSInvoker(instance: OriginsReforged) {
-            val version: String? =
+            val version =
                 Bukkit.getBukkitVersion().split("-".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[0]
             NMSInvoker = when (version) {
                 "1.20" -> NMSInvokerV1_20()
@@ -70,6 +70,7 @@ class OriginsReforged : OriginsAddon() {
                 "1.21.5", "1.21.6" -> NMSInvokerV1_21_6()
                 "1.21.7", "1.21.8" -> NMSInvokerV1_21_7()
                 "1.21.9", "1.21.10" -> NMSInvokerV1_21_10()
+                "1.21.11" -> NMSInvokerV1_21_11()
                 else -> throw IllegalStateException("Unsupported version: " + Bukkit.getMinecraftVersion())
             }
             Bukkit.getPluginManager().registerEvents(NMSInvoker, instance)

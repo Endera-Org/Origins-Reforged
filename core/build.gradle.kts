@@ -18,10 +18,12 @@ repositories {
 
     maven { url = uri("https://repo.codemc.io/repository/maven-snapshots/") }
     maven { url = uri("https://repo.codemc.io/repository/maven-releases/") }
+
+    maven("https://maven.noxcrew.com/public")
 }
 
 dependencies {
-    val exposedVersion = "1.0.0-rc-2"
+    val exposedVersion = "1.0.0-rc-4"
 
     implementation("org.jetbrains:annotations:23.0.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
@@ -36,6 +38,8 @@ dependencies {
     compileOnly("me.clip:placeholderapi:2.11.5")
     implementation("org.json:json:20250517")
     compileOnly("net.objecthunter:exp4j:0.4.8")
+
+    implementation("com.noxcrew.interfaces:interfaces:2.0.2-SNAPSHOT")
 
     compileOnly("com.github.retrooper:packetevents-spigot:2.10.0-SNAPSHOT")
 
@@ -53,6 +57,7 @@ dependencies {
     compileOnly(project(":1.21.6"))
     compileOnly(project(":1.21.7"))
     compileOnly(project(":1.21.10"))
+    compileOnly(project(":1.21.11"))
     compileOnly(files("libs/worldguard.jar"))
     compileOnly(files("libs/worldedit.jar"))
     implementation(kotlin("stdlib-jdk8"))
