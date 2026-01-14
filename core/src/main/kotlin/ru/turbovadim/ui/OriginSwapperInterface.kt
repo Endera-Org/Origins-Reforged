@@ -21,24 +21,17 @@ import org.bukkit.event.inventory.InventoryCloseEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.SkullMeta
 import org.endera.enderalib.utils.async.ioDispatcher
-import ru.turbovadim.AddonLoader
-import ru.turbovadim.OrbOfOrigin
-import ru.turbovadim.Origin
-import ru.turbovadim.OriginSwapper
+import ru.turbovadim.*
 import ru.turbovadim.OriginSwapper.Companion.applyFont
 import ru.turbovadim.OriginSwapper.Companion.getInverse
 import ru.turbovadim.OriginSwapper.Companion.setOrigin
 import ru.turbovadim.OriginSwapper.LineData
 import ru.turbovadim.OriginSwapper.LineData.LineComponent.LineType
-import ru.turbovadim.OriginsReforged
 import ru.turbovadim.OriginsReforged.Companion.bukkitDispatcher
 import ru.turbovadim.OriginsReforged.Companion.getCooldowns
 import ru.turbovadim.OriginsReforged.Companion.instance
-import ru.turbovadim.ShortcutUtils
 import ru.turbovadim.commands.OriginCommand
-import ru.turbovadim.database.DatabaseManager
 import ru.turbovadim.events.PlayerSwapOriginEvent.SwapReason
-import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 
@@ -93,6 +86,21 @@ object OriginSwapperInterface {
 
             val pageProperty = interfaceProperty(normalizePageIndex(initialPage, origins.size, enableRandom))
             val scrollProperty = interfaceProperty(initialScroll)
+
+            // Set initial title BEFORE transforms run (fixes rendering on first open)
+            val initialOriginData = getOriginData(
+                normalizePageIndex(initialPage, origins.size, enableRandom),
+                origins, config, player, layer
+            )
+            titleSupplier = {
+                buildTitle(
+                    initialOriginData.nameForDisplay,
+                    initialOriginData.impact,
+                    initialOriginData.data,
+                    initialScroll,
+                    config
+                )
+            }
 
             // Prevent closing when origin must be selected
             addCloseHandler(
@@ -269,7 +277,8 @@ object OriginSwapperInterface {
                 name = origin.getName(),
                 nameForDisplay = origin.getNameForDisplay(),
                 impact = origin.impact,
-                data = LineData(origin),
+                // Use cached LineData for better performance on repeated renders
+                data = LineData.Cache.forOrigin(origin),
                 cost = origin.cost ?: defaultCost
             )
         }

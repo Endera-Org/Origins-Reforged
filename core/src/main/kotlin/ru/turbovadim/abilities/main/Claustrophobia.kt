@@ -14,7 +14,6 @@ import org.bukkit.event.player.PlayerItemConsumeEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import org.endera.enderalib.utils.async.ioDispatcher
-import org.jetbrains.annotations.NotNull
 import ru.turbovadim.OriginSwapper
 import ru.turbovadim.OriginSwapper.LineData.Companion.makeLineFor
 import ru.turbovadim.OriginsReforged

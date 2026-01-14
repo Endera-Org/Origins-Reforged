@@ -2,7 +2,6 @@ package ru.turbovadim.abilities.types
 
 import com.sk89q.worldedit.bukkit.BukkitAdapter
 import com.sk89q.worldguard.WorldGuard
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import net.kyori.adventure.key.Key
 import org.bukkit.entity.Entity

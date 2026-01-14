@@ -1,12 +1,9 @@
 package ru.turbovadim.abilities.types
 
 import net.objecthunter.exp4j.Expression
-import net.objecthunter.exp4j.ExpressionBuilder
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.Player
-import ru.turbovadim.abilities.AbilityRegister
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 interface AttributeModifierAbility : Ability {

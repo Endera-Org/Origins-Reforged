@@ -3,7 +3,6 @@ package ru.turbovadim.abilities.fantasy
 import com.destroystokyo.paper.event.server.ServerTickEndEvent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
 import org.bukkit.entity.EnderCrystal

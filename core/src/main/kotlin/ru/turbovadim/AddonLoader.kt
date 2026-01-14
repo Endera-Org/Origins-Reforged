@@ -104,6 +104,8 @@ object AddonLoader {
         originNameMap.clear()
         originFileNameMap.clear()
         originFiles.clear()
+        // Clear cached LineData to ensure fresh rendering after reload
+        OriginSwapper.LineData.Cache.clear()
         for (addon in registeredAddons) {
             loadOriginsFor(addon)
         }

@@ -7,7 +7,10 @@ import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
-import org.bukkit.*
+import org.bukkit.Bukkit
+import org.bukkit.Material
+import org.bukkit.NamespacedKey
+import org.bukkit.World
 import org.bukkit.attribute.Attribute
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -39,6 +42,7 @@ import ru.turbovadim.events.PlayerSwapOriginEvent.SwapReason
 import ru.turbovadim.geysermc.GeyserSwapper
 import ru.turbovadim.packetsenders.NMSInvoker
 import ru.turbovadim.ui.OriginSwapperInterface
+import ru.turbovadim.ui.TextRenderingUtils
 import java.util.*
 import kotlin.math.min
 
@@ -296,6 +300,10 @@ class OriginSwapper : Listener {
 
         val rawLines: MutableList<LineComponent>
 
+        /**
+         * Creates LineData for an origin.
+         * Consider using [forOrigin] for cached access.
+         */
         constructor(origin: Origin) {
             this.rawLines = ArrayList<LineComponent>()
             rawLines.addAll(makeLineFor(origin.getDescription(), LineType.DESCRIPTION))
@@ -322,90 +330,99 @@ class OriginSwapper : Listener {
             }
         }
 
+        object Cache {
+            private val originCache = java.util.concurrent.ConcurrentHashMap<String, LineData>()
+
+            fun forOrigin(origin: Origin): LineData {
+                return originCache.getOrPut(origin.getName()) {
+                    LineData(origin)
+                }
+            }
+
+            fun clear() {
+                originCache.clear()
+            }
+
+            fun invalidate(originName: String) {
+                originCache.remove(originName)
+            }
+        }
+
         companion object {
-            // TODO Deprecate this and replace it with 'description' and 'title' methods inside VisibleAbility which returns the specified value as a fallback
+            private const val MAX_LINE_WIDTH = 140
+            private const val DESC_PREFIX = '\uF00A'
+            private const val CHAR_SPACER = '\uF000'
+            private val DESCRIPTION_COLOR = TextColor.fromHexString("#CACACA")
+
             fun makeLineFor(text: String, type: LineType): MutableList<LineComponent> {
                 val resultList = mutableListOf<LineComponent>()
-
-                // Разбиваем текст на первую строку и остаток (если есть)
-                val lines = text.split("\n", limit = 2)
-                var firstLine = lines[0]
-                val otherPart = StringBuilder()
-                if (lines.size > 1) {
-                    otherPart.append(lines[1])
-                }
-
-                // Если первая строка содержит пробелы и её ширина превышает 140,
-                // разбиваем строку по словам так, чтобы первая часть не превышала ширину 140.
-                // Слова, которые не помещаются, собираем в отдельную строку (overflowLine)
-                if (firstLine.contains(' ') && getWidth(firstLine) > 140) {
-                    val tokens = firstLine.split(" ")
-                    val firstPartBuilder = StringBuilder(tokens[0])
-                    var currentWidth = getWidth(firstPartBuilder.toString())
-                    val spaceWidth = getWidth(" ")
-                    val overflowTokens = mutableListOf<String>()
-
-                    // Перебираем оставшиеся слова
-                    for (i in 1 until tokens.size) {
-                        val token = tokens[i]
-                        val tokenWidth = getWidth(token)
-                        if (currentWidth + spaceWidth + tokenWidth <= 140) {
-                            firstPartBuilder.append(' ').append(token)
-                            currentWidth += spaceWidth + tokenWidth
-                        } else {
-                            overflowTokens.add(token)
-                        }
-                    }
-                    firstLine = firstPartBuilder.toString()
-                    // Если есть слова, не поместившиеся в первую строку, формируем отдельную строку для переноса
-                    if (overflowTokens.isNotEmpty()) {
-                        val overflowLine = overflowTokens.joinToString(" ")
-                        // Вставляем строку переноса в начало остального текста,
-                        // чтобы она сразу шла после первой строки, а затем следовало остальное содержимое
-                        otherPart.insert(0, "$overflowLine\n")
-                    }
-                }
-
-                // Если тип строки DESCRIPTION, добавляем специальный символ в начало
-                if (type == LineType.DESCRIPTION) {
-                    firstLine = '\uF00A' + firstLine
-                }
-
-                // Форматирование строки:
-                // между каждым символом вставляем символ '\uF000',
-                // а в "сырую" строку (raw) добавляем символы, кроме '\uF00A'
-                val formattedBuilder = StringBuilder()
-                val rawBuilder = StringBuilder()
-                for (char in firstLine) {
-                    formattedBuilder.append(char)
-                    if (char != '\uF00A') {
-                        rawBuilder.append(char)
-                    }
-                    formattedBuilder.append('\uF000')
-                }
-                rawBuilder.append(' ')
-
-                // Создаём компонент с нужным цветом
-                val comp = Component.text(formattedBuilder.toString())
-                    .color(
-                        if (type == LineType.TITLE)
-                            NamedTextColor.WHITE
-                        else
-                            TextColor.fromHexString("#CACACA")
-                    )
-                    .append(Component.text(getInverse(firstLine)))
-
-                resultList.add(LineComponent(comp, type, rawBuilder.toString()))
-
-                // Если осталась часть текста, обрабатываем её рекурсивно
-                if (otherPart.isNotEmpty()) {
-                    val trimmed = otherPart.toString().trimStart()  // убираем ведущие пробелы
-                    resultList.addAll(makeLineFor(trimmed, type))
-                }
-
+                makeLineForRecursive(text, type, resultList)
                 return resultList
             }
 
+            private fun makeLineForRecursive(
+                text: String,
+                type: LineType,
+                results: MutableList<LineComponent>
+            ) {
+                // Split into first line and remainder
+                val lines = text.split("\n", limit = 2)
+                var firstLine = lines[0]
+                val remainder = StringBuilder()
+                if (lines.size > 1) {
+                    remainder.append(lines[1])
+                }
+
+                if (firstLine.contains(' ') && TextRenderingUtils.getStringWidth(firstLine) > MAX_LINE_WIDTH) {
+                    val tokens = firstLine.split(" ")
+                    val firstPart = StringBuilder(tokens[0])
+                    var currentWidth = TextRenderingUtils.getStringWidth(firstPart.toString())
+                    val spaceWidth = TextRenderingUtils.getCharWidth(' ')
+                    val overflow = mutableListOf<String>()
+
+                    for (i in 1 until tokens.size) {
+                        val token = tokens[i]
+                        val tokenWidth = TextRenderingUtils.getStringWidth(token)
+                        if (currentWidth + spaceWidth + tokenWidth <= MAX_LINE_WIDTH) {
+                            firstPart.append(' ').append(token)
+                            currentWidth += spaceWidth + tokenWidth
+                        } else {
+                            overflow.add(token)
+                        }
+                    }
+
+                    firstLine = firstPart.toString()
+                    if (overflow.isNotEmpty()) {
+                        remainder.insert(0, overflow.joinToString(" ") + "\n")
+                    }
+                }
+
+                val displayLine = if (type == LineType.DESCRIPTION) {
+                    "$DESC_PREFIX$firstLine"
+                } else {
+                    firstLine
+                }
+
+                val formatted = buildString(displayLine.length * 2) {
+                    for (char in displayLine) {
+                        append(char)
+                        append(CHAR_SPACER)
+                    }
+                }
+                val rawText = firstLine.filterNot { it == DESC_PREFIX } + ' '
+
+                val color = if (type == LineType.TITLE) NamedTextColor.WHITE else DESCRIPTION_COLOR
+
+                val component = Component.text(formatted)
+                    .color(color)
+                    .append(Component.text(TextRenderingUtils.getInverseForString(displayLine)))
+
+                results.add(LineComponent(component, type, rawText))
+
+                if (remainder.isNotEmpty()) {
+                    makeLineForRecursive(remainder.toString().trimStart(), type, results)
+                }
+            }
         }
     }
 
@@ -432,13 +449,11 @@ class OriginSwapper : Listener {
         var origins: OriginsReforged = instance
         var nmsInvoker: NMSInvoker = OriginsReforged.NMSInvoker
 
-        fun getInverse(string: String): String {
-            val result = StringBuilder()
-            for (c in string.toCharArray()) {
-                result.append(getInverse(c))
-            }
-            return result.toString()
-        }
+        /**
+         * Gets the complete inverse sequence for a string.
+         * Delegates to [TextRenderingUtils] for optimized string building.
+         */
+        fun getInverse(string: String): String = TextRenderingUtils.getInverseForString(string)
 
         @Deprecated("Origins-Reborn now has a 'layer' system, allowing for multiple origins to be set at once")
         fun openOriginSwapper(
@@ -513,33 +528,17 @@ class OriginSwapper : Listener {
             }
         }
 
-        fun getWidth(s: String): Int {
-            return s.sumOf { WidthGetter.getWidth(it) }
-        }
+        /**
+         * Gets the pixel width of a string.
+         * Delegates to [TextRenderingUtils] for optimized O(1) character lookups.
+         */
+        fun getWidth(s: String): Int = TextRenderingUtils.getStringWidth(s)
 
-        fun getInverse(c: Char): String {
-            val sex = when (WidthGetter.getWidth(c)) {
-                0 -> ""
-                2 -> "\uF001"
-                3 -> "\uF002"
-                4 -> "\uF003"
-                5 -> "\uF004"
-                6 -> "\uF005"
-                7 -> "\uF006"
-                8 -> "\uF007"
-                9 -> "\uF008"
-                10 -> "\uF009"
-                11 -> "\uF008\uF001"
-                12 -> "\uF009\uF001"
-                13 -> "\uF009\uF002"
-                14 -> "\uF009\uF003"
-                15 -> "\uF009\uF004"
-                16 -> "\uF009\uF005"
-                17 -> "\uF009\uF006"
-                else -> throw IllegalStateException("Unexpected value for character: $c")
-            }
-            return sex
-        }
+        /**
+         * Gets the inverse (negative space) sequence for a character.
+         * Delegates to [TextRenderingUtils] with graceful handling of unknown widths.
+         */
+        fun getInverse(c: Char): String = TextRenderingUtils.getInverseForChar(c)
 
         @JvmField
         var orbCooldown: MutableMap<Player?, Long?> = HashMap<Player?, Long?>()
