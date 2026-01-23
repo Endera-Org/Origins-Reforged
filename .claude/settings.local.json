@@ -6,7 +6,13 @@
       "Bash(./gradlew:*)",
       "Bash(GRADLE_OPTS=\"-Xmx2g\" ./gradlew :core:compileKotlin:*)",
       "Bash(GRADLE_OPTS=\"-Xmx2g\" ./gradlew:*)",
-      "Bash(GRADLE_OPTS=\"-Xmx2g\" ./gradlew shadowJar:*)"
+      "Bash(GRADLE_OPTS=\"-Xmx2g\" ./gradlew shadowJar:*)",
+      "Bash(jar tf:*)",
+      "Bash(unzip:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(find:*)",
+      "Bash(git add:*)",
+      "Bash(xargs -I {} sh -c \"git show 2759677:{} 2>/dev/null | grep -l ''WidthGetter'' && echo {}\")"
     ]
   }
 }

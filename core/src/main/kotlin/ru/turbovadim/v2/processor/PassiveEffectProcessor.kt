@@ -107,9 +107,45 @@ class PassiveEffectProcessor(private val container: OriginsContainer) {
 
     /**
      * Clear all origin-related attribute modifiers from a player.
+     * Uses NMSInvoker attributes for cross-version compatibility.
      */
     private fun clearOriginAttributes(player: Player) {
-        for (attribute in Attribute.entries) {
+        // Get all known attributes from NMSInvoker (version-compatible)
+        val nms = container.nmsInvoker
+        val attributes = listOfNotNull(
+            nms.armorAttribute,
+            nms.maxHealthAttribute,
+            nms.movementSpeedAttribute,
+            nms.flyingSpeedAttribute,
+            nms.attackDamageAttribute,
+            nms.attackKnockbackAttribute,
+            nms.attackSpeedAttribute,
+            nms.armorToughnessAttribute,
+            nms.luckAttribute,
+            nms.knockbackResistanceAttribute,
+            nms.followRangeAttribute,
+            nms.fallDamageMultiplierAttribute,
+            nms.maxAbsorptionAttribute,
+            nms.safeFallDistanceAttribute,
+            nms.scaleAttribute,
+            nms.stepHeightAttribute,
+            nms.gravityAttribute,
+            nms.jumpStrengthAttribute,
+            nms.burningTimeAttribute,
+            nms.explosionKnockbackResistanceAttribute,
+            nms.movementEfficiencyAttribute,
+            nms.oxygenBonusAttribute,
+            nms.waterMovementEfficiencyAttribute,
+            nms.blockInteractionRangeAttribute,
+            nms.entityInteractionRangeAttribute,
+            nms.blockBreakSpeedAttribute,
+            nms.miningEfficiencyAttribute,
+            nms.sneakingSpeedAttribute,
+            nms.submergedMiningSpeedAttribute,
+            nms.sweepingDamageRatioAttribute
+        )
+
+        for (attribute in attributes) {
             val playerAttr = player.getAttribute(attribute) ?: continue
 
             // Remove all modifiers that match our naming pattern

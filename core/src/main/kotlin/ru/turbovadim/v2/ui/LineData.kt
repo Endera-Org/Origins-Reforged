@@ -4,21 +4,53 @@ import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextColor
+import ru.turbovadim.ui.TextRenderingUtils
 import ru.turbovadim.v2.ability.Ability
 
 /**
  * Data container for text lines rendered in the Origin selection GUI.
- *
- * This is a self-contained v2 version that doesn't depend on the legacy OriginSwapper.
- * It uses [TextRenderer] for character width calculations and inverse sequences.
+ * This is a direct port of the original OriginSwapper.LineData class.
  */
-class LineData(
+class LineData {
+
+    class LineComponent {
+        enum class LineType {
+            TITLE,
+            DESCRIPTION
+        }
+
+        private val component: Component
+        val type: LineType?
+        val rawText: String?
+        val isEmpty: Boolean
+
+        constructor(component: Component, type: LineType, rawText: String) {
+            this.component = component
+            this.type = type
+            this.rawText = rawText
+            this.isEmpty = false
+        }
+
+        constructor() {
+            this.type = LineType.DESCRIPTION
+            this.component = Component.empty()
+            this.rawText = ""
+            this.isEmpty = true
+        }
+
+        fun getComponent(lineNumber: Int): Component {
+            val prefix = if (type == LineType.DESCRIPTION) "" else "title_"
+            val fontKey = "minecraft:${prefix}text_line_$lineNumber"
+            return applyFont(component, Key.key(fontKey))
+        }
+    }
+
     val rawLines: MutableList<LineComponent>
-) {
-    /**
-     * Get lines for rendering, starting at [startingPoint].
-     * Returns up to 6 lines with proper font application.
-     */
+
+    constructor(lines: MutableList<LineComponent>) {
+        this.rawLines = lines
+    }
+
     fun getLines(startingPoint: Int): List<Component> {
         val end = minOf(startingPoint + 6, rawLines.size)
         return (startingPoint until end).map { index ->
@@ -26,19 +58,20 @@ class LineData(
         }
     }
 
-    /**
-     * Total number of lines.
-     */
     val size: Int get() = rawLines.size
 
     companion object {
-        private val DESCRIPTION_COLOR = TextColor.fromHexString("#CACACA")!!
+        private const val MAX_LINE_WIDTH = 140
+        private const val DESC_PREFIX = '\uF00A'
+        private const val CHAR_SPACER = '\uF000'
+        private val DESCRIPTION_COLOR = TextColor.fromHexString("#CACACA")
 
         /**
-         * Create LineComponents for a text string with the given type.
-         * Handles word wrapping and multi-line text.
+         * Apply font to a component (exact copy of original OriginSwapper.applyFont).
          */
-        fun makeLineFor(text: String, type: LineType): MutableList<LineComponent> {
+        fun applyFont(component: Component, font: Key): Component = component.font(font)
+
+        fun makeLineFor(text: String, type: LineComponent.LineType): MutableList<LineComponent> {
             val resultList = mutableListOf<LineComponent>()
             makeLineForRecursive(text, type, resultList)
             return resultList
@@ -46,7 +79,7 @@ class LineData(
 
         private fun makeLineForRecursive(
             text: String,
-            type: LineType,
+            type: LineComponent.LineType,
             results: MutableList<LineComponent>
         ) {
             // Split into first line and remainder
@@ -57,18 +90,17 @@ class LineData(
                 remainder.append(lines[1])
             }
 
-            // Word wrap if line is too long
-            if (firstLine.contains(' ') && TextRenderer.getStringWidth(firstLine) > TextRenderer.MAX_LINE_WIDTH) {
+            if (firstLine.contains(' ') && TextRenderingUtils.getStringWidth(firstLine) > MAX_LINE_WIDTH) {
                 val tokens = firstLine.split(" ")
                 val firstPart = StringBuilder(tokens[0])
-                var currentWidth = TextRenderer.getStringWidth(firstPart.toString())
-                val spaceWidth = TextRenderer.getCharWidth(' ')
+                var currentWidth = TextRenderingUtils.getStringWidth(firstPart.toString())
+                val spaceWidth = TextRenderingUtils.getCharWidth(' ')
                 val overflow = mutableListOf<String>()
 
                 for (i in 1 until tokens.size) {
                     val token = tokens[i]
-                    val tokenWidth = TextRenderer.getStringWidth(token)
-                    if (currentWidth + spaceWidth + tokenWidth <= TextRenderer.MAX_LINE_WIDTH) {
+                    val tokenWidth = TextRenderingUtils.getStringWidth(token)
+                    if (currentWidth + spaceWidth + tokenWidth <= MAX_LINE_WIDTH) {
                         firstPart.append(' ').append(token)
                         currentWidth += spaceWidth + tokenWidth
                     } else {
@@ -82,83 +114,33 @@ class LineData(
                 }
             }
 
-            // Build the display line with prefix for descriptions
-            val displayLine = if (type == LineType.DESCRIPTION) {
-                "${TextRenderer.DESC_PREFIX}$firstLine"
+            val displayLine = if (type == LineComponent.LineType.DESCRIPTION) {
+                "$DESC_PREFIX$firstLine"
             } else {
                 firstLine
             }
 
-            // Format with spacer characters
             val formatted = buildString(displayLine.length * 2) {
                 for (char in displayLine) {
                     append(char)
-                    append(TextRenderer.CHAR_SPACER)
+                    append(CHAR_SPACER)
                 }
             }
+            val rawText = firstLine.filterNot { it == DESC_PREFIX } + ' '
 
-            val rawText = firstLine.filterNot { it == TextRenderer.DESC_PREFIX } + ' '
-            val color = if (type == LineType.TITLE) NamedTextColor.WHITE else DESCRIPTION_COLOR
+            val color = if (type == LineComponent.LineType.TITLE) NamedTextColor.WHITE else DESCRIPTION_COLOR
 
             val component = Component.text(formatted)
                 .color(color)
-                .append(Component.text(TextRenderer.getInverseForString(displayLine)))
+                .append(Component.text(TextRenderingUtils.getInverseForString(displayLine)))
 
             results.add(LineComponent(component, type, rawText))
 
-            // Process remainder recursively
             if (remainder.isNotEmpty()) {
                 makeLineForRecursive(remainder.toString().trimStart(), type, results)
             }
         }
     }
-}
-
-/**
- * A single line component with formatting information.
- */
-class LineComponent {
-    private val component: Component
-    val type: LineType?
-    val rawText: String?
-    val isEmpty: Boolean
-
-    /**
-     * Create a line component with content.
-     */
-    constructor(component: Component, type: LineType, rawText: String) {
-        this.component = component
-        this.type = type
-        this.rawText = rawText
-        this.isEmpty = false
-    }
-
-    /**
-     * Create an empty line component (separator).
-     */
-    constructor() {
-        this.type = LineType.DESCRIPTION
-        this.component = Component.empty()
-        this.rawText = ""
-        this.isEmpty = true
-    }
-
-    /**
-     * Get the component with the appropriate font applied for a line number.
-     */
-    fun getComponent(lineNumber: Int): Component {
-        val prefix = if (type == LineType.DESCRIPTION) "" else "title_"
-        val formatted = "minecraft:${prefix}text_line_$lineNumber"
-        return TextRenderer.applyFont(component, Key.key(formatted))
-    }
-}
-
-/**
- * Type of line - affects color and font.
- */
-enum class LineType {
-    TITLE,
-    DESCRIPTION
 }
 
 /**
@@ -173,17 +155,17 @@ object LineDataFactory {
         description: String,
         visibleAbilities: List<Ability>
     ): LineData {
-        val lines = mutableListOf<LineComponent>()
+        val lines = mutableListOf<LineData.LineComponent>()
 
         // Add origin description
-        lines.addAll(LineData.makeLineFor(description, LineType.DESCRIPTION))
+        lines.addAll(LineData.makeLineFor(description, LineData.LineComponent.LineType.DESCRIPTION))
 
         // Add abilities
         val size = visibleAbilities.size
         var count = 0
 
         if (size > 0) {
-            lines.add(LineComponent()) // Separator
+            lines.add(LineData.LineComponent()) // Separator
         }
 
         for (ability in visibleAbilities) {
@@ -197,7 +179,7 @@ object LineDataFactory {
 
             // Add separator between abilities (not after last one)
             if (count < size) {
-                lines.add(LineComponent())
+                lines.add(LineData.LineComponent())
             }
         }
 
@@ -208,18 +190,18 @@ object LineDataFactory {
      * Create title lines for an ability.
      * Checks config for override, falls back to code default.
      */
-    fun makeTitleLines(ability: Ability): List<LineComponent> {
+    fun makeTitleLines(ability: Ability): List<LineData.LineComponent> {
         val container = ru.turbovadim.v2.di.OriginsContainer.getOrNull()
         val configTitle = container?.configLoader?.getTitle(ability.key)
         val titleText = configTitle ?: componentToPlainText(ability.title)
-        return LineData.makeLineFor(titleText, LineType.TITLE)
+        return LineData.makeLineFor(titleText, LineData.LineComponent.LineType.TITLE)
     }
 
     /**
      * Create description lines for an ability.
      * Checks config for override, falls back to code default.
      */
-    fun makeDescriptionLines(ability: Ability): MutableList<LineComponent> {
+    fun makeDescriptionLines(ability: Ability): MutableList<LineData.LineComponent> {
         val container = ru.turbovadim.v2.di.OriginsContainer.getOrNull()
         val configDesc = container?.configLoader?.getDescription(ability.key)
         val descText = if (configDesc != null) {
@@ -227,7 +209,7 @@ object LineDataFactory {
         } else {
             ability.description.joinToString("\n") { componentToPlainText(it) }
         }
-        return LineData.makeLineFor(descText, LineType.DESCRIPTION)
+        return LineData.makeLineFor(descText, LineData.LineComponent.LineType.DESCRIPTION)
     }
 
     /**

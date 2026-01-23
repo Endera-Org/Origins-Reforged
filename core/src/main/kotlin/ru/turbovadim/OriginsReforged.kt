@@ -9,6 +9,7 @@ import org.endera.enderalib.bstats.MetricsLite
 import org.endera.enderalib.utils.async.BukkitDispatcher
 import org.endera.enderalib.utils.configuration.ConfigurationManager
 import org.endera.enderalib.utils.configuration.MultiConfigurationManager
+import ru.turbovadim.commands.OriginCommand
 import ru.turbovadim.config.*
 import ru.turbovadim.database.initDb
 import ru.turbovadim.packetsenders.*
@@ -159,6 +160,12 @@ class OriginsReforged : OriginsAddon() {
 
         // Register event listeners
         Bukkit.getPluginManager().registerEvents(PackApplier(), this)
+        Bukkit.getPluginManager().registerEvents(OrbOfOrigin(), this)
+
+        // Register commands
+        val originCommand = OriginCommand()
+        getCommand("origin")?.setExecutor(originCommand)
+        getCommand("origin")?.tabCompleter = originCommand
 
         // Create export/import directories
         val export = File(dataFolder, "export")

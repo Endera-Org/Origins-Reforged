@@ -5,7 +5,6 @@ import net.kyori.adventure.text.Component
 import org.bukkit.inventory.ItemStack
 import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.ui.LineData
-import ru.turbovadim.v2.ui.LineDataFactory
 
 /**
  * Immutable representation of an Origin.
@@ -85,8 +84,19 @@ data class Origin(
     /**
      * Get LineData for rendering in the UI system.
      * Includes origin description and all visible abilities.
+     *
+     * This method follows the same pattern as the original OriginSwapper.LineData constructor.
      */
     fun getLineData(): LineData {
+        val rawLines = mutableListOf<LineData.LineComponent>()
+
+        // Add origin description
+        val descText = description.joinToString("\n") { comp ->
+            buildString { extractPlainText(comp, this) }
+        }
+        rawLines.addAll(LineData.makeLineFor(descText, LineData.LineComponent.LineType.DESCRIPTION))
+
+        // Get visible abilities
         val container = OriginsContainer.getOrNull()
         val visibleAbilities = if (container != null) {
             abilityKeys.mapNotNull { key ->
@@ -96,13 +106,20 @@ data class Origin(
             emptyList()
         }
 
-        val descText = description.joinToString("\n") { comp ->
-            buildString {
-                extractPlainText(comp, this)
-            }
+        // Add abilities (matching original pattern exactly)
+        val size = visibleAbilities.size
+        var count = 0
+        if (size > 0) rawLines.add(LineData.LineComponent()) // Separator
+
+        for (ability in visibleAbilities) {
+            count++
+            // Use ability's titleLines and descriptionLines directly
+            rawLines.addAll(ability.titleLines)
+            rawLines.addAll(ability.descriptionLines)
+            if (count < size) rawLines.add(LineData.LineComponent()) // Separator
         }
 
-        return LineDataFactory.forOriginDescription(descText, visibleAbilities)
+        return LineData(rawLines)
     }
 
     private fun extractPlainText(component: Component, builder: StringBuilder) {

@@ -186,11 +186,13 @@ class OriginLoader(private val container: OriginsContainer) {
     ) {
         val originFolder = File(dataFolder, folderName)
 
-        // Extract defaults from JAR if folder doesn't exist
+        // Create folder if it doesn't exist
         if (!originFolder.exists()) {
             originFolder.mkdirs()
-            extractOriginsFromJar(jarFile, folderName, originFolder)
         }
+
+        // Always extract missing YAML files from JAR
+        extractOriginsFromJar(jarFile, folderName, originFolder)
 
         // Load all YAML files (prefer .yml, fallback to .yaml)
         val files = originFolder.listFiles() ?: return
@@ -210,8 +212,12 @@ class OriginLoader(private val container: OriginsContainer) {
                     if (name.startsWith("$folderName/") &&
                         (name.endsWith(".yml") || name.endsWith(".yaml"))) {
                         val targetFile = File(targetFolder.parentFile, entry.name)
-                        targetFile.parentFile.mkdirs()
-                        extractFile(zipIn, targetFile)
+                        // Only extract if file doesn't exist (preserve user customizations)
+                        if (!targetFile.exists()) {
+                            targetFile.parentFile.mkdirs()
+                            extractFile(zipIn, targetFile)
+                            logger.info("Extracted default origin: ${targetFile.name}")
+                        }
                     }
                     entry = zipIn.nextEntry
                 }

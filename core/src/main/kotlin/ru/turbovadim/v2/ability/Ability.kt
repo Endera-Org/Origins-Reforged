@@ -2,7 +2,7 @@ package ru.turbovadim.v2.ability
 
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
-import ru.turbovadim.v2.ui.LineComponent
+import ru.turbovadim.v2.ui.LineData
 import ru.turbovadim.v2.ui.LineDataCompat
 
 /**
@@ -60,14 +60,14 @@ interface Ability {
      * Title formatted for the UI system.
      * Returns LineComponents for rendering in the origin selection GUI.
      */
-    val titleLines: List<LineComponent>
+    val titleLines: List<LineData.LineComponent>
         get() = LineDataCompat.makeTitleLines(this)
 
     /**
      * Description formatted for the UI system.
      * Returns LineComponents for rendering in the origin selection GUI.
      */
-    val descriptionLines: MutableList<LineComponent>
+    val descriptionLines: MutableList<LineData.LineComponent>
         get() = LineDataCompat.makeDescriptionLines(this)
 }
 

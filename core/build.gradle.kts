@@ -60,7 +60,7 @@ dependencies {
     compileOnly(files("libs/worldguard.jar"))
     compileOnly(files("libs/worldedit.jar"))
     implementation(kotlin("stdlib-jdk8"))
-    implementation("com.github.Endera-Org:EnderaLib:1.4.6") {
+    implementation("com.github.Endera-Org:EnderaLib:1.4.7") {
         isTransitive = false
     }
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")

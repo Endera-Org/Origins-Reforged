@@ -17,7 +17,7 @@ object LineDataCompat {
      * Uses TITLE formatting (white color, title font).
      * Config title override takes priority over code default.
      */
-    fun makeTitleLines(ability: Ability): List<LineComponent> {
+    fun makeTitleLines(ability: Ability): List<LineData.LineComponent> {
         return LineDataFactory.makeTitleLines(ability)
     }
 
@@ -26,31 +26,31 @@ object LineDataCompat {
      * Uses DESCRIPTION formatting (gray color, description prefix).
      * Config description override takes priority over code default.
      */
-    fun makeDescriptionLines(ability: Ability): MutableList<LineComponent> {
+    fun makeDescriptionLines(ability: Ability): MutableList<LineData.LineComponent> {
         return LineDataFactory.makeDescriptionLines(ability)
     }
 
     /**
      * Create LineComponents from a plain text string.
      */
-    fun makeLines(text: String, type: LineType): MutableList<LineComponent> {
+    fun makeLines(text: String, type: LineData.LineComponent.LineType): MutableList<LineData.LineComponent> {
         return LineData.makeLineFor(text, type)
     }
 
     /**
      * Create a single title LineComponent.
      */
-    fun makeTitleLine(text: String): LineComponent {
-        val lines = LineData.makeLineFor(text, LineType.TITLE)
-        return lines.firstOrNull() ?: LineComponent()
+    fun makeTitleLine(text: String): LineData.LineComponent {
+        val lines = LineData.makeLineFor(text, LineData.LineComponent.LineType.TITLE)
+        return lines.firstOrNull() ?: LineData.LineComponent()
     }
 
     /**
      * Create a single description LineComponent.
      */
-    fun makeDescriptionLine(text: String): LineComponent {
-        val lines = LineData.makeLineFor(text, LineType.DESCRIPTION)
-        return lines.firstOrNull() ?: LineComponent()
+    fun makeDescriptionLine(text: String): LineData.LineComponent {
+        val lines = LineData.makeLineFor(text, LineData.LineComponent.LineType.DESCRIPTION)
+        return lines.firstOrNull() ?: LineData.LineComponent()
     }
 
     /**

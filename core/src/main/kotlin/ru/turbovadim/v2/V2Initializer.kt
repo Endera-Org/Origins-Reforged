@@ -6,6 +6,7 @@ import ru.turbovadim.v2.abilities.main.allAbilities
 import ru.turbovadim.v2.abilities.mobs.MobsAbilities
 import ru.turbovadim.v2.abilities.monsters.MonstersAbilities
 import ru.turbovadim.v2.di.OriginsContainer
+import ru.turbovadim.v2.origin.OriginModules
 
 /**
  * Initializer for the v2 ability system.
@@ -41,6 +42,33 @@ object V2Initializer {
         }
 
         logger.info("[v2] Total registered abilities: ${container.abilityRegistry.size}")
+
+        // Load origins from YAML files
+        loadOrigins(container)
+    }
+
+    /**
+     * Load origins from YAML files.
+     */
+    private fun loadOrigins(container: OriginsContainer) {
+        val logger = container.plugin.logger
+        val modulesConfig = OriginsReforged.modulesConfig
+        val plugin = container.plugin
+
+        val modules = OriginModules(
+            fantasy = modulesConfig.fantasy,
+            mobs = modulesConfig.mobs,
+            monsters = modulesConfig.monsters
+        )
+
+        container.originLoader.loadOriginsForAddon(
+            addonId = "origins",
+            dataFolder = plugin.dataFolder,
+            jarFile = (plugin as OriginsReforged).file,
+            modules = modules
+        )
+
+        logger.info("[v2] Total registered origins: ${container.originRegistry.size}")
     }
 
     private fun registerMainAbilities(container: OriginsContainer) {
