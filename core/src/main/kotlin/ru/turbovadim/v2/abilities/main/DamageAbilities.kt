@@ -1,7 +1,9 @@
 package ru.turbovadim.v2.abilities.main
 
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.v2.ability.DamageResult
+import ru.turbovadim.v2.ability.PotionReactionResult
 import ru.turbovadim.v2.dsl.*
 
 // ============================================
@@ -53,7 +55,6 @@ val fragile = ability("fragile") {
     title = text("Fragile")
     description("You have 3 less hearts of health than humans.")
 
-    // Attribute: GENERIC_MAX_HEALTH, amount: -6.0, operation: ADD_NUMBER
     option("health_reduction", -6.0)
 }
 
@@ -82,26 +83,17 @@ val moreKineticDamage = ability("more_kinetic_damage") {
 /**
  * Water Vulnerability - takes freeze damage over time while in contact with water.
  * Legacy: WaterVulnerability.kt
- * Note: Actual damage dealing uses NMSInvoker.dealFreezeDamage in the runtime handler.
- * The onTick handler flags the player for damage which the executor applies.
  */
 val waterVulnerability = ability("water_vulnerability") {
     title = text("Hydrophobia")
     description("You receive damage over time while in contact with water.")
 
-    option("damage_interval", 20)
-    option("damage_amount", 1.0)
+    option("damage_amount", 1)
 
-    // Check every tick, but damage is applied every 20 ticks (1 second)
-    // The runtime handler should track last damage time per player
     onTick(interval = 20) { player, config ->
-        val damage = config.getDouble("damage_amount", 1.0)
-        // Check if player is touching water (isInWaterOrRainOrBubbleColumn covers most cases)
-        // Legacy also checked NMSInvoker.wasTouchingWater for edge cases
-        if (player.isInWaterOrRainOrBubbleColumn) {
-            // Note: Legacy uses NMSInvoker.dealFreezeDamage(player, 1)
-            // In v2, we use regular damage. The executor should handle freeze damage type.
-            player.damage(damage)
+        val damage = config.getInt("damage_amount", 1)
+        if (player.isInWaterOrRainOrBubbleColumn || NMSInvoker.wasTouchingWater(player)) {
+            NMSInvoker.dealFreezeDamage(player, damage)
         }
         true
     }
@@ -110,23 +102,18 @@ val waterVulnerability = ability("water_vulnerability") {
 /**
  * Damage From Potions - takes freeze damage when drinking potions.
  * Legacy: DamageFromPotions.kt
- * Note: This requires a PlayerItemConsumeEvent handler for POTION items.
- * The onPotionConsume DSL can be extended to support this.
  */
 val damageFromPotions = ability("damage_from_potions") {
     title = text("Appearance of the Damned")
     description("Drinking a potion causes you to take damage.")
     visible = false
 
-    option("damage_amount", 2.0)
+    option("damage_amount", 2)
 
-    // Potion consume reaction - deals freeze damage when any potion is consumed
-    // Note: Legacy uses NMSInvoker.dealFreezeDamage(player, 2)
     onPotionConsume { player, _, config ->
-        val damage = config.getDouble("damage_amount", 2.0)
-        // The executor should deal freeze damage type
-        player.damage(damage)
-        ru.turbovadim.v2.ability.PotionReactionResult.Allow
+        val damage = config.getInt("damage_amount", 2)
+        NMSInvoker.dealFreezeDamage(player, damage)
+        PotionReactionResult.Allow
     }
 }
 

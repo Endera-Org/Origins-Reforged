@@ -169,8 +169,12 @@ val claustrophobia = ability("claustrophobia") {
         stacks[player] = newStacks
 
         if (newStacks > 0) {
-            player.addPotionEffect(PotionEffect(PotionEffectType.WEAKNESS, newStacks, 0, true, true, true))
-            player.addPotionEffect(PotionEffect(NMSInvoker.slownessEffect, newStacks, 0, true, true, true))
+            player.addPotionEffects(
+                listOf(
+                    PotionEffect(PotionEffectType.WEAKNESS, newStacks, 0, true, true, true),
+                    PotionEffect(NMSInvoker.slownessEffect, newStacks, 0, true, true, true)
+                )
+            )
         }
         true
     }
