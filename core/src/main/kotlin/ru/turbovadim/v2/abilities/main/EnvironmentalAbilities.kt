@@ -2,13 +2,18 @@ package ru.turbovadim.v2.abilities.main
 
 import com.destroystokyo.paper.MaterialTags
 import net.kyori.adventure.key.Key
+import net.kyori.adventure.text.Component
+import org.bukkit.Bukkit
 import org.bukkit.Material
+import org.bukkit.Tag
 import org.bukkit.World
 import org.bukkit.block.BlockFace
 import org.bukkit.event.player.PlayerItemConsumeEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import ru.turbovadim.OriginsReforged
 import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
+import ru.turbovadim.v2.ability.Ability
 import ru.turbovadim.v2.ability.DamageResult
 import ru.turbovadim.v2.dsl.*
 
@@ -63,20 +68,49 @@ val burnInDaylight = ability("burn_in_daylight") {
  * Fresh Air - can only sleep at high altitude.
  * Legacy: FreshAir.kt
  *
- * The legacy implementation:
- * - Cancels bed interaction if below height 86
+ * Implementation:
+ * - Cancels bed interaction if below required height
  * - Only applies in the overworld
  * - Allows sleeping if it's daytime and clear weather (just resting)
  * - Shows action bar message when prevented
  */
-val freshAir = ability("fresh_air") {
+val freshAir: Ability = ability("fresh_air") {
     title = text("Fresh Air")
     description("When sleeping, your bed needs to be at an altitude of at least 86 blocks, so you can breathe fresh air.")
 
     option("required_height", 86)
+    option("fail_message", "You need fresh air to sleep")
 
-    // Note: Bed interaction is handled via PlayerInteractEvent in the executor
-    // This provides the config and metadata for the ability
+    onRightClickInteract { player, event, config ->
+        val clickedBlock = event.clickedBlock ?: return@onRightClickInteract false
+
+        val inventory = player.inventory
+        if (player.isSneaking &&
+            inventory.itemInOffHand.type == Material.AIR &&
+            inventory.itemInMainHand.type == Material.AIR
+        ) return@onRightClickInteract false
+
+        if (!Tag.BEDS.isTagged(clickedBlock.type)) return@onRightClickInteract false
+
+        val requiredHeight = config.getInt("required_height", 86)
+
+        if (clickedBlock.y >= requiredHeight) return@onRightClickInteract false
+
+        // Only applies in the overworld
+        val overworldName = OriginsReforged.mainConfig.worlds.world
+        val overworld = Bukkit.getWorld(overworldName) ?: return@onRightClickInteract false
+        if (player.world != overworld) return@onRightClickInteract false
+
+        // Allow sleeping during daytime with clear weather (just resting)
+        val blockWorld = clickedBlock.world
+        if (blockWorld.isDayTime && blockWorld.isClearWeather) return@onRightClickInteract false
+
+        // Cancel and notify player
+        player.swingMainHand()
+        val message = config.getString("fail_message", "You need fresh air to sleep")
+        player.sendActionBar(Component.text(message))
+        true
+    }
 }
 
 /**

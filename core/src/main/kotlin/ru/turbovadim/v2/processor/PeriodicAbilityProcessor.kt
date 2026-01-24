@@ -56,29 +56,25 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
      * Start the periodic processor.
      */
     fun start() {
-        // Use Bukkit scheduler to run every tick
         scheduledTask = Bukkit.getGlobalRegionScheduler().runAtFixedRate(
             container.plugin,
             { onServerTick() },
-            1L, // initial delay
-            1L  // period (every tick)
+            1L,
+            1L
         )
     }
 
-    /**
-     * Stop the periodic processor.
-     */
     fun stop() {
         scheduledTask?.cancel()
         scheduledTask = null
         playerTasks.clear()
         tickBuckets.clear()
     }
-
     /**
      * Update periodic tasks for a player.
      * Called when their abilities change.
      */
+
     fun updatePlayer(playerId: UUID, abilityKeys: Set<Key>) {
         // Remove old tasks
         removePlayer(playerId)
@@ -110,7 +106,6 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
     fun removePlayer(playerId: UUID) {
         val tasks = playerTasks.remove(playerId) ?: return
 
-        // Remove from tick buckets
         for (task in tasks) {
             tickBuckets[task.effect.intervalTicks]?.remove(task)
         }
@@ -134,7 +129,6 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
      * Process a batch of tasks efficiently.
      */
     private fun processBatch(tasks: Set<PeriodicTask>) {
-        // Group by effect type for efficient processing
         val potionTasks = mutableListOf<PeriodicTask>()
         val envCheckTasks = mutableListOf<PeriodicTask>()
         val particleTasks = mutableListOf<PeriodicTask>()
@@ -147,17 +141,14 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
             }
         }
 
-        // Process potion effects synchronously (must be on main thread anyway)
         if (potionTasks.isNotEmpty()) {
             processPotionEffects(potionTasks)
         }
 
-        // Process particles synchronously
         if (particleTasks.isNotEmpty()) {
             processParticles(particleTasks)
         }
 
-        // Process environment checks on main thread (handlers may call Bukkit API)
         if (envCheckTasks.isNotEmpty()) {
             processEnvironmentChecks(envCheckTasks)
         }
@@ -167,19 +158,19 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
      * Process potion effects - grouped by player for single iteration.
      */
     private fun processPotionEffects(tasks: List<PeriodicTask>) {
-        // Group by player
         val byPlayer = tasks.groupBy { it.playerId }
 
         for ((playerId, playerTasks) in byPlayer) {
             val player = Bukkit.getPlayer(playerId) ?: continue
 
-            for (task in playerTasks) {
+            val effects = playerTasks.mapNotNull { task ->
                 val effect = task.effect as AbilityEffect.Periodic.ApplyPotion
-
                 // Check if ability is still active (dependency check)
-                if (!isAbilityActive(player, task.abilityKey)) continue
+                if (!isAbilityActive(player, task.abilityKey)) null else effect.effect
+            }
 
-                player.addPotionEffect(effect.effect)
+            if (effects.isNotEmpty()) {
+                player.addPotionEffects(effects)
             }
         }
     }

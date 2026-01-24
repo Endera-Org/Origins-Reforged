@@ -114,6 +114,28 @@ class TriggeredAbilityProcessor(private val container: OriginsContainer) : Liste
     }
 
     // ============================================
+    // FULL INTERACT HANDLING (OnInteract)
+    // ============================================
+
+    @EventHandler(priority = EventPriority.NORMAL)
+    fun onPlayerInteract(event: PlayerInteractEvent) {
+        if (event.hand != EquipmentSlot.HAND) return
+
+        val player = event.player
+        val action = event.action
+
+        processTriggeredEffects<AbilityEffect.Triggered.OnInteract>(player) { effect, accessor ->
+            // Check action filter
+            val actionFilter = effect.actionFilter
+            if (actionFilter != null && action !in actionFilter) return@processTriggeredEffects
+
+            if (effect.handler.onInteract(player, event, accessor)) {
+                event.isCancelled = true
+            }
+        }
+    }
+
+    // ============================================
     // ATTACK HANDLING (OnAttack triggered by damage event)
     // ============================================
 

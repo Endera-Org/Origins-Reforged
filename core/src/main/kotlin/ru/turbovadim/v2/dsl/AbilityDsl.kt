@@ -6,6 +6,7 @@ import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.entity.Player
 import org.bukkit.event.Event
 import org.bukkit.event.EventPriority
+import org.bukkit.event.block.Action
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
@@ -250,6 +251,35 @@ class AbilityBuilder(@PublishedApi internal val key: Key) {
 
     fun onEntityTarget(handler: EntityTargetHandler) {
         effects += AbilityEffect.Triggered.OnEntityTarget(handler)
+    }
+
+    /**
+     * Triggered when player interacts (full event access).
+     * Provides complete PlayerInteractEvent for complex interaction handling.
+     *
+     * @param actions Filter to specific actions (null = all actions)
+     * @param handler Return true to cancel the event
+     */
+    fun onInteract(
+        vararg actions: Action,
+        handler: InteractHandler
+    ) {
+        val actionFilter = if (actions.isEmpty()) null else actions.toSet()
+        effects += AbilityEffect.Triggered.OnInteract(actionFilter, handler)
+    }
+
+    /**
+     * Triggered on right-click interactions (full event access).
+     */
+    fun onRightClickInteract(handler: InteractHandler) {
+        onInteract(Action.RIGHT_CLICK_AIR, Action.RIGHT_CLICK_BLOCK, handler = handler)
+    }
+
+    /**
+     * Triggered on left-click interactions (full event access).
+     */
+    fun onLeftClickInteract(handler: InteractHandler) {
+        onInteract(Action.LEFT_CLICK_AIR, Action.LEFT_CLICK_BLOCK, handler = handler)
     }
 
     fun build(): Ability = AbilityImpl(

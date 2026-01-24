@@ -6,7 +6,9 @@ import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.event.Event
 import org.bukkit.event.EventPriority
+import org.bukkit.event.block.Action
 import org.bukkit.event.entity.EntityDamageEvent
+import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.bukkit.potion.PotionEffect
@@ -214,6 +216,15 @@ sealed interface AbilityEffect {
         data class OnEntityTarget(
             val handler: EntityTargetHandler
         ) : Triggered
+
+        /**
+         * Triggered when player interacts (full event access).
+         * Provides complete PlayerInteractEvent for complex interaction handling.
+         */
+        data class OnInteract(
+            val actionFilter: Set<Action>?,  // null = all actions
+            val handler: InteractHandler
+        ) : Triggered
     }
 
     // ============================================
@@ -420,6 +431,14 @@ fun interface BlockBreakHandler {
  */
 fun interface EntityTargetHandler {
     fun onTarget(player: Player, attacker: Entity, config: AbilityConfigAccessor): Boolean
+}
+
+/**
+ * Handler for player interact events (full event access).
+ * Return true to cancel the event.
+ */
+fun interface InteractHandler {
+    fun onInteract(player: Player, event: PlayerInteractEvent, config: AbilityConfigAccessor): Boolean
 }
 
 /**
