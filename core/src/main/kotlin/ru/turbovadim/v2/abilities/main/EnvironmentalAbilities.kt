@@ -15,6 +15,7 @@ import ru.turbovadim.OriginsReforged
 import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.v2.ability.Ability
 import ru.turbovadim.v2.ability.DamageResult
+import ru.turbovadim.v2.ability.PotionReactionResult
 import ru.turbovadim.v2.dsl.*
 
 // ============================================
@@ -236,7 +237,6 @@ val waterBreathing = ability("water_breathing") {
         val recoveryRate = config.getInt("air_recovery_rate", 4)
 
         if (underwater || inRain || hasWaterBreathing) {
-            // Recover air when in water or rain
             val newAir = (player.remainingAir + recoveryRate).coerceAtMost(player.maximumAir)
             player.remainingAir = newAir
         } else {
@@ -254,7 +254,7 @@ val waterBreathing = ability("water_breathing") {
             }
 
             if (shouldLoseAir) {
-                player.remainingAir = player.remainingAir - 1
+                player.remainingAir -= 1
             }
 
             // Deal drowning damage when air runs out
@@ -285,7 +285,7 @@ val airFromPotions = ability("air_from_potions") {
     onPotionConsume { player, _, config ->
         val airRestored = config.getInt("air_restored", 60)
         player.remainingAir = (player.remainingAir + airRestored).coerceAtMost(player.maximumAir)
-        ru.turbovadim.v2.ability.PotionReactionResult.Allow
+        PotionReactionResult.Allow
     }
 }
 
