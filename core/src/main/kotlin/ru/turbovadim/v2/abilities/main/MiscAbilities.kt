@@ -1,7 +1,7 @@
 package ru.turbovadim.v2.abilities.main
 
+import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes
 import net.kyori.adventure.key.Key
-import org.bukkit.Particle
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
@@ -64,17 +64,14 @@ val flameParticles = ability("flame_particles") {
     description("Flame particles appear around you.")
     visible = false
 
-    option("frequency", 4)
-
-    particles(interval = 4) { player, _ ->
-        player.world.spawnParticle(
-            Particle.FLAME,
-            player.location.add(0.0, 1.0, 0.0),
-            1,
-            0.3, 0.5, 0.3,
-            0.01
-        )
-    }
+    particles(
+        particleType = ParticleTypes.FLAME,
+        frequency = 4,
+        offsetX = 0.3f,
+        offsetY = 0.5f,
+        offsetZ = 0.3f,
+        count = 1
+    )
 }
 
 /**
@@ -88,17 +85,14 @@ val enderParticles = ability("ender_particles") {
     description("Portal particles appear around you.")
     visible = false
 
-    option("frequency", 4)
-
-    particles(interval = 4) { player, _ ->
-        player.world.spawnParticle(
-            Particle.PORTAL,
-            player.location.add(0.0, 1.0, 0.0),
-            1,
-            0.3, 0.5, 0.3,
-            0.01
-        )
-    }
+    particles(
+        particleType = ParticleTypes.PORTAL,
+        frequency = 4,
+        offsetX = 0.3f,
+        offsetY = 0.5f,
+        offsetZ = 0.3f,
+        count = 1
+    )
 }
 
 /**

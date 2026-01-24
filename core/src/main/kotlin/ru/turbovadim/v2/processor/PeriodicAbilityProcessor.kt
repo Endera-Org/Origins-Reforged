@@ -1,13 +1,18 @@
 package ru.turbovadim.v2.processor
 
+import com.github.retrooper.packetevents.PacketEvents
+import com.github.retrooper.packetevents.protocol.particle.Particle
+import com.github.retrooper.packetevents.util.Vector3d
+import com.github.retrooper.packetevents.util.Vector3f
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerParticle
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
+import org.bukkit.GameMode
 import org.bukkit.entity.Player
-import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import ru.turbovadim.v2.ability.AbilityEffect
 import ru.turbovadim.v2.di.OriginsContainer
@@ -132,12 +137,14 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
         val potionTasks = mutableListOf<PeriodicTask>()
         val envCheckTasks = mutableListOf<PeriodicTask>()
         val particleTasks = mutableListOf<PeriodicTask>()
+        val customParticleTasks = mutableListOf<PeriodicTask>()
 
         for (task in tasks) {
             when (task.effect) {
                 is AbilityEffect.Periodic.ApplyPotion -> potionTasks.add(task)
                 is AbilityEffect.Periodic.EnvironmentCheck -> envCheckTasks.add(task)
                 is AbilityEffect.Periodic.Particles -> particleTasks.add(task)
+                is AbilityEffect.Periodic.CustomParticles -> customParticleTasks.add(task)
             }
         }
 
@@ -146,7 +153,13 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
         }
 
         if (particleTasks.isNotEmpty()) {
-            processParticles(particleTasks)
+            scope.launch {
+                processParticlesAsync(particleTasks)
+            }
+        }
+
+        if (customParticleTasks.isNotEmpty()) {
+            processCustomParticles(customParticleTasks)
         }
 
         if (envCheckTasks.isNotEmpty()) {
@@ -176,16 +189,73 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
     }
 
     /**
-     * Process particle effects - grouped by player.
+     * Process particle effects asynchronously using PacketEvents.
+     * Sends particles to nearby players efficiently.
      */
-    private fun processParticles(tasks: List<PeriodicTask>) {
+    private fun processParticlesAsync(tasks: List<PeriodicTask>) {
+        val onlinePlayers = Bukkit.getOnlinePlayers()
+            .filter { it.gameMode != GameMode.SPECTATOR }
+            .toList()
+
+        val byPlayer = tasks.groupBy { it.playerId }
+
+        for ((playerId, playerTasks) in byPlayer) {
+            val player = onlinePlayers.find { it.uniqueId == playerId } ?: continue
+
+            for (task in playerTasks) {
+                val effect = task.effect as AbilityEffect.Periodic.Particles
+
+                if (!isAbilityActive(player, task.abilityKey)) continue
+
+                // Create particle packet (spawn at chest level, y + 1.0)
+                val packet = WrapperPlayServerParticle(
+                    Particle(effect.particleType),
+                    false,
+                    Vector3d(player.location.x, player.location.y + 1.0, player.location.z),
+                    Vector3f(effect.offsetX, effect.offsetY, effect.offsetZ),
+                    0f,
+                    effect.count
+                )
+
+                val nearbyPlayers = getNearbyPlayers(player, onlinePlayers, effect.visibilityRadius)
+                val recipients = nearbyPlayers + player
+
+                for (recipient in recipients) {
+                    PacketEvents.getAPI().playerManager.sendPacket(recipient, packet)
+                }
+            }
+        }
+    }
+
+    /**
+     * Get players within range of the source player.
+     */
+    private fun getNearbyPlayers(
+        source: Player,
+        allPlayers: List<Player>,
+        range: Double
+    ): List<Player> {
+        val location = source.location
+        val rangeSquared = range * range
+
+        return allPlayers.filter { other ->
+            other != source &&
+            other.world == location.world &&
+            location.distanceSquared(other.location) <= rangeSquared
+        }
+    }
+
+    /**
+     * Process custom particle effects with spawner logic.
+     */
+    private fun processCustomParticles(tasks: List<PeriodicTask>) {
         val byPlayer = tasks.groupBy { it.playerId }
 
         for ((playerId, playerTasks) in byPlayer) {
             val player = Bukkit.getPlayer(playerId) ?: continue
 
             for (task in playerTasks) {
-                val effect = task.effect as AbilityEffect.Periodic.Particles
+                val effect = task.effect as AbilityEffect.Periodic.CustomParticles
 
                 if (!isAbilityActive(player, task.abilityKey)) continue
 

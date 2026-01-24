@@ -1,5 +1,7 @@
 package ru.turbovadim.v2.dsl
 
+import com.github.retrooper.packetevents.protocol.particle.type.ParticleType
+import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
@@ -166,8 +168,49 @@ class AbilityBuilder(@PublishedApi internal val key: Key) {
         )
     }
 
-    fun particles(interval: Int = 1, spawner: ParticleSpawner) {
-        effects += AbilityEffect.Periodic.Particles(interval, spawner)
+    /**
+     * Spawn particles around the player using PacketEvents (async, efficient).
+     *
+     * Example:
+     * ```kotlin
+     * particles(ParticleTypes.PORTAL, frequency = 4)
+     * particles(ParticleTypes.FLAME, frequency = 2, offsetY = 1.0f)
+     * ```
+     *
+     * @param particleType The PacketEvents particle type
+     * @param frequency How often to spawn (in ticks, default 4)
+     * @param offsetX Spread in X direction (default 0.5)
+     * @param offsetY Spread in Y direction (default 0.8)
+     * @param offsetZ Spread in Z direction (default 0.5)
+     * @param count Number of particles per spawn (default 1)
+     * @param visibilityRadius How far players can see (default 48)
+     */
+    fun particles(
+        particleType: ParticleType<*>,
+        frequency: Int = 4,
+        offsetX: Float = 0.5f,
+        offsetY: Float = 0.8f,
+        offsetZ: Float = 0.5f,
+        count: Int = 1,
+        visibilityRadius: Double = 48.0
+    ) {
+        effects += AbilityEffect.Periodic.Particles(
+            intervalTicks = frequency,
+            particleType = particleType,
+            offsetX = offsetX,
+            offsetY = offsetY,
+            offsetZ = offsetZ,
+            count = count,
+            visibilityRadius = visibilityRadius
+        )
+    }
+
+    /**
+     * Spawn particles with custom spawner logic.
+     * For complex effects that need custom positioning.
+     */
+    fun customParticles(interval: Int = 1, spawner: ParticleSpawner) {
+        effects += AbilityEffect.Periodic.CustomParticles(interval, spawner)
     }
 
     // Reactive effects

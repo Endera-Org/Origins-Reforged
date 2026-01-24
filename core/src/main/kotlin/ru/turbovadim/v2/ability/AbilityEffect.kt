@@ -1,5 +1,7 @@
 package ru.turbovadim.v2.ability
 
+import com.github.retrooper.packetevents.protocol.particle.type.ParticleType
+import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes
 import org.bukkit.block.Block
 import org.bukkit.entity.Entity
 import org.bukkit.entity.LivingEntity
@@ -75,9 +77,31 @@ sealed interface AbilityEffect {
         ) : Periodic
 
         /**
-         * Spawns particles periodically.
+         * Spawns particles periodically using PacketEvents (async, efficient).
+         *
+         * @param intervalTicks How often to spawn particles (in ticks)
+         * @param particleType The PacketEvents particle type
+         * @param offsetX Spread in X direction (default 0.5)
+         * @param offsetY Spread in Y direction (default 0.8)
+         * @param offsetZ Spread in Z direction (default 0.5)
+         * @param count Number of particles to spawn (default 1)
+         * @param visibilityRadius How far away players can see particles (default 48)
          */
         data class Particles(
+            override val intervalTicks: Int,
+            val particleType: ParticleType<*> = ParticleTypes.FLAME,
+            val offsetX: Float = 0.5f,
+            val offsetY: Float = 0.8f,
+            val offsetZ: Float = 0.5f,
+            val count: Int = 1,
+            val visibilityRadius: Double = 48.0
+        ) : Periodic
+
+        /**
+         * Spawns particles with custom spawner logic.
+         * For complex particle effects that need custom positioning.
+         */
+        data class CustomParticles(
             override val intervalTicks: Int,
             val spawner: ParticleSpawner
         ) : Periodic
