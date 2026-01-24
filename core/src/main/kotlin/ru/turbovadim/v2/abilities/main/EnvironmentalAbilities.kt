@@ -42,18 +42,15 @@ val burnInDaylight = ability("burn_in_daylight") {
         val loc = player.location
         val playerY = loc.y
 
-        // Only burn in normal overworld during daytime
         if (world.environment != World.Environment.NORMAL) return@onTick true
         if (!world.isDayTime) return@onTick true
         if (player.isInWaterOrRainOrBubbleColumn) return@onTick true
 
-        // Find highest block, skipping glass and glass panes
         var block = world.getHighestBlockAt(loc)
         while ((MaterialTags.GLASS.isTagged(block) || MaterialTags.GLASS_PANES.isTagged(block)) && block.y >= playerY) {
             block = block.getRelative(BlockFace.DOWN)
         }
 
-        // If the highest non-glass block is below player, they're exposed
         if (block.y < playerY) {
             val fireTicks = config.getInt("fire_ticks", 60)
             player.fireTicks = player.fireTicks.coerceAtLeast(fireTicks)
@@ -118,7 +115,6 @@ val claustrophobia = ability("claustrophobia") {
     option("buildup_rate", 1)
     option("recovery_rate", 1)
 
-    // Type-safe state for tracking stacks per player
     val stacks = intState("stacks", default = -200)
 
     onTick(interval = 5) { player, config ->
@@ -144,7 +140,6 @@ val claustrophobia = ability("claustrophobia") {
         true
     }
 
-    // Milk bucket resets stacks to 0 (but not below current value if already negative)
     listener<PlayerItemConsumeEvent>(
         playerFrom = { it.player }
     ) { player, event, _ ->
