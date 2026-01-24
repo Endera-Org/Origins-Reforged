@@ -157,11 +157,9 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
             processParticles(particleTasks)
         }
 
-        // Process environment checks async (block lookups can be slow)
+        // Process environment checks on main thread (handlers may call Bukkit API)
         if (envCheckTasks.isNotEmpty()) {
-            scope.launch(container.dispatchers.io) {
-                processEnvironmentChecks(envCheckTasks)
-            }
+            processEnvironmentChecks(envCheckTasks)
         }
     }
 

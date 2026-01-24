@@ -12,7 +12,8 @@
       "Bash(git ls-tree:*)",
       "Bash(find:*)",
       "Bash(git add:*)",
-      "Bash(xargs -I {} sh -c \"git show 2759677:{} 2>/dev/null | grep -l ''WidthGetter'' && echo {}\")"
+      "Bash(xargs -I {} sh -c \"git show 2759677:{} 2>/dev/null | grep -l ''WidthGetter'' && echo {}\")",
+      "Bash(git checkout:*)"
     ]
   }
 }

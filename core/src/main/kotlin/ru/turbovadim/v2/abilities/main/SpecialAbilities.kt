@@ -4,8 +4,8 @@ import net.kyori.adventure.key.Key
 import org.bukkit.Material
 import org.bukkit.entity.EnderPearl
 import org.bukkit.util.Vector
-import ru.turbovadim.v2.ability.FallDamageMode
 import ru.turbovadim.v2.ability.InvisibilityCondition
+import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.dsl.*
 
 // ============================================
@@ -109,7 +109,16 @@ val throwEnderPearl = ability("throw_ender_pearl") {
         if (player.inventory.itemInMainHand.type != Material.AIR) return@onPrimaryAction
         if (player.getTargetBlockExact(6) != null) return@onPrimaryAction
 
-        // Check cooldown (handled by executor)
+        val abilityKey = Key.key("origins", "throw_ender_pearl")
+        val cooldownManager = OriginsContainer.get().cooldownManager
+
+        // Check cooldown
+        if (cooldownManager.hasCooldown(player, abilityKey)) return@onPrimaryAction
+
+        // Set cooldown with ender_pearl icon
+        val cooldownTicks = config.getInt("cooldown_ticks", 30)
+        cooldownManager.setCooldown(player, abilityKey, cooldownTicks, "ender_pearl")
+
         // Launch ender pearl
         val pearl = player.launchProjectile(EnderPearl::class.java)
         // The executor should mark this pearl as no-damage using persistent data
@@ -154,21 +163,17 @@ val shulkerInventory = ability("shulker_inventory") {
  * Legacy: Elytra.kt
  *
  * The legacy implementation:
- * - Grants flight capability (canFly returns true)
- * - Toggles gliding on flight toggle (double-jump)
+ * - Toggles gliding on double-jump
  * - Prevents gliding from being cancelled while not on ground
+ * - Does NOT grant creative flight
  */
 val elytra = ability("elytra") {
     title = text("Winged")
     description("You have Elytra wings without needing to equip any.")
 
-    flight {
-        speed = 0.1f
-        fallDamage = FallDamageMode.NORMAL
-    }
-
-    // Note: The executor handles flight toggle -> glide toggle conversion
+    // Note: The executor handles double-jump -> glide toggle conversion
     // and prevents EntityToggleGlideEvent cancellation when not on ground
+    // This ability does NOT grant creative flight - only elytra gliding
 }
 
 /**
@@ -191,10 +196,18 @@ val launchIntoAir = ability("launch_into_air") {
         if (!sneaking) return@onSneak
         if (!player.isGliding) return@onSneak
 
-        // Check cooldown (handled by executor)
+        val abilityKey = Key.key("origins", "launch_into_air")
+        val cooldownManager = OriginsContainer.get().cooldownManager
+
+        // Check cooldown
+        if (cooldownManager.hasCooldown(player, abilityKey)) return@onSneak
+
+        // Set cooldown with launch icon
+        val cooldownTicks = config.getInt("cooldown_ticks", 600)
+        cooldownManager.setCooldown(player, abilityKey, cooldownTicks, "launch")
+
         val velocity = config.getDouble("launch_velocity", 2.0)
         player.velocity = player.velocity.add(Vector(0.0, velocity, 0.0))
-        // The executor should set the cooldown after successful launch
     }
 }
 

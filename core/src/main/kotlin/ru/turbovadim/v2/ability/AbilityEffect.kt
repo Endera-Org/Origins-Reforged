@@ -1,9 +1,12 @@
 package ru.turbovadim.v2.ability
 
-import net.kyori.adventure.key.Key
-import org.bukkit.attribute.Attribute
-import org.bukkit.attribute.AttributeModifier
+import org.bukkit.block.Block
+import org.bukkit.entity.Entity
+import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
+import org.bukkit.event.entity.EntityDamageEvent
+import org.bukkit.inventory.EquipmentSlot
+import org.bukkit.inventory.ItemStack
 import org.bukkit.potion.PotionEffect
 
 /**
@@ -252,7 +255,7 @@ fun interface ParticleSpawner {
  * Returns the result of damage handling.
  */
 fun interface DamageHandler {
-    fun handle(player: Player, damage: Double, cause: org.bukkit.event.entity.EntityDamageEvent.DamageCause, config: AbilityConfigAccessor): DamageResult
+    fun handle(player: Player, damage: Double, cause: EntityDamageEvent.DamageCause, config: AbilityConfigAccessor): DamageResult
 }
 
 /**
@@ -280,7 +283,7 @@ fun interface BreakSpeedHandler {
  * Returns true if the player can eat the food.
  */
 fun interface FoodHandler {
-    fun canEat(player: Player, foodItem: org.bukkit.inventory.ItemStack, config: AbilityConfigAccessor): Boolean
+    fun canEat(player: Player, foodItem: ItemStack, config: AbilityConfigAccessor): Boolean
 }
 
 /**
@@ -316,7 +319,7 @@ fun interface SneakHandler {
  * Handler for attack events.
  */
 fun interface AttackHandler {
-    fun onAttack(player: Player, target: org.bukkit.entity.Entity, config: AbilityConfigAccessor)
+    fun onAttack(player: Player, target: Entity, config: AbilityConfigAccessor)
 }
 
 /**
@@ -330,64 +333,64 @@ fun interface KeyBindHandler {
  * Handler for bow shoot events.
  */
 fun interface BowShootHandler {
-    fun onShoot(player: Player, projectile: org.bukkit.entity.Entity, config: AbilityConfigAccessor)
+    fun onShoot(player: Player, projectile: Entity, config: AbilityConfigAccessor)
 }
 
 /**
  * Handler for right-click events.
  */
 fun interface RightClickHandler {
-    fun onRightClick(player: Player, item: org.bukkit.inventory.ItemStack?, block: org.bukkit.block.Block?, config: AbilityConfigAccessor): Boolean
+    fun onRightClick(player: Player, item: ItemStack?, block: Block?, config: AbilityConfigAccessor): Boolean
 }
 
 /**
  * Handler for left-click events.
  */
 fun interface LeftClickHandler {
-    fun onLeftClick(player: Player, item: org.bukkit.inventory.ItemStack?, config: AbilityConfigAccessor): Boolean
+    fun onLeftClick(player: Player, item: ItemStack?, config: AbilityConfigAccessor): Boolean
 }
 
 /**
  * Handler for entity kill events.
  */
 fun interface KillHandler {
-    fun onKill(player: Player, victim: org.bukkit.entity.LivingEntity, config: AbilityConfigAccessor)
+    fun onKill(player: Player, victim: LivingEntity, config: AbilityConfigAccessor)
 }
 
 /**
  * Handler for entity interaction events.
  */
 fun interface EntityInteractHandler {
-    fun onInteract(player: Player, entity: org.bukkit.entity.Entity, hand: org.bukkit.inventory.EquipmentSlot, config: AbilityConfigAccessor): Boolean
+    fun onInteract(player: Player, entity: Entity, hand: EquipmentSlot, config: AbilityConfigAccessor): Boolean
 }
 
 /**
  * Handler for note block play events.
  */
 fun interface NoteBlockHandler {
-    fun onNotePlay(player: Player, block: org.bukkit.block.Block, config: AbilityConfigAccessor)
+    fun onNotePlay(player: Player, block: Block, config: AbilityConfigAccessor)
 }
 
 /**
  * Handler for block break events.
  */
 fun interface BlockBreakHandler {
-    fun onBreak(player: Player, block: org.bukkit.block.Block, drops: MutableList<org.bukkit.inventory.ItemStack>, config: AbilityConfigAccessor)
+    fun onBreak(player: Player, block: Block, drops: MutableList<ItemStack>, config: AbilityConfigAccessor)
 }
 
 /**
  * Handler for entity targeting player.
  */
 fun interface EntityTargetHandler {
-    fun onTarget(player: Player, attacker: org.bukkit.entity.Entity, config: AbilityConfigAccessor): Boolean
+    fun onTarget(player: Player, attacker: Entity, config: AbilityConfigAccessor): Boolean
 }
 
 /**
  * Context for break speed calculations.
  */
 data class BreakSpeedContext(
-    val block: org.bukkit.block.Block,
-    val tool: org.bukkit.inventory.ItemStack?,
+    val block: Block,
+    val tool: ItemStack?,
     val isUnderwater: Boolean,
     val isOnGround: Boolean
 )
