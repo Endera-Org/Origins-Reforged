@@ -3,10 +3,15 @@ package ru.turbovadim.v2.abilities.main
 import net.kyori.adventure.key.Key
 import org.bukkit.Material
 import org.bukkit.entity.EnderPearl
+import org.bukkit.entity.Player
+import org.bukkit.event.entity.EntityToggleGlideEvent
+import org.bukkit.event.player.PlayerJoinEvent
+import org.bukkit.event.player.PlayerToggleFlightEvent
 import org.bukkit.util.Vector
 import ru.turbovadim.v2.ability.InvisibilityCondition
 import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.dsl.*
+import ru.turbovadim.v2.event.PlayerOriginChangedEvent
 
 // ============================================
 // SPECIAL ABILITIES
@@ -162,18 +167,49 @@ val shulkerInventory = ability("shulker_inventory") {
  * Elytra - has built-in Elytra wings, can glide without wearing elytra.
  * Legacy: Elytra.kt
  *
- * The legacy implementation:
- * - Toggles gliding on double-jump
+ * Implementation:
+ * - Toggles gliding on double-jump (flight toggle)
  * - Prevents gliding from being cancelled while not on ground
- * - Does NOT grant creative flight
+ * - Does NOT grant creative flight - only elytra gliding
  */
 val elytra = ability("elytra") {
     title = text("Winged")
     description("You have Elytra wings without needing to equip any.")
 
-    // Note: The executor handles double-jump -> glide toggle conversion
-    // and prevents EntityToggleGlideEvent cancellation when not on ground
-    // This ability does NOT grant creative flight - only elytra gliding
+    // Enable allowFlight when player joins (so double-jump works)
+    listener<PlayerJoinEvent>(
+        playerFrom = { it.player }
+    ) { player, _, _ ->
+        player.allowFlight = true
+    }
+
+    // Update allowFlight when origin changes
+    listener<PlayerOriginChangedEvent>(
+        playerFrom = { it.player }
+    ) { player, _, _ ->
+        player.allowFlight = true
+    }
+
+    // Convert flight toggle to glide toggle
+    listener<PlayerToggleFlightEvent>(
+        playerFrom = { it.player }
+    ) { player, event, _ ->
+        if (event.isFlying) {
+            event.isCancelled = true
+            player.isGliding = !player.isGliding
+        }
+    }
+
+    // Prevent gliding from being cancelled while not on ground
+    listener<EntityToggleGlideEvent>(
+        playerFrom = { it.entity as? Player }
+    ) { player, event, _ ->
+        @Suppress("DEPRECATION")
+        val onGround = player.isOnGround
+        if (!onGround && !event.isGliding) {
+            event.isCancelled = true
+        }
+    }
 }
 
 /**

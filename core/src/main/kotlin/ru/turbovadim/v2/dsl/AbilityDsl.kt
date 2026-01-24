@@ -55,7 +55,7 @@ fun ability(
 /**
  * Builder for creating abilities via DSL.
  */
-class AbilityBuilder(private val key: Key) {
+class AbilityBuilder(@PublishedApi internal val key: Key) {
 
     var title: Component = Component.text(key.value())
     private var descriptionLines: MutableList<Component> = mutableListOf()
@@ -85,6 +85,45 @@ class AbilityBuilder(private val key: Key) {
     fun option(name: String, default: Any) {
         options[name] = default
     }
+
+    // ============================================
+    // TYPE-SAFE STATE DECLARATIONS
+    // ============================================
+
+    /**
+     * Declare a state variable of any type for this ability.
+     *
+     * Example with primitives:
+     * ```kotlin
+     * val stacks = state("stacks", 0)
+     * val enabled = state("enabled", false)
+     * ```
+     *
+     * Example with custom objects:
+     * ```kotlin
+     * data class AbilityData(val charges: Int = 3, val lastUsed: Long = 0)
+     * val data = state("data", AbilityData())
+     *
+     * onTick(interval = 20) { player, _ ->
+     *     val current = data[player]
+     *     data[player] = current.copy(charges = current.charges - 1)
+     * }
+     * ```
+     */
+    inline fun <reified T : Any> state(name: String, default: T): StateKey<T> {
+        return StateKey(key, name, default, T::class)
+    }
+
+    // Convenience aliases for common primitive types
+
+    fun intState(name: String, default: Int) = state(name, default)
+    fun longState(name: String, default: Long) = state(name, default)
+    fun doubleState(name: String, default: Double) = state(name, default)
+    fun floatState(name: String, default: Float) = state(name, default)
+    fun boolState(name: String, default: Boolean) = state(name, default)
+    fun stringState(name: String, default: String) = state(name, default)
+
+
 
     // Passive effects
 

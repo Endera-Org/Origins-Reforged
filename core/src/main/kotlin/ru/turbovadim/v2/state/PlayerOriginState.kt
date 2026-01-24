@@ -2,6 +2,7 @@ package ru.turbovadim.v2.state
 
 import net.kyori.adventure.key.Key
 import org.bukkit.attribute.Attribute
+import ru.turbovadim.v2.ability.StateKey
 import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.origin.Origin
 import java.util.UUID
@@ -33,9 +34,12 @@ class PlayerOriginState(
     @Volatile private var _cachedIsInvisible: Boolean? = null
     @Volatile private var _cachedAttributes: Map<Attribute, Double>? = null
 
-    // Ability-specific state storage
+    // Ability-specific state storage (legacy - uses ability key)
     // Each ability can store its own state here using its key
     private val abilityState = ConcurrentHashMap<Key, Any>()
+
+    // Type-safe state storage (uses composite key: "ability:stateName")
+    private val typedState = ConcurrentHashMap<String, Any>()
 
     /**
      * Get origin for a specific layer.
@@ -100,6 +104,52 @@ class PlayerOriginState(
         abilityState.remove(key)
     }
 
+    // ============================================
+    // TYPE-SAFE STATE ACCESSORS
+    // ============================================
+
+    /**
+     * Get typed state value, returning default if not set.
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <T : Any> getTypedState(key: StateKey<T>): T {
+        val value = typedState[key.storageKey]
+        return if (value != null && key.type.isInstance(value)) {
+            value as T
+        } else {
+            key.default
+        }
+    }
+
+    /**
+     * Set typed state value.
+     */
+    fun <T : Any> setTypedState(key: StateKey<T>, value: T) {
+        typedState[key.storageKey] = value
+    }
+
+    /**
+     * Remove typed state, resetting to default on next access.
+     */
+    fun <T : Any> removeTypedState(key: StateKey<T>) {
+        typedState.remove(key.storageKey)
+    }
+
+    /**
+     * Check if typed state has been explicitly set.
+     */
+    fun <T : Any> hasTypedState(key: StateKey<T>): Boolean {
+        return typedState.containsKey(key.storageKey)
+    }
+
+    /**
+     * Clear all typed state for a specific ability.
+     */
+    fun clearAbilityTypedState(abilityKey: Key) {
+        val prefix = "${abilityKey.asString()}:"
+        typedState.keys.removeIf { it.startsWith(prefix) }
+    }
+
     /**
      * Check if player has an origin selected for the given layer.
      */
@@ -130,6 +180,7 @@ class PlayerOriginState(
     internal fun clear() {
         _origins.clear()
         abilityState.clear()
+        typedState.clear()
         invalidateCache()
     }
 

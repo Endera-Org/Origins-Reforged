@@ -2,8 +2,10 @@ package ru.turbovadim.v2.abilities.main
 
 import com.destroystokyo.paper.MaterialTags
 import net.kyori.adventure.key.Key
+import org.bukkit.Material
 import org.bukkit.World
 import org.bukkit.block.BlockFace
+import org.bukkit.event.player.PlayerItemConsumeEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
@@ -99,10 +101,10 @@ val netherSpawn = ability("nether_spawn") {
  * Claustrophobia - gets weakness and slowness when under low ceilings.
  * Legacy: Claustrophobia.kt
  *
- * The legacy implementation:
+ * Implementation:
  * - Checks if block 2 above player is solid
  * - Builds up "stacks" over time (max 3600, starts at -200)
- * - Applies weakness and slowness based on stack count
+ * - Applies weakness and slowness with duration = stacks
  * - Stacks decrease when not under low ceiling
  * - Milk resets stacks to 0 (not below)
  */
@@ -116,26 +118,40 @@ val claustrophobia = ability("claustrophobia") {
     option("buildup_rate", 1)
     option("recovery_rate", 1)
 
-    // Note: The executor needs to track stacks per player
-    // This is a simplified version that applies effects when under low ceiling
+    // Type-safe state for tracking stacks per player
+    val stacks = intState("stacks", default = -200)
+
     onTick(interval = 5) { player, config ->
         val blockAbove = player.location.block.getRelative(BlockFace.UP, 2)
         val maxStacks = config.getInt("max_stacks", 3600)
+        val minStacks = config.getInt("min_stacks", -200)
+        val buildupRate = config.getInt("buildup_rate", 1)
+        val recoveryRate = config.getInt("recovery_rate", 1)
 
-        if (blockAbove.isSolid) {
-            // Under low ceiling - apply effects
-            // Legacy applies weakness and slowness with duration = current stacks
-            // For simplicity, apply short duration effects that get refreshed
-            player.addPotionEffect(
-                PotionEffect(PotionEffectType.WEAKNESS, 40, 0, true, true, true)
-            )
-            // Use SLOW for 1.20.1 compatibility (not SLOWNESS)
-            player.addPotionEffect(
-                PotionEffect(PotionEffectType.SLOW, 40, 0, true, true, true)
-            )
+        val currentStacks = stacks[player]
+
+        val newStacks = if (blockAbove.isSolid) {
+            (currentStacks + buildupRate).coerceAtMost(maxStacks)
+        } else {
+            (currentStacks - recoveryRate).coerceAtLeast(minStacks)
         }
-        // Note: Full implementation would track stacks and scale effect duration
+        stacks[player] = newStacks
+
+        if (newStacks > 0) {
+            player.addPotionEffect(PotionEffect(PotionEffectType.WEAKNESS, newStacks, 0, true, true, true))
+            player.addPotionEffect(PotionEffect(NMSInvoker.slownessEffect, newStacks, 0, true, true, true))
+        }
         true
+    }
+
+    // Milk bucket resets stacks to 0 (but not below current value if already negative)
+    listener<PlayerItemConsumeEvent>(
+        playerFrom = { it.player }
+    ) { player, event, _ ->
+        if (event.item.type == Material.MILK_BUCKET) {
+            val currentStacks = stacks[player]
+            stacks[player] = minOf(currentStacks, 0)
+        }
     }
 }
 
