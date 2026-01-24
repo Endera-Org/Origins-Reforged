@@ -4,6 +4,7 @@ import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.entity.Player
+import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.v2.ability.*
@@ -205,7 +206,6 @@ class AbilityBuilder(private val key: Key) {
         effects += AbilityEffect.Triggered.OnEntityTarget(handler)
     }
 
-    // Build
 
     fun build(): Ability = AbilityImpl(
         key = key,
@@ -246,47 +246,6 @@ fun text(content: String): Component = Component.text(content)
 fun text(content: String, color: NamedTextColor): Component = Component.text(content, color)
 
 /**
- * Create a vegetarian food restriction (can only eat vegetarian foods).
- */
-fun vegetarianRestriction(): FoodHandler = FoodHandler { _, item, _ ->
-    val type = item.type
-    // List of vegetarian foods
-    type.name.contains("APPLE") ||
-    type.name.contains("CARROT") ||
-    type.name.contains("POTATO") ||
-    type.name.contains("BEETROOT") ||
-    type.name.contains("BREAD") ||
-    type.name.contains("COOKIE") ||
-    type.name.contains("MELON") ||
-    type.name.contains("PUMPKIN") ||
-    type.name.contains("MUSHROOM") ||
-    type.name.contains("KELP") ||
-    type.name.contains("SWEET_BERRIES") ||
-    type.name.contains("GLOW_BERRIES") ||
-    type.name.contains("HONEY") ||
-    type.name.contains("CAKE") ||
-    type.name.contains("GOLDEN_APPLE") ||
-    type.name.contains("CHORUS_FRUIT")
-}
-
-/**
- * Create a carnivore food restriction (can only eat meat).
- */
-fun carnivoreRestriction(): FoodHandler = FoodHandler { _, item, _ ->
-    val type = item.type
-    type.name.contains("BEEF") ||
-    type.name.contains("PORK") ||
-    type.name.contains("MUTTON") ||
-    type.name.contains("CHICKEN") ||
-    type.name.contains("RABBIT") ||
-    type.name.contains("COD") ||
-    type.name.contains("SALMON") ||
-    type.name.contains("TROPICAL_FISH") ||
-    type.name.contains("ROTTEN_FLESH") ||
-    type.name.contains("SPIDER_EYE")
-}
-
-/**
  * Create a damage multiplier.
  */
 fun damageMultiplier(multiplier: Double): DamageHandler = DamageHandler { _, damage, _, _ ->
@@ -303,6 +262,6 @@ fun damageModifier(amount: Double): DamageHandler = DamageHandler { _, damage, _
 /**
  * Create a damage immunity handler for specific damage causes.
  */
-fun immuneTo(vararg causes: org.bukkit.event.entity.EntityDamageEvent.DamageCause): DamageHandler = DamageHandler { _, _, cause, _ ->
+fun immuneTo(vararg causes: EntityDamageEvent.DamageCause): DamageHandler = DamageHandler { _, _, cause, _ ->
     if (cause in causes) DamageResult.Cancel else DamageResult.Allow
 }
