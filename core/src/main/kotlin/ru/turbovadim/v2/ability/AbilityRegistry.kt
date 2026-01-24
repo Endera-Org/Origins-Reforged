@@ -20,6 +20,7 @@ class AbilityRegistry(private val container: OriginsContainer) {
     private val periodicAbilities = mutableMapOf<Key, List<AbilityEffect.Periodic>>()
     private val reactiveAbilities = mutableMapOf<Key, List<AbilityEffect.Reactive>>()
     private val triggeredAbilities = mutableMapOf<Key, List<AbilityEffect.Triggered>>()
+    private val listenerAbilities = mutableMapOf<Key, List<AbilityEffect.Listener>>()
 
     // Dependency abilities for fast lookup
     private val dependencyAbilities = mutableMapOf<Key, DependencyAbility>()
@@ -46,6 +47,13 @@ class AbilityRegistry(private val container: OriginsContainer) {
                 multiAbilityMap.getOrPut(sub.key) { mutableListOf() }.add(ability)
             }
         }
+
+        // Register listener effects with the processor
+        val listeners = ability.effects.filterIsInstance<AbilityEffect.Listener>()
+        if (listeners.isNotEmpty()) {
+            listenerAbilities[ability.key] = listeners
+            container.genericListenerProcessor.registerAbility(ability)
+        }
     }
 
     /**
@@ -61,6 +69,11 @@ class AbilityRegistry(private val container: OriginsContainer) {
         reactiveAbilities.remove(key)
         triggeredAbilities.remove(key)
         dependencyAbilities.remove(key)
+
+        // Remove listener effects
+        if (listenerAbilities.remove(key) != null) {
+            container.genericListenerProcessor.unregisterAbility(key)
+        }
 
         // Remove multi-ability mappings
         if (ability is MultiAbility) {
@@ -161,6 +174,7 @@ class AbilityRegistry(private val container: OriginsContainer) {
         periodicAbilities.clear()
         reactiveAbilities.clear()
         triggeredAbilities.clear()
+        listenerAbilities.clear()
         dependencyAbilities.clear()
         multiAbilityMap.clear()
     }
@@ -188,6 +202,9 @@ class AbilityRegistry(private val container: OriginsContainer) {
                 }
                 is AbilityEffect.Triggered -> {
                     triggered.add(effect)
+                }
+                is AbilityEffect.Listener -> {
+                    // Handled separately in register()
                 }
             }
         }

@@ -4,10 +4,13 @@ import org.bukkit.block.Block
 import org.bukkit.entity.Entity
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
+import org.bukkit.event.Event
+import org.bukkit.event.EventPriority
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.bukkit.potion.PotionEffect
+import kotlin.reflect.KClass
 
 /**
  * Sealed hierarchy representing all types of ability effects.
@@ -211,6 +214,25 @@ sealed interface AbilityEffect {
         data class OnEntityTarget(
             val handler: EntityTargetHandler
         ) : Triggered
+    }
+
+    // ============================================
+    // LISTENER EFFECTS - Generic event handlers
+    // ============================================
+
+    sealed interface Listener : AbilityEffect {
+
+        /**
+         * Generic event listener that can handle any Bukkit event.
+         * Allows registering arbitrary event handlers within abilities.
+         */
+        data class Generic<E : Event>(
+            val eventClass: KClass<E>,
+            val priority: EventPriority,
+            val ignoreCancelled: Boolean,
+            val playerExtractor: (E) -> Player?,
+            val handler: (Player, E, AbilityConfigAccessor) -> Unit
+        ) : Listener
     }
 }
 

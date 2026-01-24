@@ -14,6 +14,7 @@ import ru.turbovadim.v2.cooldown.CooldownManager
 import ru.turbovadim.v2.processor.ArmorAbilityProcessor
 import ru.turbovadim.v2.processor.ElytraAbilityProcessor
 import ru.turbovadim.v2.processor.FoodAbilityProcessor
+import ru.turbovadim.v2.processor.GenericListenerProcessor
 import ru.turbovadim.v2.processor.PassiveEffectProcessor
 import ru.turbovadim.v2.processor.PeriodicAbilityProcessor
 import ru.turbovadim.v2.processor.ReactiveAbilityProcessor
@@ -57,6 +58,7 @@ class OriginsContainer private constructor(
     val foodAbilityProcessor: FoodAbilityProcessor by lazy { FoodAbilityProcessor(this) }
     val armorAbilityProcessor: ArmorAbilityProcessor by lazy { ArmorAbilityProcessor(this) }
     val elytraAbilityProcessor: ElytraAbilityProcessor by lazy { ElytraAbilityProcessor(this) }
+    val genericListenerProcessor: GenericListenerProcessor by lazy { GenericListenerProcessor(this) }
 
     // Cooldown management
     val cooldownManager: CooldownManager by lazy { CooldownManager() }

@@ -4,6 +4,8 @@ import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.entity.Player
+import org.bukkit.event.Event
+import org.bukkit.event.EventPriority
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
@@ -64,7 +66,8 @@ class AbilityBuilder(private val key: Key) {
     var dependsOn: Key? = null
     var dependencyInverse: Boolean = false
 
-    private val effects = mutableListOf<AbilityEffect>()
+    @PublishedApi
+    internal val effects = mutableListOf<AbilityEffect>()
     private val options = mutableMapOf<String, Any>()
 
     // Description helpers
@@ -210,7 +213,6 @@ class AbilityBuilder(private val key: Key) {
         effects += AbilityEffect.Triggered.OnEntityTarget(handler)
     }
 
-
     fun build(): Ability = AbilityImpl(
         key = key,
         title = title,
@@ -268,4 +270,42 @@ fun damageModifier(amount: Double): DamageHandler = DamageHandler { _, damage, _
  */
 fun immuneTo(vararg causes: EntityDamageEvent.DamageCause): DamageHandler = DamageHandler { _, _, cause, _ ->
     if (cause in causes) DamageResult.Cancel else DamageResult.Allow
+}
+
+// ============================================
+// GENERIC EVENT LISTENER DSL
+// ============================================
+
+/**
+ * Register a generic event listener within an ability.
+ *
+ * Example usage:
+ * ```kotlin
+ * val myAbility = ability("custom") {
+ *     listener<InventoryClickEvent>(
+ *         playerFrom = { it.whoClicked as? Player }
+ *     ) { player, event, config ->
+ *         event.isCancelled = true
+ *     }
+ * }
+ * ```
+ *
+ * @param priority The event priority (default: NORMAL)
+ * @param ignoreCancelled Whether to ignore cancelled events (default: true)
+ * @param playerFrom Function to extract the relevant player from the event
+ * @param handler The handler function that processes the event
+ */
+inline fun <reified E : Event> AbilityBuilder.listener(
+    priority: EventPriority = EventPriority.NORMAL,
+    ignoreCancelled: Boolean = true,
+    noinline playerFrom: (E) -> Player?,
+    noinline handler: (Player, E, AbilityConfigAccessor) -> Unit
+) {
+    effects += AbilityEffect.Listener.Generic(
+        eventClass = E::class,
+        priority = priority,
+        ignoreCancelled = ignoreCancelled,
+        playerExtractor = playerFrom,
+        handler = handler
+    )
 }
