@@ -148,6 +148,10 @@ class AbilityBuilder(private val key: Key) {
         effects += AbilityEffect.Reactive.PotionReaction(handler)
     }
 
+    fun restrictArmor(handler: ArmorHandler) {
+        effects += AbilityEffect.Reactive.ArmorRestriction(handler)
+    }
+
     // Triggered effects
 
     fun onJump(handler: JumpHandler) {

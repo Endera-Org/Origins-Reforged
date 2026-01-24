@@ -84,14 +84,9 @@ val lightArmor = ability("light_armor") {
     title = text("Need for Mobility")
     description("You can not wear any heavy armor (armor with protection values higher than chainmail).")
 
-    // Allowed armor types
-    option("allowed_helmets", listOf("CHAINMAIL_HELMET", "LEATHER_HELMET", "GOLDEN_HELMET", "TURTLE_HELMET"))
-    option("allowed_chestplates", listOf("CHAINMAIL_CHESTPLATE", "LEATHER_CHESTPLATE", "GOLDEN_CHESTPLATE", "ELYTRA"))
-    option("allowed_leggings", listOf("CHAINMAIL_LEGGINGS", "LEATHER_LEGGINGS", "GOLDEN_LEGGINGS"))
-    option("allowed_boots", listOf("CHAINMAIL_BOOTS", "LEATHER_BOOTS", "GOLDEN_BOOTS"))
-
-    // Note: Armor restriction is handled via inventory events in the executor
-    // This provides the config for what's allowed
+    restrictArmor { _, item, _, _ ->
+        item.type in allowedArmorTypes
+    }
 }
 
 /**

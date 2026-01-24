@@ -112,6 +112,13 @@ sealed interface AbilityEffect {
         data class PotionReaction(
             val handler: PotionReactionHandler
         ) : Reactive
+
+        /**
+         * Restricts what armor can be equipped.
+         */
+        data class ArmorRestriction(
+            val canEquip: ArmorHandler
+        ) : Reactive
     }
 
     // ============================================
@@ -284,6 +291,14 @@ fun interface BreakSpeedHandler {
  */
 fun interface FoodHandler {
     fun canEat(player: Player, foodItem: ItemStack, config: AbilityConfigAccessor): Boolean
+}
+
+/**
+ * Handler for armor restrictions.
+ * Returns true if the player can equip the armor.
+ */
+fun interface ArmorHandler {
+    fun canEquip(player: Player, armorItem: ItemStack, slot: EquipmentSlot, config: AbilityConfigAccessor): Boolean
 }
 
 /**
