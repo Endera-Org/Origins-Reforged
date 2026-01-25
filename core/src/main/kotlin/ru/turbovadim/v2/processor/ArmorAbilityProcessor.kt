@@ -5,10 +5,12 @@ import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
+import org.bukkit.event.Event
 import org.bukkit.event.Cancellable
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
+import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockDispenseArmorEvent
 import org.bukkit.event.inventory.*
 import org.bukkit.event.player.PlayerInteractEvent
@@ -31,26 +33,20 @@ class ArmorAbilityProcessor(private val container: OriginsContainer) : Listener 
     fun onInventoryClick(event: InventoryClickEvent) {
         val player = event.whoClicked as? Player ?: return
 
-        // Direct click on armor slot with cursor item
-        event.cursor?.takeIf { isArmor(it.type) && event.slotType == InventoryType.SlotType.ARMOR }
+        event.cursor.takeIf { isArmor(it.type) && event.slotType == InventoryType.SlotType.ARMOR }
             ?.let { checkArmorEquip(event, player, it, getSlotForArmor(it.type)) }
 
-        // Shift-click to equip armor
         if (event.isShiftClick) {
             val currentItem = event.currentItem ?: return
-            if (event.inventory.type != InventoryType.CRAFTING) return
+            if (!isArmor(currentItem.type)) return
 
-            if (MaterialTags.HELMETS.isTagged(currentItem.type) && player.equipment.helmet == null) {
-                checkArmorEquip(event, player, currentItem, EquipmentSlot.HEAD)
-            }
-            if (MaterialTags.CHESTPLATES.isTagged(currentItem.type) && player.equipment.chestplate == null) {
-                checkArmorEquip(event, player, currentItem, EquipmentSlot.CHEST)
-            }
-            if (MaterialTags.LEGGINGS.isTagged(currentItem.type) && player.equipment.leggings == null) {
-                checkArmorEquip(event, player, currentItem, EquipmentSlot.LEGS)
-            }
-            if (MaterialTags.BOOTS.isTagged(currentItem.type) && player.equipment.boots == null) {
-                checkArmorEquip(event, player, currentItem, EquipmentSlot.FEET)
+            // Shift-click only auto-equips armor in the player's own inventory screen.
+            // In other inventory views (chests, anvils, etc.) shift-click just moves items between inventories.
+            if (event.view.type != InventoryType.CRAFTING && event.view.type != InventoryType.CREATIVE) return
+
+            val slot = getSlotForArmor(currentItem.type)
+            if (slot != EquipmentSlot.HAND && isArmorSlotEmpty(player, slot)) {
+                checkArmorEquip(event, player, currentItem, slot)
             }
         }
 
@@ -88,20 +84,13 @@ class ArmorAbilityProcessor(private val container: OriginsContainer) : Listener 
         }
     }
 
-    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
-    fun onPlayerInteract(event: PlayerInteractEvent) {
-        if (!event.action.isRightClick) return
+    @EventHandler
+    fun onPlayerRightClick(event: PlayerInteractEvent) {
         val item = event.item ?: return
-
-        val slot = when {
-            MaterialTags.HELMETS.isTagged(item.type) -> EquipmentSlot.HEAD
-            MaterialTags.CHESTPLATES.isTagged(item.type) -> EquipmentSlot.CHEST
-            MaterialTags.LEGGINGS.isTagged(item.type) -> EquipmentSlot.LEGS
-            MaterialTags.BOOTS.isTagged(item.type) -> EquipmentSlot.FEET
-            else -> return
+        val player = event.player
+        if (isArmor(item.type)) {
+            checkArmorEquip(event, player, item, getSlotForArmor(item.type))
         }
-
-        checkArmorEquip(event, event.player, item, slot)
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
@@ -114,8 +103,8 @@ class ArmorAbilityProcessor(private val container: OriginsContainer) : Listener 
     }
 
     private fun checkArmorEquip(event: Cancellable, player: Player, armor: ItemStack, slot: EquipmentSlot) {
-        val state = container.playerStateManager.getState(player)
-        val abilityKeys = state.getAbilityKeys()
+        val playerState = container.playerStateManager.getState(player)
+        val abilityKeys = playerState.getAbilityKeys()
 
         for (abilityKey in abilityKeys) {
             if (!isAbilityActive(player, abilityKey)) continue
@@ -128,6 +117,15 @@ class ArmorAbilityProcessor(private val container: OriginsContainer) : Listener 
                 val accessor = container.configLoader.getAccessor(abilityKey, ability.defaultOptions)
 
                 if (!effect.canEquip.canEquip(player, armor, slot, accessor)) {
+                    if (event is PlayerInteractEvent) {
+                        event.setUseItemInHand(Event.Result.DENY)
+                        event.isCancelled = true
+                        if (event.action == Action.RIGHT_CLICK_BLOCK) {
+                            event.setUseInteractedBlock(Event.Result.DEFAULT)
+                        }
+                        return
+                    }
+
                     event.isCancelled = true
                     return
                 }
@@ -170,4 +168,20 @@ class ArmorAbilityProcessor(private val container: OriginsContainer) : Listener 
             else -> EquipmentSlot.HAND
         }
     }
+
+    private fun isEmpty(item: ItemStack?): Boolean {
+        return item == null || item.type == Material.AIR
+    }
+
+    private fun isArmorSlotEmpty(player: Player, slot: EquipmentSlot): Boolean {
+        val equipment = player.equipment
+        return when (slot) {
+            EquipmentSlot.HEAD -> isEmpty(equipment.helmet)
+            EquipmentSlot.CHEST -> isEmpty(equipment.chestplate)
+            EquipmentSlot.LEGS -> isEmpty(equipment.leggings)
+            EquipmentSlot.FEET -> isEmpty(equipment.boots)
+            else -> true
+        }
+    }
+
 }

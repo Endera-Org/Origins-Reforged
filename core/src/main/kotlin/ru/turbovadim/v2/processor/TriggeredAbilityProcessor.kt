@@ -18,8 +18,10 @@ import org.bukkit.event.player.PlayerInteractAtEntityEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerToggleSneakEvent
 import org.bukkit.inventory.EquipmentSlot
-import ru.turbovadim.v2.ability.AbilityEffect
+import ru.turbovadim.v2.ability.AbilityConfigAccessor
+import ru.turbovadim.v2.ability.KeyBindType
 import ru.turbovadim.v2.di.OriginsContainer
+import ru.turbovadim.v2.ability.AbilityEffect
 
 /**
  * Processor for triggered ability effects.
@@ -60,61 +62,7 @@ class TriggeredAbilityProcessor(private val container: OriginsContainer) : Liste
     }
 
     // ============================================
-    // CLICK HANDLING (Primary Action / Left Click)
-    // ============================================
-
-    @EventHandler(priority = EventPriority.NORMAL)
-    fun onPlayerLeftClick(event: PlayerInteractEvent) {
-        if (event.action != Action.LEFT_CLICK_AIR && event.action != Action.LEFT_CLICK_BLOCK) return
-        if (event.hand != EquipmentSlot.HAND) return
-
-        val player = event.player
-        val item = player.inventory.itemInMainHand.takeIf { it.type != Material.AIR }
-
-        // Process OnLeftClick effects
-        processTriggeredEffects<AbilityEffect.Triggered.OnLeftClick>(player) { effect, accessor ->
-            if (effect.handler.onLeftClick(player, item, accessor)) {
-                event.isCancelled = true
-            }
-        }
-
-        // Process OnKeyBind PRIMARY effects (left click with empty hand typically)
-        processTriggeredEffects<AbilityEffect.Triggered.OnKeyBind>(player) { effect, accessor ->
-            if (effect.keyBind == ru.turbovadim.v2.ability.KeyBindType.PRIMARY) {
-                effect.handler.onKeyBind(player, accessor)
-            }
-        }
-    }
-
-    // ============================================
-    // RIGHT CLICK HANDLING
-    // ============================================
-
-    @EventHandler(priority = EventPriority.NORMAL)
-    fun onPlayerRightClick(event: PlayerInteractEvent) {
-        if (event.action != Action.RIGHT_CLICK_AIR && event.action != Action.RIGHT_CLICK_BLOCK) return
-        if (event.hand != EquipmentSlot.HAND) return
-
-        val player = event.player
-        val item = player.inventory.itemInMainHand.takeIf { it.type != Material.AIR }
-        val block = event.clickedBlock
-
-        processTriggeredEffects<AbilityEffect.Triggered.OnRightClick>(player) { effect, accessor ->
-            if (effect.handler.onRightClick(player, item, block, accessor)) {
-                event.isCancelled = true
-            }
-        }
-
-        // Process OnKeyBind SECONDARY effects
-        processTriggeredEffects<AbilityEffect.Triggered.OnKeyBind>(player) { effect, accessor ->
-            if (effect.keyBind == ru.turbovadim.v2.ability.KeyBindType.SECONDARY) {
-                effect.handler.onKeyBind(player, accessor)
-            }
-        }
-    }
-
-    // ============================================
-    // FULL INTERACT HANDLING (OnInteract)
+    // INTERACT HANDLING (Left Click, Right Click, OnInteract)
     // ============================================
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -123,9 +71,42 @@ class TriggeredAbilityProcessor(private val container: OriginsContainer) : Liste
 
         val player = event.player
         val action = event.action
+        val item = player.inventory.itemInMainHand.takeIf { it.type != Material.AIR }
 
+        // Left click handling
+        if (action == Action.LEFT_CLICK_AIR || action == Action.LEFT_CLICK_BLOCK) {
+            processTriggeredEffects<AbilityEffect.Triggered.OnLeftClick>(player) { effect, accessor ->
+                if (effect.handler.onLeftClick(player, item, accessor)) {
+                    event.isCancelled = true
+                }
+            }
+
+            processTriggeredEffects<AbilityEffect.Triggered.OnKeyBind>(player) { effect, accessor ->
+                if (effect.keyBind == KeyBindType.PRIMARY) {
+                    effect.handler.onKeyBind(player, accessor)
+                }
+            }
+        }
+
+        // Right click handling
+        if (action == Action.RIGHT_CLICK_AIR || action == Action.RIGHT_CLICK_BLOCK) {
+            val block = event.clickedBlock
+
+            processTriggeredEffects<AbilityEffect.Triggered.OnRightClick>(player) { effect, accessor ->
+                if (effect.handler.onRightClick(player, item, block, accessor)) {
+                    event.isCancelled = true
+                }
+            }
+
+            processTriggeredEffects<AbilityEffect.Triggered.OnKeyBind>(player) { effect, accessor ->
+                if (effect.keyBind == KeyBindType.SECONDARY) {
+                    effect.handler.onKeyBind(player, accessor)
+                }
+            }
+        }
+
+        // Generic OnInteract handling
         processTriggeredEffects<AbilityEffect.Triggered.OnInteract>(player) { effect, accessor ->
-            // Check action filter
             val actionFilter = effect.actionFilter
             if (actionFilter != null && action !in actionFilter) return@processTriggeredEffects
 
@@ -252,7 +233,7 @@ class TriggeredAbilityProcessor(private val container: OriginsContainer) : Liste
      */
     private inline fun <reified T : AbilityEffect.Triggered> processTriggeredEffects(
         player: Player,
-        handler: (T, ru.turbovadim.v2.ability.AbilityConfigAccessor) -> Unit
+        handler: (T, AbilityConfigAccessor) -> Unit
     ) {
         val state = container.playerStateManager.getState(player)
         val abilityKeys = state.getAbilityKeys()
