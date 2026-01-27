@@ -13,6 +13,7 @@ import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.v2.ability.*
+import ru.turbovadim.v2.event.OriginChangedEvent
 
 /**
  * Kotlin DSL for defining abilities.
@@ -309,6 +310,14 @@ class AbilityBuilder(@PublishedApi internal val key: Key) {
     ) {
         val actionFilter = if (actions.isEmpty()) null else actions.toSet()
         effects += AbilityEffect.Triggered.OnInteract(actionFilter, handler)
+    }
+
+    /**
+     * Triggered after a player's origin has changed.
+     * This is dispatched by the internal origin pipeline (not a Bukkit event).
+     */
+    fun onOriginChanged(handler: (Player, OriginChangedEvent, AbilityConfigAccessor) -> Unit) {
+        effects += AbilityEffect.Listener.OriginChanged(handler)
     }
 
     /**

@@ -30,6 +30,7 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
 
     private val scope = CoroutineScope(container.dispatchers.io + SupervisorJob())
     private val interceptors = CopyOnWriteArrayList<OriginChangeInterceptor>()
+    private val changedListeners = CopyOnWriteArrayList<OriginChangedListener>()
 
     /**
      * Register an internal origin change interceptor.
@@ -48,7 +49,21 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
     }
 
     /**
-     * Process an origin change through the internal pipeline and external hooks.
+     * Register an internal post-change listener.
+     */
+    fun registerChangedListener(listener: OriginChangedListener) {
+        changedListeners.addIfAbsent(listener)
+    }
+
+    /**
+     * Unregister an internal post-change listener.
+     */
+    fun unregisterChangedListener(listener: OriginChangedListener) {
+        changedListeners.remove(listener)
+    }
+
+    /**
+     * Process an origin change through the internal pipeline.
      *
      * This function always executes on the main thread, even if called from async code.
      */
@@ -100,33 +115,13 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
             }
         }
 
-        // External hook via Bukkit event (cancellable + editable), fired synchronously
-        val changingEvent = PlayerOriginChangingEvent(
-            player = request.player,
-            layer = request.layer,
-            oldOrigin = request.oldOrigin,
-            newOrigin = request.newOrigin,
-            reason = request.reason
-        )
-        Bukkit.getPluginManager().callEvent(changingEvent)
-
-        request.layer = changingEvent.layer
-        request.newOrigin = changingEvent.newOrigin
-        request.cancelled = request.cancelled || changingEvent.isCancelled
-
-        if (request.cancelled) {
-            return OriginChangeResult(
-                cancelled = true,
-                layer = request.layer,
-                oldOrigin = request.oldOrigin,
-                newOrigin = request.newOrigin,
-                changed = false
-            )
-        }
-
         val finalLayer = request.layer
-        val finalOldOrigin = request.oldOrigin
         val finalNewOrigin = request.newOrigin
+        val finalOldOrigin = if (finalLayer == layer) {
+            request.oldOrigin
+        } else {
+            state.getOrigin(finalLayer)
+        }
 
         // Apply the change to state on the main thread
         if (finalNewOrigin == null) {
@@ -137,8 +132,8 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
 
         val changed = finalOldOrigin != finalNewOrigin || finalLayer != layer
 
-        // Notify processors and fire post event
-        notifyOriginChanged(player, finalLayer, finalOldOrigin, finalNewOrigin)
+        // Notify processors and fire internal post-change listeners
+        notifyOriginChanged(player, finalLayer, finalOldOrigin, finalNewOrigin, reason)
 
         return OriginChangeResult(
             cancelled = false,
@@ -153,7 +148,13 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
      * Called after a player's origin has been applied to state.
      * Triggers passive effect reapplication, periodic task scheduling, and post hooks.
      */
-    private fun notifyOriginChanged(player: Player, layer: String, oldOrigin: Origin?, newOrigin: Origin?) {
+    private fun notifyOriginChanged(
+        player: Player,
+        layer: String,
+        oldOrigin: Origin?,
+        newOrigin: Origin?,
+        reason: OriginChangeReason
+    ) {
         val state = container.playerStateManager.getState(player)
 
         // Apply passive effects on main thread
@@ -164,9 +165,20 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
         // Update periodic tasks
         container.periodicAbilityProcessor.updatePlayer(player.uniqueId, state.getAbilityKeys())
 
-        // Fire Bukkit post event for other plugins to listen (synchronously)
-        val event = PlayerOriginChangedEvent(player, layer, oldOrigin, newOrigin)
-        Bukkit.getPluginManager().callEvent(event)
+        // Fire internal post-change listeners
+        if (changedListeners.isEmpty()) return
+
+        val event = OriginChangedEvent(player, layer, oldOrigin, newOrigin, reason)
+        for (listener in changedListeners) {
+            try {
+                listener.onChanged(event)
+            } catch (t: Throwable) {
+                container.plugin.logger.severe(
+                    "OriginChangedListener failed for ${player.name} (layer: $layer): ${t.message}"
+                )
+                t.printStackTrace()
+            }
+        }
     }
 
     /**
@@ -230,60 +242,5 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
 
         // Rules differ if one is disabled and the other isn't
         return fromDisabled != toDisabled
-    }
-}
-
-/**
- * Bukkit event fired when a player's origin changes.
- */
-class PlayerOriginChangedEvent(
-    val player: Player,
-    val layer: String,
-    val oldOrigin: Origin?,
-    val newOrigin: Origin?
-) : org.bukkit.event.Event(), org.bukkit.event.Cancellable {
-
-    private var cancelled = false
-
-    override fun getHandlers(): org.bukkit.event.HandlerList = handlerList
-
-    override fun isCancelled(): Boolean = cancelled
-
-    override fun setCancelled(cancel: Boolean) {
-        cancelled = cancel
-    }
-
-    companion object {
-        @JvmStatic
-        val handlerList = org.bukkit.event.HandlerList()
-    }
-}
-
-/**
- * Bukkit pre-event fired before a player's origin changes.
- *
- * This event is synchronous and supports cancellation + mutation for addon hooks.
- */
-class PlayerOriginChangingEvent(
-    val player: Player,
-    var layer: String,
-    val oldOrigin: Origin?,
-    var newOrigin: Origin?,
-    val reason: OriginChangeReason
-) : org.bukkit.event.Event(), org.bukkit.event.Cancellable {
-
-    private var cancelled = false
-
-    override fun getHandlers(): org.bukkit.event.HandlerList = handlerList
-
-    override fun isCancelled(): Boolean = cancelled
-
-    override fun setCancelled(cancel: Boolean) {
-        cancelled = cancel
-    }
-
-    companion object {
-        @JvmStatic
-        val handlerList = org.bukkit.event.HandlerList()
     }
 }

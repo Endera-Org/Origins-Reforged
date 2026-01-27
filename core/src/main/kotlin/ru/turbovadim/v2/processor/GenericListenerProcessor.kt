@@ -10,6 +10,7 @@ import ru.turbovadim.v2.ability.Ability
 import ru.turbovadim.v2.ability.AbilityConfigAccessor
 import ru.turbovadim.v2.ability.AbilityEffect
 import ru.turbovadim.v2.di.OriginsContainer
+import ru.turbovadim.v2.event.OriginChangedEvent
 import kotlin.reflect.KClass
 
 /**
@@ -23,18 +24,34 @@ class GenericListenerProcessor(private val container: OriginsContainer) {
         val effect: AbilityEffect.Listener.Generic<E>
     )
 
+    private data class OriginChangedHandlerEntry(
+        val abilityKey: Key,
+        val effect: AbilityEffect.Listener.OriginChanged
+    )
+
     // eventClass -> list of handler entries
     private val handlers = mutableMapOf<KClass<*>, MutableList<HandlerEntry<*>>>()
     private val registeredEvents = mutableSetOf<KClass<*>>()
+    private val originChangedHandlers = mutableListOf<OriginChangedHandlerEntry>()
+    private var originChangedRegistered = false
 
     /**
      * Register an ability's listener effects.
      * Called when an ability is registered with the AbilityRegistry.
      */
     fun registerAbility(ability: Ability) {
-        for (effect in ability.effects.filterIsInstance<AbilityEffect.Listener.Generic<*>>()) {
-            addHandler(ability.key, effect)
-            ensureEventRegistered(effect)
+        val listenerEffects = ability.effects.filterIsInstance<AbilityEffect.Listener>()
+        for (effect in listenerEffects) {
+            when (effect) {
+                is AbilityEffect.Listener.Generic<*> -> {
+                    addHandler(ability.key, effect)
+                    ensureEventRegistered(effect)
+                }
+                is AbilityEffect.Listener.OriginChanged -> {
+                    addOriginChangedHandler(ability.key, effect)
+                    ensureOriginChangedRegistered()
+                }
+            }
         }
     }
 
@@ -45,6 +62,7 @@ class GenericListenerProcessor(private val container: OriginsContainer) {
         handlers.values.forEach { entries ->
             entries.removeAll { it.abilityKey == abilityKey }
         }
+        originChangedHandlers.removeAll { it.abilityKey == abilityKey }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -70,6 +88,19 @@ class GenericListenerProcessor(private val container: OriginsContainer) {
         )
     }
 
+    private fun addOriginChangedHandler(abilityKey: Key, effect: AbilityEffect.Listener.OriginChanged) {
+        originChangedHandlers.add(OriginChangedHandlerEntry(abilityKey, effect))
+    }
+
+    private fun ensureOriginChangedRegistered() {
+        if (originChangedRegistered) return
+        originChangedRegistered = true
+
+        container.eventBus.registerChangedListener { event ->
+            dispatchOriginChanged(event)
+        }
+    }
+
     @Suppress("UNCHECKED_CAST")
     private fun dispatchEvent(event: Event) {
         val entries = handlers[event::class] ?: return
@@ -91,6 +122,22 @@ class GenericListenerProcessor(private val container: OriginsContainer) {
 
             // Call the handler
             typedEntry.effect.handler(player, event, accessor)
+        }
+    }
+
+    private fun dispatchOriginChanged(event: OriginChangedEvent) {
+        if (originChangedHandlers.isEmpty()) return
+        val player = event.player
+        val state = container.playerStateManager.getState(player)
+
+        for (entry in originChangedHandlers) {
+            if (!state.hasAbility(entry.abilityKey)) continue
+            if (!isAbilityActive(player, entry.abilityKey)) continue
+
+            val ability = container.abilityRegistry.get(entry.abilityKey) ?: continue
+            val accessor = container.configLoader.getAccessor(entry.abilityKey, ability.defaultOptions)
+
+            entry.effect.handler(player, event, accessor)
         }
     }
 

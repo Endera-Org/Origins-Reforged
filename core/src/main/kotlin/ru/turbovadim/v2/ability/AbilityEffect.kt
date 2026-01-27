@@ -14,6 +14,7 @@ import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.bukkit.potion.PotionEffect
+import ru.turbovadim.v2.event.OriginChangedEvent
 import kotlin.reflect.KClass
 
 /**
@@ -267,6 +268,14 @@ sealed interface AbilityEffect {
             val ignoreCancelled: Boolean,
             val playerExtractor: (E) -> Player?,
             val handler: (Player, E, AbilityConfigAccessor) -> Unit
+        ) : Listener
+
+        /**
+         * Internal origin-changed listener.
+         * This is NOT a Bukkit event and is dispatched by the internal origin pipeline.
+         */
+        data class OriginChanged(
+            val handler: (Player, OriginChangedEvent, AbilityConfigAccessor) -> Unit
         ) : Listener
     }
 }

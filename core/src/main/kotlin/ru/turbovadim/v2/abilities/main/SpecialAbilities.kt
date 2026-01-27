@@ -11,7 +11,7 @@ import org.bukkit.util.Vector
 import ru.turbovadim.v2.ability.InvisibilityCondition
 import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.dsl.*
-import ru.turbovadim.v2.event.PlayerOriginChangedEvent
+import ru.turbovadim.v2.event.OriginChangedEvent
 
 // ============================================
 // SPECIAL ABILITIES
@@ -184,9 +184,7 @@ val elytra = ability("elytra") {
     }
 
     // Update allowFlight when origin changes
-    listener<PlayerOriginChangedEvent>(
-        playerFrom = { it.player }
-    ) { player, _, _ ->
+    onOriginChanged { player, _: OriginChangedEvent, _ ->
         player.allowFlight = true
     }
 

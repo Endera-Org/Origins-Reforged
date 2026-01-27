@@ -52,3 +52,22 @@ fun interface OriginChangeInterceptor {
     fun intercept(request: OriginChangeRequest)
 }
 
+/**
+ * Internal post-change event emitted after an origin change is applied.
+ *
+ * This is intentionally NOT a Bukkit event.
+ */
+data class OriginChangedEvent(
+    val player: Player,
+    val layer: String,
+    val oldOrigin: Origin?,
+    val newOrigin: Origin?,
+    val reason: OriginChangeReason
+)
+
+/**
+ * Internal listener for origin-changed events.
+ */
+fun interface OriginChangedListener {
+    fun onChanged(event: OriginChangedEvent)
+}
