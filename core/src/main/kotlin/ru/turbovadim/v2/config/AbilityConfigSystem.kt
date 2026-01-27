@@ -2,18 +2,36 @@ package ru.turbovadim.v2.config
 
 import kotlinx.serialization.Serializable
 import net.kyori.adventure.key.Key
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.plugin.java.JavaPlugin
 import org.endera.enderalib.utils.configuration.Comment
 import org.endera.enderalib.utils.configuration.ConfigurationManager
 import org.endera.enderalib.utils.configuration.Spacer
+import ru.turbovadim.v2.ability.Ability
 import ru.turbovadim.v2.ability.AbilityConfigAccessor
+import ru.turbovadim.v2.ability.AttributeEffect
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Unified configuration system for all ability options using EnderaLib.
+ * Folder-based configuration system for abilities.
+ *
+ * Abilities are organized by namespace in subfolders:
+ * ```
+ * abilities/
+ * ├── origins/
+ * │   ├── climbing.yml
+ * │   ├── tailwind.yml
+ * │   └── ...
+ * ├── fantasyorigins/
+ * │   ├── double_health.yml
+ * │   └── ...
+ * └── moborigins/
+ *     ├── bee_wings.yml
+ *     └── ...
+ * ```
  *
  * Uses EnderaLib's ConfigurationManager for:
  * - Type-safe config loading with kotlinx.serialization
@@ -25,49 +43,142 @@ import java.util.concurrent.ConcurrentHashMap
 class AbilityConfigLoader(private val plugin: JavaPlugin) {
 
     private val configs = ConcurrentHashMap<Key, AbilityConfigData>()
-    private var configManager: ConfigurationManager<AbilitiesConfig>? = null
-
-    /**
-     * Load ability configs using EnderaLib ConfigurationManager.
-     */
-    fun load() {
-        val configFile = File(plugin.dataFolder, "abilities.yml")
-
-        configManager = ConfigurationManager(
-            configFile = configFile,
-            dataFolder = plugin.dataFolder,
-            defaultConfig = defaultAbilitiesConfig,
-            logger = plugin.logger,
-            serializer = AbilitiesConfig.serializer(),
-            clazz = AbilitiesConfig::class
-        )
-
-        // Load or create config (handles merging, backups, etc.)
-        val loadedConfig = configManager!!.loadOrCreateConfig()
-
-        // Parse into our internal format
-        loadedConfig.abilities.forEach { (keyStr, data) ->
-            val key = parseKey(keyStr)
-            configs[key] = data
-        }
-
-        plugin.logger.info("Loaded ${configs.size} ability configurations")
+    private val abilitiesFolder: File by lazy {
+        File(plugin.dataFolder, "abilities").also { it.mkdirs() }
     }
 
     /**
-     * Reload configs from file.
+     * Load all ability configs from the abilities folder.
+     * Scans all namespace subfolders for YAML files.
+     */
+    fun load() {
+        configs.clear()
+
+        // Scan namespace subfolders
+        abilitiesFolder.listFiles { file -> file.isDirectory }?.forEach { namespaceFolder ->
+            val namespace = namespaceFolder.name
+
+            // Load all YAML files in this namespace folder
+            namespaceFolder.listFiles { file -> file.extension == "yml" }?.forEach { file ->
+                try {
+                    loadAbilityConfig(namespace, file)
+                } catch (e: Exception) {
+                    plugin.logger.warning("Failed to load ability config ${namespace}/${file.name}: ${e.message}")
+                }
+            }
+        }
+
+        plugin.logger.info("Loaded ${configs.size} ability configurations from abilities/ folder")
+    }
+
+    /**
+     * Load a single ability config file from a namespace folder.
+     */
+    private fun loadAbilityConfig(namespace: String, file: File) {
+        val abilityName = file.nameWithoutExtension
+        val key = Key.key(namespace, abilityName)
+        val namespaceFolder = file.parentFile
+
+        val configManager = ConfigurationManager(
+            configFile = file,
+            dataFolder = namespaceFolder,
+            defaultConfig = AbilityConfigData(),
+            logger = plugin.logger,
+            serializer = AbilityConfigData.serializer(),
+            clazz = AbilityConfigData::class
+        )
+
+        val data = configManager.loadOrCreateConfig()
+        configs[key] = data
+    }
+
+    /**
+     * Reload configs from files.
      */
     fun reload() {
-        configs.clear()
         load()
     }
 
     /**
-     * Save current configs to file.
+     * Save config for a specific ability by regenerating the file.
+     * The file is created/updated using ConfigurationManager's merge behavior.
      */
-    fun save() {
-        // TODO: Implement config saving
-        plugin.logger.info("Config save requested - not yet implemented")
+    fun save(key: Key) {
+        val data = configs[key] ?: return
+        val namespaceFolder = getNamespaceFolder(key.namespace())
+        val file = File(namespaceFolder, "${key.value()}.yml")
+
+        val configManager = ConfigurationManager(
+            configFile = file,
+            dataFolder = namespaceFolder,
+            defaultConfig = data,
+            logger = plugin.logger,
+            serializer = AbilityConfigData.serializer(),
+            clazz = AbilityConfigData::class
+        )
+
+        // loadOrCreateConfig writes the file if missing and merges with defaults
+        configManager.loadOrCreateConfig()
+    }
+
+    /**
+     * Save all ability configs.
+     */
+    fun saveAll() {
+        configs.keys.forEach { save(it) }
+        plugin.logger.info("Saved ${configs.size} ability configurations")
+    }
+
+    /**
+     * Generate default config file for an ability if it doesn't exist.
+     * Called during ability registration.
+     */
+    fun generateDefaultConfig(ability: Ability) {
+        val namespaceFolder = getNamespaceFolder(ability.key.namespace())
+        val file = File(namespaceFolder, "${ability.key.value()}.yml")
+
+        // Extract attribute config from ability effects
+        val attributeConfigs = ability.effects
+            .filterIsInstance<AttributeEffect.Static>()
+            .flatMap { it.modifiers }
+            .map { mod ->
+                AttributeConfigEntry(
+                    attribute = mod.attributeType.name.lowercase().replace("_", "-"),
+                    value = mod.defaultValue,
+                    operation = mod.operation.name.lowercase().replace("_", "-")
+                )
+            }
+
+        // Build default config from ability
+        val defaultData = AbilityConfigData(
+            visible = ability.isVisibleDefault,
+            title = PlainTextComponentSerializer.plainText().serialize(ability.title),
+            description = ability.description.map {
+                PlainTextComponentSerializer.plainText().serialize(it)
+            }.takeIf { it.isNotEmpty() },
+            attributes = attributeConfigs.takeIf { it.isNotEmpty() } ?: emptyList(),
+            options = ability.defaultOptions.mapValues { it.value.toString() }
+        )
+
+        val configManager = ConfigurationManager(
+            configFile = file,
+            dataFolder = namespaceFolder,
+            defaultConfig = defaultData,
+            logger = plugin.logger,
+            serializer = AbilityConfigData.serializer(),
+            clazz = AbilityConfigData::class
+        )
+
+        // Load or create - this handles merging existing config with new defaults
+        val loadedConfig = configManager.loadOrCreateConfig()
+        configs[ability.key] = loadedConfig
+    }
+
+    /**
+     * Get or create the folder for a namespace.
+     */
+    private fun getNamespaceFolder(namespace: String): File {
+        return File(abilitiesFolder, namespace).also { it.mkdirs() }
     }
 
     /**
@@ -144,22 +255,6 @@ class AbilityConfigLoader(private val plugin: JavaPlugin) {
             configs[key] = existing.copy(options = mergedOptions)
         }
     }
-
-    private fun parseKey(path: String): Key {
-        return if (path.contains(":")) {
-            Key.key(path)
-        } else {
-            Key.key("origins", path)
-        }
-    }
-
-    private fun keyToString(key: Key): String {
-        return if (key.namespace() == "origins") {
-            key.value()
-        } else {
-            "${key.namespace()}:${key.value()}"
-        }
-    }
 }
 
 // ============================================
@@ -167,20 +262,8 @@ class AbilityConfigLoader(private val plugin: JavaPlugin) {
 // ============================================
 
 /**
- * Root config structure for abilities.yml
- */
-@Serializable
-data class AbilitiesConfig(
-    @Comment("""
-        Ability configurations
-        Each key is an ability name (e.g., 'climbing', 'burn-in-daylight')
-        All values defined here override the defaults from code
-    """)
-    val abilities: Map<String, AbilityConfigData>
-)
-
-/**
  * Configuration for a single ability.
+ * Each ability has its own YAML file with this structure.
  */
 @Serializable
 data class AbilityConfigData(
@@ -188,7 +271,7 @@ data class AbilityConfigData(
     val visible: Boolean? = null,
 
     @Spacer(1)
-    @Comment("Display title (plain text, rendered with custom font)")
+    @Comment("Display title (plain text)")
     val title: String? = null,
 
     @Comment("Description lines (plain text)")
@@ -198,9 +281,11 @@ data class AbilityConfigData(
     @Comment("""
         Attribute modifiers applied by this ability
         Example:
-          - attribute: generic-max-health
+          - attribute: max-health
             value: 4.0
             operation: add-number
+
+        Available operations: add-number, add-scalar, multiply-scalar-1
     """)
     val attributes: List<AttributeConfigEntry> = emptyList(),
 
@@ -214,7 +299,7 @@ data class AbilityConfigData(
  */
 @Serializable
 data class AttributeConfigEntry(
-    @Comment("Bukkit attribute (e.g., generic-max-health, generic-attack-damage)")
+    @Comment("Attribute name (e.g., max-health, movement-speed, attack-damage)")
     val attribute: String,
 
     @Comment("Modifier value")
@@ -222,13 +307,6 @@ data class AttributeConfigEntry(
 
     @Comment("Operation: add-number, add-scalar, multiply-scalar-1")
     val operation: String = "add-number"
-)
-
-/**
- * Default empty config.
- */
-val defaultAbilitiesConfig = AbilitiesConfig(
-    abilities = emptyMap()
 )
 
 // ============================================

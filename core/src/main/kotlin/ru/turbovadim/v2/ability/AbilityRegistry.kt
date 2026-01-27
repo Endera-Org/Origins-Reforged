@@ -58,6 +58,9 @@ class AbilityRegistry(private val container: OriginsContainer) {
             listenerAbilities[ability.key] = listeners
             container.genericListenerProcessor.registerAbility(ability)
         }
+
+        // Generate config file for this ability
+        container.configLoader.generateDefaultConfig(ability)
     }
 
     /**
