@@ -17,7 +17,7 @@ import ru.turbovadim.v2.event.OriginChangeReason
  *
  * Subcommands:
  * - /origin help - Show help
- * - /origin orb [player] - Give an Orb of Origin
+ * - /origin orb [player] [amount] - Give Orb(s) of Origin
  * - /origin set <player> <origin> [layer] - Set a player's origin
  * - /origin get [player] - Get a player's origin(s)
  * - /origin list [layer] - List available origins
@@ -47,7 +47,7 @@ class OriginCommand : CommandExecutor, TabCompleter {
     private fun showHelp(sender: CommandSender): Boolean {
         sender.sendMessage(Component.text("=== Origins Commands ===", NamedTextColor.GOLD))
         sender.sendMessage(Component.text("/origin help", NamedTextColor.YELLOW).append(Component.text(" - Show this help", NamedTextColor.GRAY)))
-        sender.sendMessage(Component.text("/origin orb [player]", NamedTextColor.YELLOW).append(Component.text(" - Give an Orb of Origin", NamedTextColor.GRAY)))
+        sender.sendMessage(Component.text("/origin orb [player] [amount]", NamedTextColor.YELLOW).append(Component.text(" - Give Orb(s) of Origin", NamedTextColor.GRAY)))
         sender.sendMessage(Component.text("/origin set <player> <origin> [layer]", NamedTextColor.YELLOW).append(Component.text(" - Set a player's origin", NamedTextColor.GRAY)))
         sender.sendMessage(Component.text("/origin get [player]", NamedTextColor.YELLOW).append(Component.text(" - Get a player's origins", NamedTextColor.GRAY)))
         sender.sendMessage(Component.text("/origin list [layer]", NamedTextColor.YELLOW).append(Component.text(" - List available origins", NamedTextColor.GRAY)))
@@ -75,8 +75,20 @@ class OriginCommand : CommandExecutor, TabCompleter {
             return true
         }
 
-        target.inventory.addItem(OrbOfOrigin.orb)
-        sender.sendMessage(Component.text("Gave an Orb of Origin to ${target.name}.", NamedTextColor.GREEN))
+        val amount = if (args.size >= 3) {
+            args[2].toIntOrNull()?.coerceIn(1, 64) ?: run {
+                sender.sendMessage(Component.text("Invalid amount: ${args[2]}", NamedTextColor.RED))
+                return true
+            }
+        } else {
+            1
+        }
+
+        val orbStack = OrbOfOrigin.orb.clone().apply { this.amount = amount }
+        target.inventory.addItem(orbStack)
+
+        val orbText = if (amount == 1) "an Orb of Origin" else "$amount Orbs of Origin"
+        sender.sendMessage(Component.text("Gave $orbText to ${target.name}.", NamedTextColor.GREEN))
         return true
     }
 
@@ -222,6 +234,7 @@ class OriginCommand : CommandExecutor, TabCompleter {
             3 -> {
                 when (args[0].lowercase()) {
                     "set" -> container.originRegistry.getAll().map { it.name }.filter { it.lowercase().startsWith(args[2].lowercase()) }
+                    "orb" -> listOf("1", "16", "32", "64").filter { it.startsWith(args[2]) }
                     else -> emptyList()
                 }
             }

@@ -1,8 +1,11 @@
 package ru.turbovadim.v2.abilities.main
 
 import org.bukkit.Material
+import org.bukkit.potion.PotionEffect
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.v2.ability.DamageResult
 import ru.turbovadim.v2.dsl.*
+import kotlin.random.Random
 
 // ============================================
 // COMBAT ABILITIES
@@ -106,15 +109,33 @@ val arthropod = ability("arthropod") {
     option("damage_per_level", 1.25)
     option("slowness_amplifier", 3)
 
-    // Note: Bane of Arthropods damage is handled in damage event
-    // The executor needs to check the attacker's weapon for the enchantment
     modifyDamage(
-        incoming = { player, damage, _, config ->
-            // Extra damage and slowness from Bane of Arthropods
-            // Note: The executor needs to check the attacker's weapon
-            // This handler cannot access the attacker directly
-            // For now, let the executor handle this via EntityDamageByEntityEvent
-            DamageResult.Allow
+        incomingFromEntity = { player, attacker, damage, _, config ->
+            val equipment = attacker.equipment ?: return@modifyDamage DamageResult.Allow
+            val mainHand = equipment.itemInMainHand
+            val baneEnchantment = NMSInvoker.baneOfArthropodsEnchantment
+
+            if (!mainHand.containsEnchantment(baneEnchantment)) {
+                return@modifyDamage DamageResult.Allow
+            }
+
+            val level = mainHand.getEnchantmentLevel(baneEnchantment)
+            val damagePerLevel = config.getDouble("damage_per_level", 1.25)
+            val slownessAmplifier = config.getInt("slowness_amplifier", 3)
+
+            val duration = (20 * Random.nextDouble(1.0, 1.0 + (0.5 * level))).toInt()
+            player.addPotionEffect(
+                PotionEffect(
+                    NMSInvoker.slownessEffect,
+                    duration,
+                    slownessAmplifier,
+                    false,
+                    true
+                )
+            )
+
+            // Return modified damage
+            DamageResult.Modify(damage + (damagePerLevel * level))
         }
     )
 }

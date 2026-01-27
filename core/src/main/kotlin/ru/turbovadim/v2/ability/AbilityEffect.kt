@@ -116,10 +116,15 @@ sealed interface AbilityEffect {
 
         /**
          * Modifies incoming or outgoing damage.
+         *
+         * @param incoming Handler for any incoming damage (no attacker access)
+         * @param outgoing Handler for outgoing damage dealt by the player
+         * @param incomingFromEntity Handler for incoming damage from an entity (with attacker access)
          */
         data class DamageModifier(
             val incoming: DamageHandler? = null,
-            val outgoing: DamageHandler? = null
+            val outgoing: DamageHandler? = null,
+            val incomingFromEntity: EntityDamageHandler? = null
         ) : Reactive
 
         /**
@@ -329,6 +334,14 @@ fun interface ParticleSpawner {
  */
 fun interface DamageHandler {
     fun handle(player: Player, damage: Double, cause: EntityDamageEvent.DamageCause, config: AbilityConfigAccessor): DamageResult
+}
+
+/**
+ * Handler for entity damage modification with attacker access.
+ * Used when the player is damaged by another entity and you need access to the attacker.
+ */
+fun interface EntityDamageHandler {
+    fun handle(player: Player, attacker: LivingEntity, damage: Double, cause: EntityDamageEvent.DamageCause, config: AbilityConfigAccessor): DamageResult
 }
 
 /**

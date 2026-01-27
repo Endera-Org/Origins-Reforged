@@ -4,6 +4,7 @@ import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
+import org.bukkit.entity.Projectile
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
@@ -89,6 +90,50 @@ class ReactiveAbilityProcessor(private val container: OriginsContainer) : Listen
                 val accessor = container.configLoader.getAccessor(abilityKey, ability.defaultOptions)
 
                 when (val result = handler.handle(player, event.damage, event.cause, accessor)) {
+                    is DamageResult.Cancel -> {
+                        event.isCancelled = true
+                        return
+                    }
+                    is DamageResult.Modify -> {
+                        event.damage = result.newDamage
+                    }
+                    is DamageResult.Allow -> {
+                        // No modification
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Handle incoming damage from entities for players with incomingFromEntity handlers.
+     * Provides attacker access to damage modification handlers.
+     */
+    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    fun onPlayerDamagedByEntity(event: EntityDamageByEntityEvent) {
+        val player = event.entity as? Player ?: return
+        val state = container.playerStateManager.getState(player)
+        val abilityKeys = state.getAbilityKeys()
+
+        // Get the actual attacker (handle projectiles)
+        val attacker = when (val d = event.damager) {
+            is Projectile -> d.shooter as? LivingEntity
+            is LivingEntity -> d
+            else -> null
+        } ?: return
+
+        for (abilityKey in abilityKeys) {
+            if (!isAbilityActive(player, abilityKey)) continue
+
+            val reactiveEffects = container.abilityRegistry.getReactiveEffects(abilityKey)
+            for (effect in reactiveEffects) {
+                if (effect !is AbilityEffect.Reactive.DamageModifier) continue
+                val handler = effect.incomingFromEntity ?: continue
+
+                val ability = container.abilityRegistry.get(abilityKey) ?: continue
+                val accessor = container.configLoader.getAccessor(abilityKey, ability.defaultOptions)
+
+                when (val result = handler.handle(player, attacker, event.damage, event.cause, accessor)) {
                     is DamageResult.Cancel -> {
                         event.isCancelled = true
                         return

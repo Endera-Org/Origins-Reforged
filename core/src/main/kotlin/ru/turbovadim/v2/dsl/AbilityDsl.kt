@@ -218,9 +218,10 @@ class AbilityBuilder(@PublishedApi internal val key: Key) {
 
     fun modifyDamage(
         incoming: DamageHandler? = null,
-        outgoing: DamageHandler? = null
+        outgoing: DamageHandler? = null,
+        incomingFromEntity: EntityDamageHandler? = null
     ) {
-        effects += AbilityEffect.Reactive.DamageModifier(incoming, outgoing)
+        effects += AbilityEffect.Reactive.DamageModifier(incoming, outgoing, incomingFromEntity)
     }
 
     fun modifyBreakSpeed(handler: BreakSpeedHandler) {
