@@ -5,6 +5,7 @@ import com.noxcrew.interfaces.InterfacesListeners
 import io.github.retrooper.packetevents.factory.spigot.SpigotPacketEventsBuilder
 import net.milkbowl.vault.economy.Economy
 import org.bukkit.Bukkit
+import org.bukkit.plugin.java.JavaPlugin
 import org.endera.enderalib.bstats.MetricsLite
 import org.endera.enderalib.utils.async.BukkitDispatcher
 import org.endera.enderalib.utils.configuration.ConfigurationManager
@@ -17,7 +18,7 @@ import ru.turbovadim.v2.V2Initializer
 import ru.turbovadim.v2.di.OriginsContainer
 import java.io.File
 
-class OriginsReforged : OriginsAddon() {
+class OriginsReforged : JavaPlugin() {
 
     companion object {
 
@@ -56,7 +57,7 @@ class OriginsReforged : OriginsAddon() {
             Bukkit.getPluginManager().registerEvents(NMSInvoker, instance)
         }
 
-        /** v2 container - initialized in onRegister() */
+        /** v2 container - initialized in onEnable() */
         var v2Container: OriginsContainer? = null
             private set
     }
@@ -79,6 +80,8 @@ class OriginsReforged : OriginsAddon() {
     var isVaultEnabled: Boolean = false
         private set
 
+    public override fun getFile(): File = super.getFile()
+
     override fun onLoad() {
         instance = this
         PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this))
@@ -90,7 +93,7 @@ class OriginsReforged : OriginsAddon() {
         PacketEvents.getAPI().terminate()
     }
 
-    override fun onRegister() {
+    override fun onEnable() {
 
         bukkitDispatcher = BukkitDispatcher(this)
         InterfacesListeners.install(this)
@@ -178,13 +181,4 @@ class OriginsReforged : OriginsAddon() {
         }
     }
 
-    override fun getNamespace(): String {
-        return "origins"
-    }
-
-    override fun getAbilities(): List<ru.turbovadim.v2.ability.Ability> {
-        // v2 abilities are registered directly in V2Initializer
-        // Return empty list as legacy addons will use v2 registry
-        return emptyList()
-    }
 }

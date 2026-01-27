@@ -20,20 +20,12 @@ class PackApplier : Listener {
     }
 
     companion object {
-        private val addonPacks: MutableMap<Class<out OriginsAddon>, OriginsReforgedResourcePackInfo> =
-            HashMap()
-
-        // Packs from v2 addons (keyed by namespace)
-        private val v2AddonPacks: MutableMap<String, OriginsReforgedResourcePackInfo> =
+        private val addonPacks: MutableMap<String, OriginsReforgedResourcePackInfo> =
             HashMap()
 
         fun sendPacks(player: Player) {
             CoroutineScope(ioDispatcher).launch {
-                // Merge both v1 and v2 addon packs
-                val allPacks = HashMap<Any, OriginsReforgedResourcePackInfo>()
-                allPacks.putAll(addonPacks)
-                allPacks.putAll(v2AddonPacks)
-                NMSInvoker.sendResourcePacks(player, getPackURL(), allPacks)
+                NMSInvoker.sendResourcePacks(player, getPackURL(), addonPacks)
             }
         }
 
@@ -41,17 +33,13 @@ class PackApplier : Listener {
             return "https://github.com/Endera-Org/Origins-Reborn-Enhanced/raw/refs/heads/master/OriginsPack.zip"
         }
 
-        fun addResourcePack(addon: OriginsAddon, info: OriginsReforgedResourcePackInfo) {
-            addonPacks.put(addon.javaClass, info)
-        }
-
         /**
-         * Add a resource pack from a v2 addon.
+         * Add a resource pack from an addon.
          * @param namespace The addon's namespace (used as key)
          * @param info The resource pack info wrapper
          */
-        fun addResourcePackV2(namespace: String, info: OriginsReforgedResourcePackInfo) {
-            v2AddonPacks[namespace] = info
+        fun addResourcePack(namespace: String, info: OriginsReforgedResourcePackInfo) {
+            addonPacks[namespace] = info
         }
     }
 }

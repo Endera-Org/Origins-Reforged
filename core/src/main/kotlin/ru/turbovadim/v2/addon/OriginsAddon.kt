@@ -13,7 +13,7 @@ import ru.turbovadim.v2.origin.Origin
 import java.net.URI
 
 /**
- * Base class for Origins addons (v2 API).
+ * Base class for Origins addons.
  *
  * Addons can provide:
  * - Custom abilities
@@ -132,7 +132,7 @@ abstract class OriginsAddon : JavaPlugin() {
                     .uri(URI.create(pack.url))
                     .hash(pack.hash)
                     .build()
-                PackApplier.addResourcePackV2(namespace, OriginsReforgedResourcePackInfo(adventurePackInfo))
+                PackApplier.addResourcePack(namespace, OriginsReforgedResourcePackInfo(adventurePackInfo))
                 logger.info("Registered resource pack from ${pack.url}")
             } catch (e: Exception) {
                 logger.warning("Failed to register resource pack: ${e.message}")
