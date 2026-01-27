@@ -3,6 +3,10 @@ package ru.turbovadim.database
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
+import org.jetbrains.exposed.v1.jdbc.insert
+import org.jetbrains.exposed.v1.jdbc.insertAndGetId
+import org.jetbrains.exposed.v1.jdbc.selectAll
+import org.jetbrains.exposed.v1.jdbc.update
 import ru.turbovadim.database.schema.*
 import java.util.*
 
@@ -19,16 +23,19 @@ object DatabaseManager {
         originCache.clear()
         allUsedOriginsCache.clear()
 
-        UUIDOriginEntity.all().forEach { uuidEntity ->
-            uuidEntity.layerOriginPairs.forEach { kv ->
-                originCache[uuidEntity.uuid to kv.layer] = kv.origin
-            }
+        // Build an id -> uuid map once, then materialize all layer/origin pairs.
+        val idToUuid = UUIDOrigins.selectAll()
+            .associate { it[UUIDOrigins.id].value to it[UUIDOrigins.uuid] }
+
+        OriginKeyValuePairs.selectAll().forEach { row ->
+            val uuid = idToUuid[row[OriginKeyValuePairs.parent].value] ?: return@forEach
+            originCache[uuid to row[OriginKeyValuePairs.layer]] = row[OriginKeyValuePairs.origin]
         }
 
         allUsedOriginsCache.addAll(
-            UsedOriginEntity.all()
+            UsedOrigins.selectAll()
                 .orderBy(UsedOrigins.id to SortOrder.ASC)
-                .map { it.usedOrigin }
+                .map { it[UsedOrigins.usedOrigin] }
         )
     }
 
@@ -38,9 +45,22 @@ object DatabaseManager {
      * @param uuid The unique identifier for which the selected origins are fetched.
      * @return The `UUIDOrigin` object containing the selected origins, or `null` if no matching data is found.
      */
-    suspend fun getSelectedOrigins(uuid: String) = dbQuery {
-        val uuidEntity = UUIDOriginEntity.find { UUIDOrigins.uuid eq uuid }.firstOrNull()
-        uuidEntity?.toUUIDOrigin()
+    suspend fun getSelectedOrigins(uuid: String): UUIDOrigin? = dbQuery {
+        val uuidRow = UUIDOrigins.selectAll()
+            .where { UUIDOrigins.uuid eq uuid }
+            .firstOrNull() ?: return@dbQuery null
+
+        val parentId = uuidRow[UUIDOrigins.id]
+
+        val layerOriginPairs = OriginKeyValuePairs.selectAll()
+            .where { OriginKeyValuePairs.parent eq parentId }
+            .associate { it[OriginKeyValuePairs.layer] to it[OriginKeyValuePairs.origin] }
+
+        UUIDOrigin(
+            id = parentId.value,
+            uuid = uuidRow[UUIDOrigins.uuid],
+            layerOriginPairs = layerOriginPairs
+        )
     }
 
     /**
@@ -50,12 +70,16 @@ object DatabaseManager {
      * @return A list of used origins as strings, sorted in ascending order by their IDs. Returns an empty list if the UUID is not found or has no used origins.
      */
     suspend fun getUsedOrigins(uuid: String): List<String> = dbQuery {
-        val uuidEntity = UUIDOriginEntity.find { UUIDOrigins.uuid eq uuid }.firstOrNull()
-        uuidEntity?.let {
-            UsedOriginEntity.find { UsedOrigins.parent eq it.id }
-                .orderBy(UsedOrigins.id to SortOrder.ASC)
-                .map { it.usedOrigin }
-        } ?: emptyList()
+        val parentId = UUIDOrigins.selectAll()
+            .where { UUIDOrigins.uuid eq uuid }
+            .firstOrNull()
+            ?.get(UUIDOrigins.id)
+            ?: return@dbQuery emptyList()
+
+        UsedOrigins.selectAll()
+            .where { UsedOrigins.parent eq parentId }
+            .orderBy(UsedOrigins.id to SortOrder.ASC)
+            .map { it[UsedOrigins.usedOrigin] }
     }
 
     /**
@@ -71,40 +95,55 @@ object DatabaseManager {
         originCache[cacheKey]?.let { return it }
 
         return dbQuery {
-            val uuidEntity = UUIDOriginEntity.find { UUIDOrigins.uuid eq uuid }.firstOrNull()
-            val origin = uuidEntity?.let {
-                OriginKeyValuePairEntity.find {
-                    (OriginKeyValuePairs.parent eq it.id) and (OriginKeyValuePairs.layer eq layer)
-                }.firstOrNull()?.origin
+            val parentId = UUIDOrigins.selectAll()
+                .where { UUIDOrigins.uuid eq uuid }
+                .firstOrNull()
+                ?.get(UUIDOrigins.id)
+
+            val origin = parentId?.let { id ->
+                OriginKeyValuePairs.selectAll()
+                    .where { (OriginKeyValuePairs.parent eq id) and (OriginKeyValuePairs.layer eq layer) }
+                    .firstOrNull()
+                    ?.get(OriginKeyValuePairs.origin)
             }
             originCache[cacheKey] = origin
             origin
         }
     }
 
-    suspend fun updateOrigin(uuid: String, layer: String, newOrigin: String?) = dbQuery {
-        val uuidEntity = UUIDOriginEntity.find { UUIDOrigins.uuid eq uuid }.firstOrNull() ?: UUIDOriginEntity.new {
-            this.uuid = uuid
-        }
+    suspend fun updateOrigin(uuid: String, layer: String, newOrigin: String?): Unit = dbQuery {
+        // Get or create UUID entry
+        val parentId = UUIDOrigins.selectAll()
+            .where { UUIDOrigins.uuid eq uuid }
+            .firstOrNull()
+            ?.get(UUIDOrigins.id)
+            ?: UUIDOrigins.insertAndGetId {
+                it[UUIDOrigins.uuid] = uuid
+            }
 
-        // Получаем или создаём пару ключ-значение для указанного слоя
-        var originPair = OriginKeyValuePairEntity.find {
-            (OriginKeyValuePairs.parent eq uuidEntity.id) and (OriginKeyValuePairs.layer eq layer)
-        }.firstOrNull()
+        // Check if layer entry exists
+        val existingPair = OriginKeyValuePairs.selectAll()
+            .where { (OriginKeyValuePairs.parent eq parentId) and (OriginKeyValuePairs.layer eq layer) }
+            .firstOrNull()
 
-        if (originPair != null) {
-            originPair.origin = newOrigin
+        if (existingPair != null) {
+            // Update existing
+            OriginKeyValuePairs.update(
+                where = { (OriginKeyValuePairs.parent eq parentId) and (OriginKeyValuePairs.layer eq layer) }
+            ) {
+                it[origin] = newOrigin
+            }
         } else {
-            originPair = OriginKeyValuePairEntity.new {
-                this.parent = uuidEntity
-                this.layer = layer
-                this.origin = newOrigin
+            // Insert new
+            OriginKeyValuePairs.insert {
+                it[parent] = parentId
+                it[OriginKeyValuePairs.layer] = layer
+                it[origin] = newOrigin
             }
         }
+
         // Update cache
         originCache[uuid to layer] = newOrigin
-
-        originPair.toOriginKeyValuePair()
     }
 
     /**
@@ -120,9 +159,9 @@ object DatabaseManager {
 
         // Otherwise query the database and update cache
         return dbQuery {
-            val origins = UsedOriginEntity.all()
+            val origins = UsedOrigins.selectAll()
                 .orderBy(UsedOrigins.id to SortOrder.ASC)
-                .map { it.usedOrigin }
+                .map { it[UsedOrigins.usedOrigin] }
 
             // Update cache
             allUsedOriginsCache.clear()
@@ -133,10 +172,16 @@ object DatabaseManager {
     }
 
     suspend fun addOriginToHistory(uuidEntity: UUIDOriginEntity, newOrigin: String) = dbQuery {
-        val result = UsedOriginEntity.new {
-            this.parent = uuidEntity
-            this.usedOrigin = newOrigin
-        }.toUsedOrigin()
+        val insertedId = UsedOrigins.insertAndGetId {
+            it[parent] = uuidEntity.id
+            it[usedOrigin] = newOrigin
+        }
+
+        val result = UsedOrigin(
+            id = insertedId.value,
+            uuid = uuidEntity.uuid,
+            usedOrigin = newOrigin
+        )
 
         allUsedOriginsCache.add(newOrigin)
 
@@ -144,8 +189,23 @@ object DatabaseManager {
     }
 
     suspend fun addOriginToHistory(uuid: String, newOrigin: String) = dbQuery {
-        val uuidEntity = UUIDOriginEntity.find { UUIDOrigins.uuid eq uuid }
-            .firstOrNull() ?: throw IllegalArgumentException("Entity with UUID $uuid not found")
-        addOriginToHistory(uuidEntity, newOrigin)
+        val parentId = UUIDOrigins.selectAll()
+            .where { UUIDOrigins.uuid eq uuid }
+            .firstOrNull()
+            ?.get(UUIDOrigins.id)
+            ?: throw IllegalArgumentException("Entity with UUID $uuid not found")
+
+        val insertedId = UsedOrigins.insertAndGetId {
+            it[parent] = parentId
+            it[usedOrigin] = newOrigin
+        }
+
+        allUsedOriginsCache.add(newOrigin)
+
+        UsedOrigin(
+            id = insertedId.value,
+            uuid = uuid,
+            usedOrigin = newOrigin
+        )
     }
 }
