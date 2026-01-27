@@ -17,6 +17,7 @@ import ru.turbovadim.OriginsReforged.Companion.bukkitDispatcher
 import ru.turbovadim.OriginsReforged.Companion.instance
 import ru.turbovadim.OriginsReforged.Companion.mainConfig
 import ru.turbovadim.OriginsReforged.Companion.v2Container
+import ru.turbovadim.v2.event.OriginChangeReason
 import ru.turbovadim.v2.ui.OriginSelectorUI
 
 /**
@@ -87,7 +88,7 @@ class OrbOfOrigin : Listener {
             // Give random origin directly
             val randomOrigin = container.originRegistry.getRandomOrigin(layer)
             if (randomOrigin != null) {
-                container.playerStateManager.setOrigin(player, layer, randomOrigin)
+                container.playerStateManager.setOrigin(player, layer, randomOrigin, OriginChangeReason.ORB)
                 player.sendMessage(
                     Component.text("You are now a ")
                         .color(NamedTextColor.GREEN)

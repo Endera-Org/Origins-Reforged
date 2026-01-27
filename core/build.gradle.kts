@@ -66,10 +66,11 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
 
-    compileOnly("org.jetbrains.exposed:exposed-core:$exposedVersion")
-    compileOnly("org.jetbrains.exposed:exposed-dao:$exposedVersion")
-    compileOnly("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
-    compileOnly("com.zaxxer:HikariCP:6.2.1")
+    implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
+    implementation("com.zaxxer:HikariCP:6.2.1")
+    implementation("com.h2database:h2:2.3.232")
 
 }
 

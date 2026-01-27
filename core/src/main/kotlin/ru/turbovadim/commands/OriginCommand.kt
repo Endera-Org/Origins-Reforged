@@ -10,6 +10,7 @@ import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
 import ru.turbovadim.OriginsReforged.Companion.v2Container
 import ru.turbovadim.OrbOfOrigin
+import ru.turbovadim.v2.event.OriginChangeReason
 
 /**
  * Main command handler for /origin.
@@ -108,7 +109,7 @@ class OriginCommand : CommandExecutor, TabCompleter {
 
         val layer = if (args.size >= 4) args[3] else origin.layer
 
-        container.playerStateManager.setOrigin(target, layer, origin)
+        container.playerStateManager.setOrigin(target, layer, origin, OriginChangeReason.COMMAND)
         sender.sendMessage(Component.text("Set ${target.name}'s origin to ${origin.getNameForDisplay()} in layer '$layer'.", NamedTextColor.GREEN))
         return true
     }

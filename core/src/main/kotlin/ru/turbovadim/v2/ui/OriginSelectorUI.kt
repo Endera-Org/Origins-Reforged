@@ -23,6 +23,7 @@ import ru.turbovadim.OriginsReforged.Companion.bukkitDispatcher
 import ru.turbovadim.ShortcutUtils
 import ru.turbovadim.ui.TextRenderingUtils
 import ru.turbovadim.config.MainConfig
+import ru.turbovadim.v2.event.OriginChangeReason
 import ru.turbovadim.v2.origin.Origin
 import kotlin.math.max
 import kotlin.math.min
@@ -387,7 +388,7 @@ object OriginSelectorUI {
         }
 
         // Set the origin
-        container.playerStateManager.setOrigin(player, layer, origin)
+        container.playerStateManager.setOrigin(player, layer, origin, OriginChangeReason.UI)
 
         player.sendMessage(
             Component.text("You are now a ")
