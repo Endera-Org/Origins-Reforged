@@ -14,7 +14,9 @@
       "Bash(git add:*)",
       "Bash(xargs -I {} sh -c \"git show 2759677:{} 2>/dev/null | grep -l ''WidthGetter'' && echo {}\")",
       "Bash(git checkout:*)",
-      "Bash(git grep:*)"
+      "Bash(git grep:*)",
+      "Bash(.\\\\gradlew.bat :core:compileKotlin:*)",
+      "Bash(./gradlew.bat:*)"
     ]
   }
 }

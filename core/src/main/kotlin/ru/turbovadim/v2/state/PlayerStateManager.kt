@@ -1,5 +1,7 @@
 package ru.turbovadim.v2.state
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -7,6 +9,7 @@ import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
+import ru.turbovadim.database.DatabaseManager
 import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.origin.Origin
 import java.util.UUID
@@ -58,7 +61,7 @@ class PlayerStateManager(
 
     /**
      * Set a player's origin for a layer.
-     * This triggers passive effect reapplication and event bus notification.
+     * This triggers passive effect reapplication, event bus notification, and database persistence.
      */
     fun setOrigin(player: Player, layer: String, origin: Origin) {
         val state = getState(player)
@@ -68,10 +71,16 @@ class PlayerStateManager(
 
         // Notify event bus to apply passive effects
         container.eventBus.onOriginChanged(player, layer, oldOrigin, origin)
+
+        // Persist to database asynchronously
+        CoroutineScope(container.dispatchers.io).launch {
+            DatabaseManager.updateOrigin(player.uniqueId.toString(), layer, origin.name)
+        }
     }
 
     /**
      * Remove a player's origin from a layer.
+     * This triggers event bus notification and database persistence.
      */
     fun removeOrigin(player: Player, layer: String): Origin? {
         val state = getState(player)
@@ -79,6 +88,11 @@ class PlayerStateManager(
 
         if (removed != null) {
             container.eventBus.onOriginChanged(player, layer, removed, null)
+
+            // Persist removal to database asynchronously
+            CoroutineScope(container.dispatchers.io).launch {
+                DatabaseManager.updateOrigin(player.uniqueId.toString(), layer, null)
+            }
         }
 
         return removed
@@ -117,8 +131,42 @@ class PlayerStateManager(
 
     @EventHandler(priority = EventPriority.LOWEST)
     fun onPlayerJoin(event: PlayerJoinEvent) {
+        val player = event.player
         // Pre-create state for the player
-        getState(event.player)
+        val state = getState(player)
+
+        // Load origins from database asynchronously
+        CoroutineScope(container.dispatchers.io).launch {
+            loadOriginsFromDatabase(player, state)
+        }
+    }
+
+    /**
+     * Load player's origins from the database and apply them.
+     */
+    private suspend fun loadOriginsFromDatabase(player: Player, state: PlayerOriginState) {
+        val savedOrigins = DatabaseManager.getSelectedOrigins(player.uniqueId.toString())
+            ?: return // No saved origins for this player
+
+        // Resolve each layer-origin pair and apply
+        for ((layer, originName) in savedOrigins.layerOriginPairs) {
+            if (originName == null) continue
+
+            val origin = container.originRegistry.getByName(originName)
+            if (origin == null) {
+                container.plugin.logger.warning(
+                    "Could not find origin '$originName' for player ${player.name} (layer: $layer)"
+                )
+                continue
+            }
+
+            // Set origin in state without re-saving to database
+            state.setOrigin(layer, origin)
+
+            if (player.isOnline) {
+                container.eventBus.onOriginChanged(player, layer, null, origin)
+            }
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
