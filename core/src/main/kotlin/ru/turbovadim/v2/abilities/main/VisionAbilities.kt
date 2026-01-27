@@ -150,7 +150,6 @@ val slowFalling = ability("slow_falling") {
     // Apply/remove slow falling based on sneaking state
     onTick(interval = 1) { player, _ ->
         if (!player.isSneaking) {
-            // Apply slow falling if not already present
             if (!player.hasPotionEffect(PotionEffectType.SLOW_FALLING)) {
                 player.addPotionEffect(
                     PotionEffect(
@@ -163,7 +162,6 @@ val slowFalling = ability("slow_falling") {
                 )
             }
         } else {
-            // Remove slow falling when sneaking
             if (player.hasPotionEffect(PotionEffectType.SLOW_FALLING)) {
                 player.removePotionEffect(PotionEffectType.SLOW_FALLING)
             }
