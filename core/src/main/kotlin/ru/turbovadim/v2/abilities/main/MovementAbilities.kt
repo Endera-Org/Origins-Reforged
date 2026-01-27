@@ -1,8 +1,10 @@
 package ru.turbovadim.v2.abilities.main
 
+import org.bukkit.attribute.AttributeModifier
 import org.bukkit.block.BlockFace
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.ability.FallDamageMode
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.text
@@ -78,8 +80,12 @@ val tailwind = ability("tailwind") {
     title = text("Tailwind")
     description("You are a little bit quicker on foot than others.")
 
-    // Attribute: GENERIC_MOVEMENT_SPEED, amount: 0.2, operation: MULTIPLY_SCALAR_1
-    option("speed_multiplier", 0.2)
+    attribute(
+        AttributeType.MOVEMENT_SPEED,
+        0.2,
+        AttributeModifier.Operation.MULTIPLY_SCALAR_1,
+        configKey = "speed_multiplier"
+    )
 }
 
 /**

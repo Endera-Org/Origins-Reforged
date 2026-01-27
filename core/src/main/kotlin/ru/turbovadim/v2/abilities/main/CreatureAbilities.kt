@@ -9,6 +9,7 @@ import org.bukkit.entity.Projectile
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.persistence.PersistentDataType
 import ru.turbovadim.OriginsReforged
+import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.ability.FallDamageMode
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.listener
@@ -99,8 +100,7 @@ val nineLives = ability("nine_lives") {
     title = text("Nine Lives")
     description("You have 1 less heart of health than humans.")
 
-    // Attribute: GENERIC_MAX_HEALTH, amount: -2.0, operation: ADD_NUMBER
-    option("health_reduction", -2.0)
+    attribute(AttributeType.MAX_HEALTH, -2.0, configKey = "health_reduction")
 }
 
 /** Key for storing which player hit a creeper */

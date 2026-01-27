@@ -3,6 +3,7 @@ package ru.turbovadim.v2.abilities.main
 import org.bukkit.Material
 import org.bukkit.block.BlockFace
 import org.bukkit.potion.PotionEffectType
+import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.text
 
@@ -149,10 +150,10 @@ val extraReach = ability("extra_reach") {
     title = text("Slender Body")
     description("You can reach blocks and entities further away.")
 
-    // Attribute: PLAYER_BLOCK_INTERACTION_RANGE, amount: 1.5, operation: ADD_NUMBER
-    // Attribute: PLAYER_ENTITY_INTERACTION_RANGE, amount: 1.5, operation: ADD_NUMBER
-    option("extra_block_reach", 1.5)
-    option("extra_entity_reach", 1.5)
+    attributes {
+        add(AttributeType.BLOCK_INTERACTION_RANGE, 1.5, configKey = "extra_block_reach")
+        add(AttributeType.ENTITY_INTERACTION_RANGE, 1.5, configKey = "extra_entity_reach")
+    }
 }
 
 /**

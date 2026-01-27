@@ -2,6 +2,7 @@ package ru.turbovadim.v2.abilities.main
 
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause
 import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
+import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.ability.DamageResult
 import ru.turbovadim.v2.ability.PotionReactionResult
 import ru.turbovadim.v2.dsl.ability
@@ -57,7 +58,7 @@ val fragile = ability("fragile") {
     title = text("Fragile")
     description("You have 3 less hearts of health than humans.")
 
-    option("health_reduction", -6.0)
+    attribute(AttributeType.MAX_HEALTH, -6.0, configKey = "health_reduction")
 }
 
 /**
