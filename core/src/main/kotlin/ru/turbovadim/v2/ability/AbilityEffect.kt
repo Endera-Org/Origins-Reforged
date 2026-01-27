@@ -2,6 +2,8 @@ package ru.turbovadim.v2.ability
 
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleType
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes
+import org.bukkit.attribute.Attribute
+import org.bukkit.attribute.AttributeModifier
 import org.bukkit.block.Block
 import org.bukkit.entity.Entity
 import org.bukkit.entity.LivingEntity
@@ -14,6 +16,7 @@ import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.bukkit.potion.PotionEffect
+import ru.turbovadim.packetsenders.NMSInvoker
 import ru.turbovadim.v2.event.OriginChangedEvent
 import kotlin.reflect.KClass
 
@@ -507,4 +510,110 @@ interface AbilityConfigAccessor {
     fun getFloat(key: String, default: Float): Float
     fun getBoolean(key: String, default: Boolean): Boolean
     fun getString(key: String, default: String): String
+}
+
+// ============================================
+// ATTRIBUTE SYSTEM
+// ============================================
+
+/**
+ * Type-safe attribute references with version-compatible getters.
+ *
+ * Each enum value provides a getter lambda that retrieves the attribute
+ * from NMSInvoker, handling version-specific attributes that may be null.
+ */
+enum class AttributeType(val getter: (NMSInvoker) -> Attribute?) {
+    MAX_HEALTH({ it.maxHealthAttribute }),
+    MOVEMENT_SPEED({ it.movementSpeedAttribute }),
+    ATTACK_DAMAGE({ it.attackDamageAttribute }),
+    ATTACK_SPEED({ it.attackSpeedAttribute }),
+    ARMOR({ it.armorAttribute }),
+    ARMOR_TOUGHNESS({ it.armorToughnessAttribute }),
+    KNOCKBACK_RESISTANCE({ it.knockbackResistanceAttribute }),
+    LUCK({ it.luckAttribute }),
+    FLYING_SPEED({ it.flyingSpeedAttribute }),
+    FOLLOW_RANGE({ it.followRangeAttribute }),
+    ATTACK_KNOCKBACK({ it.attackKnockbackAttribute }),
+    // Version-specific (nullable on older versions)
+    FALL_DAMAGE_MULTIPLIER({ it.fallDamageMultiplierAttribute }),
+    MAX_ABSORPTION({ it.maxAbsorptionAttribute }),
+    SAFE_FALL_DISTANCE({ it.safeFallDistanceAttribute }),
+    SCALE({ it.scaleAttribute }),
+    STEP_HEIGHT({ it.stepHeightAttribute }),
+    GRAVITY({ it.gravityAttribute }),
+    JUMP_STRENGTH({ it.jumpStrengthAttribute }),
+    BURNING_TIME({ it.burningTimeAttribute }),
+    EXPLOSION_KNOCKBACK_RESISTANCE({ it.explosionKnockbackResistanceAttribute }),
+    MOVEMENT_EFFICIENCY({ it.movementEfficiencyAttribute }),
+    OXYGEN_BONUS({ it.oxygenBonusAttribute }),
+    WATER_MOVEMENT_EFFICIENCY({ it.waterMovementEfficiencyAttribute }),
+    BLOCK_INTERACTION_RANGE({ it.blockInteractionRangeAttribute }),
+    ENTITY_INTERACTION_RANGE({ it.entityInteractionRangeAttribute }),
+    BLOCK_BREAK_SPEED({ it.blockBreakSpeedAttribute }),
+    MINING_EFFICIENCY({ it.miningEfficiencyAttribute }),
+    SNEAKING_SPEED({ it.sneakingSpeedAttribute }),
+    SUBMERGED_MINING_SPEED({ it.submergedMiningSpeedAttribute }),
+    SWEEPING_DAMAGE_RATIO({ it.sweepingDamageRatioAttribute });
+
+    /**
+     * Resolve this attribute type to an actual Bukkit Attribute using the NMSInvoker.
+     * Returns null if the attribute is not available on the current server version.
+     */
+    fun resolve(nmsInvoker: NMSInvoker): Attribute? = getter(nmsInvoker)
+}
+
+/**
+ * Definition for a static attribute modifier.
+ *
+ * @param attributeType The type of attribute to modify
+ * @param defaultValue The default modifier value (can be overridden in config)
+ * @param operation How the modifier is applied (ADD_NUMBER, ADD_SCALAR, MULTIPLY_SCALAR_1)
+ * @param configKey Optional config key for runtime value lookup (auto-generated if null)
+ */
+data class AttributeModifierDef(
+    val attributeType: AttributeType,
+    val defaultValue: Double,
+    val operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER,
+    val configKey: String? = null
+)
+
+/**
+ * Definition for a conditional attribute modifier with dynamic value and condition.
+ *
+ * @param attributeType The type of attribute to modify
+ * @param valueProvider Function that computes the modifier value at runtime
+ * @param operation How the modifier is applied
+ * @param condition Function that determines if the modifier should be active
+ */
+data class ConditionalModifierDef(
+    val attributeType: AttributeType,
+    val valueProvider: (Player, AbilityConfigAccessor) -> Double,
+    val operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER,
+    val condition: (Player, AbilityConfigAccessor) -> Boolean
+)
+
+/**
+ * Sealed interface for attribute-related effects.
+ *
+ * AttributeEffect is a new effect category that manages attribute modifiers
+ * defined through the DSL, separate from config-based attributes.
+ */
+sealed interface AttributeEffect : AbilityEffect {
+    /**
+     * Static attribute modifiers applied once when origin changes.
+     * Values are fixed (from defaults or config).
+     */
+    data class Static(val modifiers: List<AttributeModifierDef>) : AttributeEffect
+
+    /**
+     * Conditional attribute modifiers checked periodically.
+     * Values and/or conditions can change based on player state.
+     *
+     * @param intervalTicks How often to check conditions (in ticks)
+     * @param modifiers List of conditional modifier definitions
+     */
+    data class Conditional(
+        val intervalTicks: Int = 5,
+        val modifiers: List<ConditionalModifierDef>
+    ) : AttributeEffect
 }

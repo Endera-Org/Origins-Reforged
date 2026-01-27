@@ -51,11 +51,14 @@ class PassiveEffectProcessor(private val container: OriginsContainer) {
     }
 
     /**
-     * Apply attribute modifiers from config.
+     * Apply attribute modifiers from config and DSL.
      */
     private fun applyAttributes(player: Player, state: PlayerOriginState) {
         // Clear existing origin attributes first
         clearOriginAttributes(player)
+
+        // Also clear DSL-defined static attributes
+        container.attributeAbilityProcessor.clearStaticAttributes(player)
 
         // Get all abilities for the player
         val abilityKeys = state.getAbilityKeys()
@@ -68,6 +71,9 @@ class PassiveEffectProcessor(private val container: OriginsContainer) {
                 applyAttributeModifier(player, abilityKey, attr.attribute, attr.value, attr.operation)
             }
         }
+
+        // Apply DSL-defined static attributes
+        container.attributeAbilityProcessor.applyStaticAttributes(player, state)
     }
 
     /**

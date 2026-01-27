@@ -22,6 +22,10 @@ class AbilityRegistry(private val container: OriginsContainer) {
     private val triggeredAbilities = mutableMapOf<Key, List<AbilityEffect.Triggered>>()
     private val listenerAbilities = mutableMapOf<Key, List<AbilityEffect.Listener>>()
 
+    // Attribute effect indexes
+    private val staticAttributeAbilities = mutableMapOf<Key, AttributeEffect.Static>()
+    private val conditionalAttributeAbilities = mutableMapOf<Key, AttributeEffect.Conditional>()
+
     // Dependency abilities for fast lookup
     private val dependencyAbilities = mutableMapOf<Key, DependencyAbility>()
 
@@ -69,6 +73,8 @@ class AbilityRegistry(private val container: OriginsContainer) {
         reactiveAbilities.remove(key)
         triggeredAbilities.remove(key)
         dependencyAbilities.remove(key)
+        staticAttributeAbilities.remove(key)
+        conditionalAttributeAbilities.remove(key)
 
         // Remove listener effects
         if (listenerAbilities.remove(key) != null) {
@@ -155,6 +161,26 @@ class AbilityRegistry(private val container: OriginsContainer) {
     }
 
     /**
+     * Get all ability keys that have static attribute effects.
+     */
+    fun getStaticAttributeAbilities(): Set<Key> = staticAttributeAbilities.keys.toSet()
+
+    /**
+     * Get all ability keys that have conditional attribute effects.
+     */
+    fun getConditionalAttributeAbilities(): Set<Key> = conditionalAttributeAbilities.keys.toSet()
+
+    /**
+     * Get the static attribute effect for an ability (if it has one).
+     */
+    fun getStaticAttributeEffect(key: Key): AttributeEffect.Static? = staticAttributeAbilities[key]
+
+    /**
+     * Get the conditional attribute effect for an ability (if it has one).
+     */
+    fun getConditionalAttributeEffect(key: Key): AttributeEffect.Conditional? = conditionalAttributeAbilities[key]
+
+    /**
      * Check if an ability key is registered.
      */
     fun contains(key: Key): Boolean = abilities.containsKey(key)
@@ -177,6 +203,8 @@ class AbilityRegistry(private val container: OriginsContainer) {
         listenerAbilities.clear()
         dependencyAbilities.clear()
         multiAbilityMap.clear()
+        staticAttributeAbilities.clear()
+        conditionalAttributeAbilities.clear()
     }
 
     // Private helpers
@@ -205,6 +233,12 @@ class AbilityRegistry(private val container: OriginsContainer) {
                 }
                 is AbilityEffect.Listener -> {
                     // Handled separately in register()
+                }
+                is AttributeEffect.Static -> {
+                    staticAttributeAbilities[ability.key] = effect
+                }
+                is AttributeEffect.Conditional -> {
+                    conditionalAttributeAbilities[ability.key] = effect
                 }
             }
         }

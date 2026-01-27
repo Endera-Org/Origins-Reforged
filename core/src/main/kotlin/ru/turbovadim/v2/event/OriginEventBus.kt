@@ -165,6 +165,9 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
         // Update periodic tasks
         container.periodicAbilityProcessor.updatePlayer(player.uniqueId, state.getAbilityKeys())
 
+        // Update conditional attribute tasks
+        container.attributeAbilityProcessor.updatePlayer(player.uniqueId, state.getAbilityKeys())
+
         // Fire internal post-change listeners
         if (changedListeners.isEmpty()) return
 

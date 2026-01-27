@@ -13,6 +13,7 @@ import ru.turbovadim.v2.origin.OriginLoader
 import ru.turbovadim.v2.origin.OriginRegistry
 import ru.turbovadim.v2.cooldown.CooldownManager
 import ru.turbovadim.v2.processor.ArmorAbilityProcessor
+import ru.turbovadim.v2.processor.AttributeAbilityProcessor
 import ru.turbovadim.v2.processor.FoodAbilityProcessor
 import ru.turbovadim.v2.processor.GenericListenerProcessor
 import ru.turbovadim.v2.processor.PassiveEffectProcessor
@@ -58,6 +59,7 @@ class OriginsContainer private constructor(
     val foodAbilityProcessor: FoodAbilityProcessor by lazy { FoodAbilityProcessor(this) }
     val armorAbilityProcessor: ArmorAbilityProcessor by lazy { ArmorAbilityProcessor(this) }
     val genericListenerProcessor: GenericListenerProcessor by lazy { GenericListenerProcessor(this) }
+    val attributeAbilityProcessor: AttributeAbilityProcessor by lazy { AttributeAbilityProcessor(this) }
 
     // Cooldown management
     val cooldownManager: CooldownManager by lazy { CooldownManager() }
@@ -77,6 +79,7 @@ class OriginsContainer private constructor(
         foodAbilityProcessor.registerEvents()
         armorAbilityProcessor.registerEvents()
         periodicAbilityProcessor.start()
+        attributeAbilityProcessor.start()
         cooldownManager.start()
     }
 
@@ -86,6 +89,7 @@ class OriginsContainer private constructor(
     fun shutdown() {
         cooldownManager.stop()
         periodicAbilityProcessor.stop()
+        attributeAbilityProcessor.stop()
         playerStateManager.clearAll()
     }
 

@@ -3,6 +3,7 @@ package ru.turbovadim.v2.abilities.main
 import org.bukkit.Material
 import org.bukkit.potion.PotionEffect
 import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
+import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.ability.DamageResult
 import ru.turbovadim.v2.dsl.*
 import kotlin.random.Random
@@ -64,14 +65,12 @@ val burningWrath = ability("burning_wrath") {
  * Legacy: NaturalArmor.kt
  *
  * Uses attribute modifier: GENERIC_ARMOR, amount: 8.0, operation: ADD_NUMBER
- * Note: Attribute modifiers are applied by the AbilityAttributeService.
  */
 val naturalArmor = ability("natural_armor") {
     title = text("Sturdy Skin")
     description("Even without wearing armor, your skin provides natural protection.")
 
-    // Attribute: GENERIC_ARMOR, amount: 8.0, operation: ADD_NUMBER
-    option("armor_bonus", 8.0)
+    attribute(AttributeType.ARMOR, 8.0, configKey = "armor_bonus")
 }
 
 /**

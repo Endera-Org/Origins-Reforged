@@ -9,6 +9,7 @@ import org.bukkit.entity.Player
 import org.bukkit.event.Event
 import org.bukkit.event.EventPriority
 import org.bukkit.event.block.Action
+import org.bukkit.attribute.AttributeModifier
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
@@ -128,6 +129,164 @@ class AbilityBuilder(@PublishedApi internal val key: Key) {
     fun stringState(name: String, default: String) = state(name, default)
 
 
+
+    // ============================================
+    // ATTRIBUTE EFFECTS
+    // ============================================
+
+    /**
+     * Add a single static attribute modifier.
+     *
+     * Example:
+     * ```kotlin
+     * attribute(AttributeType.ARMOR, 4.0)
+     * attribute(AttributeType.MOVEMENT_SPEED, -0.1, AttributeModifier.Operation.MULTIPLY_SCALAR_1)
+     * ```
+     *
+     * @param type The attribute to modify
+     * @param value The modifier value
+     * @param operation How the modifier is applied (default: ADD_NUMBER)
+     * @param configKey Optional config key for runtime value lookup
+     */
+    fun attribute(
+        type: AttributeType,
+        value: Double,
+        operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER,
+        configKey: String? = null
+    ) {
+        val actualConfigKey = configKey ?: "attr_${type.name.lowercase()}"
+        option(actualConfigKey, value)
+
+        val existing = effects.filterIsInstance<AttributeEffect.Static>().firstOrNull()
+        if (existing != null) {
+            effects.remove(existing)
+            effects += AttributeEffect.Static(
+                existing.modifiers + AttributeModifierDef(type, value, operation, actualConfigKey)
+            )
+        } else {
+            effects += AttributeEffect.Static(
+                listOf(AttributeModifierDef(type, value, operation, actualConfigKey))
+            )
+        }
+    }
+
+    /**
+     * Add multiple static attribute modifiers using a builder.
+     *
+     * Example:
+     * ```kotlin
+     * attributes {
+     *     add(AttributeType.SCALE, 1.5, AttributeModifier.Operation.MULTIPLY_SCALAR_1)
+     *     add(AttributeType.MAX_HEALTH, 10.0)
+     *     add(AttributeType.MOVEMENT_SPEED, -0.1, AttributeModifier.Operation.MULTIPLY_SCALAR_1)
+     * }
+     * ```
+     */
+    fun attributes(block: AttributeListBuilder.() -> Unit) {
+        val builder = AttributeListBuilder()
+        builder.block()
+
+        val existing = effects.filterIsInstance<AttributeEffect.Static>().firstOrNull()
+        if (existing != null) {
+            effects.remove(existing)
+            effects += AttributeEffect.Static(existing.modifiers + builder.modifiers)
+        } else {
+            effects += AttributeEffect.Static(builder.modifiers)
+        }
+
+        // Register config options for each modifier
+        for (modifier in builder.modifiers) {
+            val configKey = modifier.configKey ?: "attr_${modifier.attributeType.name.lowercase()}"
+            option(configKey, modifier.defaultValue)
+        }
+    }
+
+    /**
+     * Add a conditional attribute modifier with a dynamic value provider.
+     * The modifier is applied when the value is non-zero.
+     *
+     * Example:
+     * ```kotlin
+     * conditionalAttribute(AttributeType.MOVEMENT_SPEED, AttributeModifier.Operation.MULTIPLY_SCALAR_1) { player, _ ->
+     *     if (player.isInWater) 0.5 else -0.2
+     * }
+     * ```
+     *
+     * @param type The attribute to modify
+     * @param operation How the modifier is applied (default: ADD_NUMBER)
+     * @param checkInterval How often to check conditions in ticks (default: 5)
+     * @param valueProvider Function that computes the modifier value
+     */
+    fun conditionalAttribute(
+        type: AttributeType,
+        operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER,
+        checkInterval: Int = 5,
+        valueProvider: (Player, AbilityConfigAccessor) -> Double
+    ) {
+        val modifier = ConditionalModifierDef(
+            attributeType = type,
+            valueProvider = valueProvider,
+            operation = operation,
+            condition = { player, config -> valueProvider(player, config) != 0.0 }
+        )
+
+        val existing = effects.filterIsInstance<AttributeEffect.Conditional>().firstOrNull()
+        if (existing != null) {
+            effects.remove(existing)
+            effects += AttributeEffect.Conditional(
+                intervalTicks = minOf(existing.intervalTicks, checkInterval),
+                modifiers = existing.modifiers + modifier
+            )
+        } else {
+            effects += AttributeEffect.Conditional(checkInterval, listOf(modifier))
+        }
+    }
+
+    /**
+     * Add a conditional attribute modifier with an explicit condition.
+     * The modifier value is fixed; the condition determines when it's active.
+     *
+     * Example:
+     * ```kotlin
+     * conditionalAttributeWhen(
+     *     type = AttributeType.MOVEMENT_SPEED,
+     *     value = -0.15,
+     *     operation = AttributeModifier.Operation.MULTIPLY_SCALAR_1,
+     *     condition = { player, _ -> player.location.block.lightFromSky > 10 }
+     * )
+     * ```
+     *
+     * @param type The attribute to modify
+     * @param value The modifier value when condition is true
+     * @param operation How the modifier is applied (default: ADD_NUMBER)
+     * @param checkInterval How often to check conditions in ticks (default: 5)
+     * @param condition Function that determines if the modifier should be active
+     */
+    fun conditionalAttributeWhen(
+        type: AttributeType,
+        value: Double,
+        operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER,
+        checkInterval: Int = 5,
+        condition: (Player, AbilityConfigAccessor) -> Boolean
+    ) {
+        val modifier = ConditionalModifierDef(
+            attributeType = type,
+            valueProvider = { _, _ -> value },
+            operation = operation,
+            condition = condition
+        )
+
+        val existing = effects.filterIsInstance<AttributeEffect.Conditional>().firstOrNull()
+        if (existing != null) {
+            effects.remove(existing)
+            effects += AttributeEffect.Conditional(
+                intervalTicks = minOf(existing.intervalTicks, checkInterval),
+                modifiers = existing.modifiers + modifier
+            )
+        } else {
+            effects += AttributeEffect.Conditional(checkInterval, listOf(modifier))
+        }
+    }
 
     // Passive effects
 
@@ -430,4 +589,46 @@ inline fun <reified E : Event> AbilityBuilder.listener(
         playerExtractor = playerFrom,
         handler = handler
     )
+}
+
+// ============================================
+// ATTRIBUTE LIST BUILDER
+// ============================================
+
+/**
+ * Builder for defining multiple static attribute modifiers.
+ *
+ * Example:
+ * ```kotlin
+ * attributes {
+ *     add(AttributeType.ARMOR, 4.0)
+ *     add(AttributeType.SCALE, 1.5, AttributeModifier.Operation.MULTIPLY_SCALAR_1)
+ *     add(AttributeType.MAX_HEALTH, 10.0, configKey = "extra_health")
+ * }
+ * ```
+ */
+class AttributeListBuilder {
+    internal val modifiers = mutableListOf<AttributeModifierDef>()
+
+    /**
+     * Add an attribute modifier to the list.
+     *
+     * @param type The attribute to modify
+     * @param value The modifier value
+     * @param operation How the modifier is applied (default: ADD_NUMBER)
+     * @param configKey Optional config key for runtime value lookup (auto-generated if null)
+     */
+    fun add(
+        type: AttributeType,
+        value: Double,
+        operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER,
+        configKey: String? = null
+    ) {
+        modifiers += AttributeModifierDef(
+            type,
+            value,
+            operation,
+            configKey ?: "attr_${type.name.lowercase()}"
+        )
+    }
 }
