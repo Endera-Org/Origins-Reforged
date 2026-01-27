@@ -175,16 +175,16 @@ val aquaAffinity = ability("aqua_affinity") {
  * Webbing - can craft cobwebs from string.
  * Legacy: Webbing.kt / Part of MasterOfWebs.kt
  *
- * The legacy implementation adds a shapeless recipe: 2 string -> 1 cobweb.
- * Note: Recipe registration is handled by the executor on plugin load.
+ * Adds a shapeless recipe: 2 string -> 1 cobweb.
+ * Recipe is registered globally when the ability system initializes.
  */
 val webbing = ability("webbing") {
     title = text("Webbing")
     description("You are able to craft cobweb from string.")
     visible = false
 
-    // Note: The executor registers the crafting recipe on startup
-    // ShapelessRecipe: 2x STRING -> 1x COBWEB
+    // Recipe registration is handled in WebbingRecipe.register()
+    // which is called from V2Initializer
 }
 
 /**

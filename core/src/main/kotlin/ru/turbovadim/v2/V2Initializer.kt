@@ -2,6 +2,7 @@ package ru.turbovadim.v2
 
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.abilities.fantasy.FantasyAbilities
+import ru.turbovadim.v2.abilities.main.WebbingRecipe
 import ru.turbovadim.v2.abilities.main.allAbilities
 import ru.turbovadim.v2.abilities.mobs.MobsAbilities
 import ru.turbovadim.v2.abilities.monsters.MonstersAbilities
@@ -74,6 +75,9 @@ object V2Initializer {
     private fun registerMainAbilities(container: OriginsContainer) {
         val registry = container.abilityRegistry
         allAbilities.forEach { registry.register(it) }
+
+        // Register webbing recipe (allows crafting cobweb from string)
+        WebbingRecipe.register(container.plugin)
     }
 
     private fun registerFantasyAbilities(container: OriginsContainer) {

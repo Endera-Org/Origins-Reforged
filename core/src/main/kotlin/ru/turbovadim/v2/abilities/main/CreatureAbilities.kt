@@ -1,7 +1,14 @@
 package ru.turbovadim.v2.abilities.main
 
 import org.bukkit.Material
+import org.bukkit.NamespacedKey
 import org.bukkit.block.BlockFace
+import org.bukkit.entity.EntityType
+import org.bukkit.entity.Player
+import org.bukkit.entity.Projectile
+import org.bukkit.event.entity.EntityDamageByEntityEvent
+import org.bukkit.persistence.PersistentDataType
+import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.ability.FallDamageMode
 import ru.turbovadim.v2.dsl.*
 
@@ -94,22 +101,49 @@ val nineLives = ability("nine_lives") {
     option("health_reduction", -2.0)
 }
 
+/** Key for storing which player hit a creeper */
+private val hitByPlayerKey by lazy { NamespacedKey(OriginsReforged.instance, "hit-by-player") }
+
 /**
  * Scare Creepers - creepers are afraid and only attack if provoked.
  * Legacy: ScareCreepers.kt
  *
- * The legacy implementation:
- * - Adds a custom mob goal to creepers that makes them flee from players with this ability
- * - Creepers only target players who have attacked them
- * - Uses persistent data to track which player hit the creeper
+ * Implementation:
+ * - Creepers will not target players with this ability unless attacked first
+ * - When a player attacks a creeper, the player's UUID is stored on the creeper
+ * - Uses persistent data so it survives server restarts
  */
 val scareCreepers = ability("scare_creepers") {
     title = text("Catlike Appearance")
     description("Creepers are scared of you and will only explode if you attack them first.")
 
-    // Note: Creeper AI modification is handled via mob goals in the executor
-    // The executor adds a flee goal to creepers when they spawn/load
-    // EntityTargetLivingEntityEvent is cancelled unless the creeper was hit by the player
+    // Cancel creeper targeting unless player attacked the creeper first
+    onEntityTarget { player, attacker, _ ->
+        if (attacker.type != EntityType.CREEPER) return@onEntityTarget true // Allow non-creepers
+
+        // Check if this player hit this creeper
+        val storedUuid = attacker.persistentDataContainer.get(hitByPlayerKey, PersistentDataType.STRING)
+        val wasAttackedByThisPlayer = storedUuid == player.uniqueId.toString()
+
+        // Return true to allow targeting, false to cancel
+        wasAttackedByThisPlayer
+    }
+
+    // Track when player attacks a creeper - store player UUID on the creeper
+    listener<EntityDamageByEntityEvent>(
+        playerFrom = { event ->
+            if (event.entity.type != EntityType.CREEPER) return@listener null
+            when (val damager = event.damager) {
+                is Player -> damager
+                is Projectile -> damager.shooter as? Player
+                else -> null
+            }
+        }
+    ) { player, event, _ ->
+        val creeper = event.entity
+        // Store which player hit this creeper
+        creeper.persistentDataContainer.set(hitByPlayerKey, PersistentDataType.STRING, player.uniqueId.toString())
+    }
 }
 
 /**
