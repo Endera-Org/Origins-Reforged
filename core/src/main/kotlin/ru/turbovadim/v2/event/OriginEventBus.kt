@@ -11,6 +11,7 @@ import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerChangedWorldEvent
 import org.bukkit.event.player.PlayerRespawnEvent
+import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.origin.Origin
 
@@ -96,9 +97,18 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
     // Private helpers
 
     private fun worldRulesDiffer(from: World, to: World): Boolean {
-        // TODO: Check config for world-specific origin rules
-        // For now, assume all worlds have the same rules
-        return false
+        // Check if one world is disabled and the other isn't
+        val disabledWorlds = try {
+            OriginsReforged.mainConfig.worlds.disabledWorlds
+        } catch (e: Exception) {
+            return false // Config not initialized, assume same rules
+        }
+
+        val fromDisabled = from.name in disabledWorlds
+        val toDisabled = to.name in disabledWorlds
+
+        // Rules differ if one is disabled and the other isn't
+        return fromDisabled != toDisabled
     }
 }
 

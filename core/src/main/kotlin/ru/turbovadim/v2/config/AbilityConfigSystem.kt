@@ -64,13 +64,10 @@ class AbilityConfigLoader(private val plugin: JavaPlugin) {
 
     /**
      * Save current configs to file.
-     * Note: EnderaLib's ConfigurationManager doesn't have a save method yet.
-     * Config is saved via loadOrCreateConfig() which handles merging.
      */
     fun save() {
-        // TODO: Implement when EnderaLib adds save support
-        // For now, configs are loaded with defaults merged automatically
-        plugin.logger.info("Config save requested - configs are merged on load")
+        // TODO: Implement config saving
+        plugin.logger.info("Config save requested - not yet implemented")
     }
 
     /**

@@ -1,12 +1,16 @@
 package ru.turbovadim.v2.addon
 
 import net.kyori.adventure.key.Key
+import net.kyori.adventure.resource.ResourcePackInfo as AdventureResourcePackInfo
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
+import ru.turbovadim.PackApplier
+import ru.turbovadim.packetsenders.OriginsReforgedResourcePackInfo
 import ru.turbovadim.v2.ability.Ability
 import ru.turbovadim.v2.ability.AbilityCheckResult
 import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.origin.Origin
+import java.net.URI
 
 /**
  * Base class for Origins addons (v2 API).
@@ -118,11 +122,21 @@ abstract class OriginsAddon : JavaPlugin() {
         }
 
         // Register ability check hook if overridden
-        // TODO: Add hook registration to container
+        val hook = AbilityCheckHook { player, ability -> onAbilityCheck(player, ability) }
+        container.addonAbilityCheckRegistry.register(hook)
 
         // Register resource pack
         resourcePack()?.let { pack ->
-            // TODO: Register with PackApplier
+            try {
+                val adventurePackInfo = AdventureResourcePackInfo.resourcePackInfo()
+                    .uri(URI.create(pack.url))
+                    .hash(pack.hash)
+                    .build()
+                PackApplier.addResourcePackV2(namespace, OriginsReforgedResourcePackInfo(adventurePackInfo))
+                logger.info("Registered resource pack from ${pack.url}")
+            } catch (e: Exception) {
+                logger.warning("Failed to register resource pack: ${e.message}")
+            }
         }
 
         logger.info("Registered ${abilities.size} abilities and ${origins.size} origins")

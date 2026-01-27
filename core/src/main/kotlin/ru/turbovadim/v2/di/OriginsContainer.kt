@@ -6,6 +6,7 @@ import org.bukkit.plugin.java.JavaPlugin
 import org.endera.enderalib.utils.async.BukkitDispatcher
 import ru.turbovadim.packetsenders.NMSInvoker
 import ru.turbovadim.v2.ability.AbilityRegistry
+import ru.turbovadim.v2.addon.AddonAbilityCheckRegistry
 import ru.turbovadim.v2.config.AbilityConfigLoader
 import ru.turbovadim.v2.event.OriginEventBus
 import ru.turbovadim.v2.origin.OriginLoader
@@ -60,6 +61,9 @@ class OriginsContainer private constructor(
 
     // Cooldown management
     val cooldownManager: CooldownManager by lazy { CooldownManager() }
+
+    // Addon support
+    val addonAbilityCheckRegistry: AddonAbilityCheckRegistry by lazy { AddonAbilityCheckRegistry() }
 
     /**
      * Initialize the container. Call this after all abilities and origins are registered.

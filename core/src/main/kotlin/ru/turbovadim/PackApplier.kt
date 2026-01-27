@@ -21,11 +21,19 @@ class PackApplier : Listener {
 
     companion object {
         private val addonPacks: MutableMap<Class<out OriginsAddon>, OriginsReforgedResourcePackInfo> =
-            HashMap<Class<out OriginsAddon>, OriginsReforgedResourcePackInfo>()
+            HashMap()
+
+        // Packs from v2 addons (keyed by namespace)
+        private val v2AddonPacks: MutableMap<String, OriginsReforgedResourcePackInfo> =
+            HashMap()
 
         fun sendPacks(player: Player) {
             CoroutineScope(ioDispatcher).launch {
-                NMSInvoker.sendResourcePacks(player, getPackURL(), addonPacks)
+                // Merge both v1 and v2 addon packs
+                val allPacks = HashMap<Any, OriginsReforgedResourcePackInfo>()
+                allPacks.putAll(addonPacks)
+                allPacks.putAll(v2AddonPacks)
+                NMSInvoker.sendResourcePacks(player, getPackURL(), allPacks)
             }
         }
 
@@ -35,6 +43,15 @@ class PackApplier : Listener {
 
         fun addResourcePack(addon: OriginsAddon, info: OriginsReforgedResourcePackInfo) {
             addonPacks.put(addon.javaClass, info)
+        }
+
+        /**
+         * Add a resource pack from a v2 addon.
+         * @param namespace The addon's namespace (used as key)
+         * @param info The resource pack info wrapper
+         */
+        fun addResourcePackV2(namespace: String, info: OriginsReforgedResourcePackInfo) {
+            v2AddonPacks[namespace] = info
         }
     }
 }
