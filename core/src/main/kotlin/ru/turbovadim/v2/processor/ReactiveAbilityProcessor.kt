@@ -70,11 +70,32 @@ class ReactiveAbilityProcessor(private val container: OriginsContainer) : Listen
     }
 
     /**
-     * Handle outgoing damage from players with damage modifier abilities.
+     * Handle entity damage events involving players.
+     * Processes both outgoing damage (player attacks) and incoming damage with attacker access.
      */
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
-    fun onPlayerAttack(event: EntityDamageByEntityEvent) {
-        val player = event.damager as? Player ?: return
+    fun onEntityDamageByEntity(event: EntityDamageByEntityEvent) {
+        // Get the actual attacker (handle projectiles)
+        val attacker = when (val d = event.damager) {
+            is Projectile -> d.shooter as? LivingEntity
+            is LivingEntity -> d
+            else -> null
+        }
+
+        // Handle outgoing damage (player is the attacker)
+        (attacker as? Player)?.let { player ->
+            processOutgoingDamage(player, event)
+        }
+
+        // Handle incoming damage from entity (player is the victim)
+        (event.entity as? Player)?.let { player ->
+            if (attacker != null) {
+                processIncomingEntityDamage(player, attacker, event)
+            }
+        }
+    }
+
+    private fun processOutgoingDamage(player: Player, event: EntityDamageByEntityEvent) {
         val state = container.playerStateManager.getState(player)
         val abilityKeys = state.getAbilityKeys()
 
@@ -97,30 +118,15 @@ class ReactiveAbilityProcessor(private val container: OriginsContainer) : Listen
                     is DamageResult.Modify -> {
                         event.damage = result.newDamage
                     }
-                    is DamageResult.Allow -> {
-                        // No modification
-                    }
+                    is DamageResult.Allow -> {}
                 }
             }
         }
     }
 
-    /**
-     * Handle incoming damage from entities for players with incomingFromEntity handlers.
-     * Provides attacker access to damage modification handlers.
-     */
-    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
-    fun onPlayerDamagedByEntity(event: EntityDamageByEntityEvent) {
-        val player = event.entity as? Player ?: return
+    private fun processIncomingEntityDamage(player: Player, attacker: LivingEntity, event: EntityDamageByEntityEvent) {
         val state = container.playerStateManager.getState(player)
         val abilityKeys = state.getAbilityKeys()
-
-        // Get the actual attacker (handle projectiles)
-        val attacker = when (val d = event.damager) {
-            is Projectile -> d.shooter as? LivingEntity
-            is LivingEntity -> d
-            else -> null
-        } ?: return
 
         for (abilityKey in abilityKeys) {
             if (!isAbilityActive(player, abilityKey)) continue
@@ -141,9 +147,7 @@ class ReactiveAbilityProcessor(private val container: OriginsContainer) : Listen
                     is DamageResult.Modify -> {
                         event.damage = result.newDamage
                     }
-                    is DamageResult.Allow -> {
-                        // No modification
-                    }
+                    is DamageResult.Allow -> {}
                 }
             }
         }
