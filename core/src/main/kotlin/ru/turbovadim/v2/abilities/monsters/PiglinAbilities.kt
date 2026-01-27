@@ -1,16 +1,9 @@
 package ru.turbovadim.v2.abilities.monsters
 
-import com.destroystokyo.paper.MaterialTags
 import org.bukkit.Material
-import org.bukkit.entity.Piglin
-import org.bukkit.entity.Player
-import org.bukkit.loot.LootContext
-import org.bukkit.loot.LootTables
 import ru.turbovadim.v2.ability.DamageResult
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.text
-import java.util.Locale
-import java.util.Random
 
 /**
  * Piglin-specific abilities for monster origins.

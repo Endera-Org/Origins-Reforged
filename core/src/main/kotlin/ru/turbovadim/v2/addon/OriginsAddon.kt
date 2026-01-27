@@ -1,7 +1,6 @@
 package ru.turbovadim.v2.addon
 
 import net.kyori.adventure.key.Key
-import net.kyori.adventure.resource.ResourcePackInfo as AdventureResourcePackInfo
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
 import ru.turbovadim.PackApplier
@@ -11,6 +10,7 @@ import ru.turbovadim.v2.ability.AbilityCheckResult
 import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.origin.Origin
 import java.net.URI
+import net.kyori.adventure.resource.ResourcePackInfo as AdventureResourcePackInfo
 
 /**
  * Base class for Origins addons.

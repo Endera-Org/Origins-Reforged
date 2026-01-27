@@ -8,8 +8,8 @@ import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
-import ru.turbovadim.OriginsReforged.Companion.v2Container
 import ru.turbovadim.OrbOfOrigin
+import ru.turbovadim.OriginsReforged.Companion.v2Container
 import ru.turbovadim.v2.event.OriginChangeReason
 
 /**

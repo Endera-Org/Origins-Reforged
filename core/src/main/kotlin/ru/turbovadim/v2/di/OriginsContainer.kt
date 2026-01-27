@@ -8,18 +8,11 @@ import ru.turbovadim.packetsenders.NMSInvoker
 import ru.turbovadim.v2.ability.AbilityRegistry
 import ru.turbovadim.v2.addon.AddonAbilityCheckRegistry
 import ru.turbovadim.v2.config.AbilityConfigLoader
+import ru.turbovadim.v2.cooldown.CooldownManager
 import ru.turbovadim.v2.event.OriginEventBus
 import ru.turbovadim.v2.origin.OriginLoader
 import ru.turbovadim.v2.origin.OriginRegistry
-import ru.turbovadim.v2.cooldown.CooldownManager
-import ru.turbovadim.v2.processor.ArmorAbilityProcessor
-import ru.turbovadim.v2.processor.AttributeAbilityProcessor
-import ru.turbovadim.v2.processor.FoodAbilityProcessor
-import ru.turbovadim.v2.processor.GenericListenerProcessor
-import ru.turbovadim.v2.processor.PassiveEffectProcessor
-import ru.turbovadim.v2.processor.PeriodicAbilityProcessor
-import ru.turbovadim.v2.processor.ReactiveAbilityProcessor
-import ru.turbovadim.v2.processor.TriggeredAbilityProcessor
+import ru.turbovadim.v2.processor.*
 import ru.turbovadim.v2.state.PlayerStateManager
 
 /**

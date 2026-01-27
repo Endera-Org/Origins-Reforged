@@ -3,13 +3,9 @@ package ru.turbovadim.v2.abilities.monsters
 import com.destroystokyo.paper.MaterialTags
 import org.bukkit.Bukkit
 import org.bukkit.block.BlockFace
-import org.bukkit.enchantments.Enchantment
-import org.bukkit.entity.LivingEntity
-import org.bukkit.entity.Player
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause
 import ru.turbovadim.v2.ability.DamageResult
 import ru.turbovadim.v2.dsl.ability
-import ru.turbovadim.v2.dsl.damageMultiplier
 import ru.turbovadim.v2.dsl.text
 
 /**

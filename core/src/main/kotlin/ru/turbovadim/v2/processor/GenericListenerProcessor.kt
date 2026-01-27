@@ -4,10 +4,8 @@ import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.Event
-import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import ru.turbovadim.v2.ability.Ability
-import ru.turbovadim.v2.ability.AbilityConfigAccessor
 import ru.turbovadim.v2.ability.AbilityEffect
 import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.event.OriginChangedEvent

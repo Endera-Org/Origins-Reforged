@@ -9,7 +9,6 @@ import net.kyori.adventure.text.format.TextColor
 import org.bukkit.Bukkit
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
-import org.bukkit.plugin.java.JavaPlugin
 import org.endera.enderalib.utils.async.ioDispatcher
 import org.intellij.lang.annotations.Subst
 import ru.turbovadim.OriginsReforged
@@ -17,7 +16,7 @@ import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.ShortcutUtils.isBedrockPlayer
 import java.awt.image.BufferedImage
 import java.io.File
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import javax.imageio.ImageIO
 import kotlin.math.floor

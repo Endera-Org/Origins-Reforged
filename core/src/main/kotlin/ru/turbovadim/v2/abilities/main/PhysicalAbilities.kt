@@ -3,7 +3,8 @@ package ru.turbovadim.v2.abilities.main
 import org.bukkit.Material
 import org.bukkit.block.BlockFace
 import org.bukkit.potion.PotionEffectType
-import ru.turbovadim.v2.dsl.*
+import ru.turbovadim.v2.dsl.ability
+import ru.turbovadim.v2.dsl.text
 
 // ============================================
 // PHYSICAL ABILITIES (Mining, Reach, etc.)

@@ -1,26 +1,18 @@
 package ru.turbovadim.v2.abilities.mobs
 
 import com.destroystokyo.paper.MaterialTags
-import org.bukkit.Bukkit
-import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.Tag
 import org.bukkit.block.BlockFace
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Item
-import org.bukkit.entity.LivingEntity
-import org.bukkit.entity.Player
 import org.bukkit.entity.Slime
-import org.bukkit.event.entity.EntityDamageEvent
-import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
-import ru.turbovadim.v2.ability.DamageResult
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.text
 import kotlin.math.max
-import kotlin.math.min
 
 /**
  * Miscellaneous mob abilities that don't fit into other categories.

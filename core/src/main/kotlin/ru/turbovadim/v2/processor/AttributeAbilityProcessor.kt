@@ -13,7 +13,7 @@ import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.ability.ConditionalModifierDef
 import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.state.PlayerOriginState
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 

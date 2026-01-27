@@ -6,7 +6,9 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.v2.ability.FallDamageMode
-import ru.turbovadim.v2.dsl.*
+import ru.turbovadim.v2.dsl.ability
+import ru.turbovadim.v2.dsl.immuneTo
+import ru.turbovadim.v2.dsl.text
 
 // ============================================
 // MISCELLANEOUS ABILITIES

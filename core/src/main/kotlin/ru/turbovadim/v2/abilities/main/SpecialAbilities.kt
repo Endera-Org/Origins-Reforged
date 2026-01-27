@@ -10,7 +10,9 @@ import org.bukkit.event.player.PlayerToggleFlightEvent
 import org.bukkit.util.Vector
 import ru.turbovadim.v2.ability.InvisibilityCondition
 import ru.turbovadim.v2.di.OriginsContainer
-import ru.turbovadim.v2.dsl.*
+import ru.turbovadim.v2.dsl.ability
+import ru.turbovadim.v2.dsl.listener
+import ru.turbovadim.v2.dsl.text
 import ru.turbovadim.v2.event.OriginChangedEvent
 
 // ============================================

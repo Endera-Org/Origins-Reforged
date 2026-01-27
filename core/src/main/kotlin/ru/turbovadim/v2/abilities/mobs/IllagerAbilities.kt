@@ -1,15 +1,12 @@
 package ru.turbovadim.v2.abilities.mobs
 
-import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.block.BlockFace
 import org.bukkit.entity.EntityType
-import org.bukkit.entity.Player
-import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.text
-import java.util.Random
+import java.util.*
 
 /**
  * Illager-related abilities for the Mobs module.

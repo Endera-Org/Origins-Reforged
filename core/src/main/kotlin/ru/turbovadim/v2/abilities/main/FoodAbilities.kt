@@ -4,7 +4,8 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
-import ru.turbovadim.v2.dsl.*
+import ru.turbovadim.v2.dsl.ability
+import ru.turbovadim.v2.dsl.text
 
 // ============================================
 // FOOD RESTRICTION ABILITIES

@@ -16,7 +16,7 @@ import org.bukkit.entity.Player
 import org.bukkit.event.Listener
 import ru.turbovadim.v2.ability.AbilityEffect
 import ru.turbovadim.v2.di.OriginsContainer
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 

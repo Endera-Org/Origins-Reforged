@@ -6,7 +6,6 @@ import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.Player
-import ru.turbovadim.v2.ability.AbilityEffect
 import ru.turbovadim.v2.ability.FallDamageMode
 import ru.turbovadim.v2.ability.InvisibilityCondition
 import ru.turbovadim.v2.di.OriginsContainer

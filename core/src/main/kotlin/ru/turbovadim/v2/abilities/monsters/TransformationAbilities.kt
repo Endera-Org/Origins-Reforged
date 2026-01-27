@@ -1,15 +1,9 @@
 package ru.turbovadim.v2.abilities.monsters
 
 import org.bukkit.Bukkit
-import org.bukkit.Material
-import org.bukkit.Sound
-import org.bukkit.SoundCategory
-import org.bukkit.entity.Player
 import org.bukkit.event.entity.EntityDamageEvent
-import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.v2.ability.DamageResult
 import ru.turbovadim.v2.dsl.ability
-import ru.turbovadim.v2.dsl.immuneTo
 import ru.turbovadim.v2.dsl.text
 
 /**

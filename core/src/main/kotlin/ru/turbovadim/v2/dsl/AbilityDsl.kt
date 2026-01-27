@@ -1,15 +1,14 @@
 package ru.turbovadim.v2.dsl
 
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleType
-import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
+import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.Player
 import org.bukkit.event.Event
 import org.bukkit.event.EventPriority
 import org.bukkit.event.block.Action
-import org.bukkit.attribute.AttributeModifier
 import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType

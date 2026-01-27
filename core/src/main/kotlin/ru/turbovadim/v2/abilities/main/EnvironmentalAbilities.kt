@@ -16,7 +16,9 @@ import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.v2.ability.Ability
 import ru.turbovadim.v2.ability.DamageResult
 import ru.turbovadim.v2.ability.PotionReactionResult
-import ru.turbovadim.v2.dsl.*
+import ru.turbovadim.v2.dsl.ability
+import ru.turbovadim.v2.dsl.listener
+import ru.turbovadim.v2.dsl.text
 
 // ============================================
 // ENVIRONMENTAL ABILITIES

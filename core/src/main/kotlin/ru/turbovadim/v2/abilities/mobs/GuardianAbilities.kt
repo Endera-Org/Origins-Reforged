@@ -8,7 +8,7 @@ import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.v2.ability.DamageResult
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.text
-import java.util.Random
+import java.util.*
 
 /**
  * Guardian-related abilities for the Mobs module.

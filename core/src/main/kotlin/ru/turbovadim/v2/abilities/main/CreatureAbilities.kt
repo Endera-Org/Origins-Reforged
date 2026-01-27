@@ -10,7 +10,9 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.persistence.PersistentDataType
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.ability.FallDamageMode
-import ru.turbovadim.v2.dsl.*
+import ru.turbovadim.v2.dsl.ability
+import ru.turbovadim.v2.dsl.listener
+import ru.turbovadim.v2.dsl.text
 
 // ============================================
 // CREATURE-RELATED ABILITIES

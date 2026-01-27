@@ -17,12 +17,12 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import ru.turbovadim.OrbOfOrigin
 import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
-import ru.turbovadim.OriginsReforged.Companion.v2Container
-import ru.turbovadim.OriginsReforged.Companion.mainConfig
 import ru.turbovadim.OriginsReforged.Companion.bukkitDispatcher
+import ru.turbovadim.OriginsReforged.Companion.mainConfig
+import ru.turbovadim.OriginsReforged.Companion.v2Container
 import ru.turbovadim.ShortcutUtils
-import ru.turbovadim.ui.TextRenderingUtils
 import ru.turbovadim.config.MainConfig
+import ru.turbovadim.ui.TextRenderingUtils
 import ru.turbovadim.v2.event.OriginChangeReason
 import ru.turbovadim.v2.origin.Origin
 import kotlin.math.max

@@ -10,7 +10,6 @@ import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerItemConsumeEvent
 import org.bukkit.inventory.meta.PotionMeta
 import org.bukkit.potion.PotionEffect
-import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.v2.ability.AbilityEffect
 import ru.turbovadim.v2.ability.PotionReactionResult
 import ru.turbovadim.v2.di.OriginsContainer

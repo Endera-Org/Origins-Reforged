@@ -5,7 +5,7 @@ import org.bukkit.attribute.Attribute
 import ru.turbovadim.v2.ability.StateKey
 import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.origin.Origin
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 /**

@@ -4,7 +4,9 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause
 import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.v2.ability.DamageResult
 import ru.turbovadim.v2.ability.PotionReactionResult
-import ru.turbovadim.v2.dsl.*
+import ru.turbovadim.v2.dsl.ability
+import ru.turbovadim.v2.dsl.immuneTo
+import ru.turbovadim.v2.dsl.text
 
 // ============================================
 // DAMAGE IMMUNITIES

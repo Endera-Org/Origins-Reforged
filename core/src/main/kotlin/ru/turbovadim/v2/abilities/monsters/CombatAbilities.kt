@@ -1,14 +1,8 @@
 package ru.turbovadim.v2.abilities.monsters
 
-import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.Particle
-import org.bukkit.entity.Arrow
 import org.bukkit.entity.LivingEntity
-import org.bukkit.entity.Player
-import org.bukkit.entity.Villager
-import org.bukkit.potion.PotionEffect
-import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.v2.ability.DamageResult
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.text

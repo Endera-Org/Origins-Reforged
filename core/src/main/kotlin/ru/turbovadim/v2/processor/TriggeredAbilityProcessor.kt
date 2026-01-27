@@ -19,9 +19,9 @@ import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerToggleSneakEvent
 import org.bukkit.inventory.EquipmentSlot
 import ru.turbovadim.v2.ability.AbilityConfigAccessor
+import ru.turbovadim.v2.ability.AbilityEffect
 import ru.turbovadim.v2.ability.KeyBindType
 import ru.turbovadim.v2.di.OriginsContainer
-import ru.turbovadim.v2.ability.AbilityEffect
 
 /**
  * Processor for triggered ability effects.

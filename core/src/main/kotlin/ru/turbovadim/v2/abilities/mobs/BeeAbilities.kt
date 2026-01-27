@@ -1,7 +1,6 @@
 package ru.turbovadim.v2.abilities.mobs
 
 import org.bukkit.Bukkit
-import org.bukkit.entity.EntityType
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.potion.PotionEffect

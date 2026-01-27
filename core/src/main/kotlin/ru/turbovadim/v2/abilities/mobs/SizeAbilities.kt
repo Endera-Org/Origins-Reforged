@@ -1,7 +1,5 @@
 package ru.turbovadim.v2.abilities.mobs
 
-import org.bukkit.attribute.Attribute
-import org.bukkit.attribute.AttributeModifier
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.text
 
