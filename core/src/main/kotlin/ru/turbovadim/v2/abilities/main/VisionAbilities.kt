@@ -22,36 +22,21 @@ val catVision = ability("cat_vision") {
     title = text("Nocturnal")
     description("You can slightly see in the dark when not in water.")
 
-    option("effect_duration", -1) // -1 means infinite in Paper
-
-    // Night vision when NOT underwater
-    // The executor should handle effect storing/restoring logic
     onTick(interval = 1) { player, _ ->
         if (!player.isUnderWater) {
-            // Apply infinite night vision
-            // Legacy uses infiniteDuration() which returns -1 for infinite
-            val currentEffect = player.getPotionEffect(PotionEffectType.NIGHT_VISION)
-            val ambient = currentEffect?.isAmbient == true
-            val showParticles = currentEffect?.hasParticles() == true
-
-            // Only apply if not already having infinite night vision
-            if (currentEffect == null || currentEffect.duration != -1) {
-                player.addPotionEffect(
-                    PotionEffect(
-                        PotionEffectType.NIGHT_VISION,
-                        -1, // Infinite duration
-                        0,
-                        ambient,
-                        showParticles
-                    )
+            player.addPotionEffect(
+                PotionEffect(
+                    PotionEffectType.NIGHT_VISION,
+                    80,
+                    0,
+                    false,
+                    false
                 )
-            }
+            )
         } else {
-            // When underwater, remove infinite night vision
-            player.getPotionEffect(PotionEffectType.NIGHT_VISION)?.let { effect ->
-                if (effect.duration == -1) {
-                    player.removePotionEffect(PotionEffectType.NIGHT_VISION)
-                }
+            // When underwater, remove night vision from this ability
+            if (player.hasPotionEffect(PotionEffectType.NIGHT_VISION)) {
+                player.removePotionEffect(PotionEffectType.NIGHT_VISION)
             }
         }
         true
@@ -72,33 +57,24 @@ val waterVision = ability("water_vision") {
     title = text("Wet Eyes")
     description("Your vision underwater is perfect.")
 
-    option("effect_duration", -1)
-
     // Night vision ONLY when underwater
+    // Uses finite duration (400 ticks / 20 sec) that gets refreshed each tick
+    // This ensures the effect naturally expires when the ability is removed (e.g., origin change)
     onTick(interval = 1) { player, _ ->
         if (player.isUnderWater) {
-            val currentEffect = player.getPotionEffect(PotionEffectType.NIGHT_VISION)
-            val ambient = currentEffect?.isAmbient == true
-            val showParticles = currentEffect?.hasParticles() == true
-
-            // Apply infinite night vision when underwater
-            if (currentEffect == null || currentEffect.duration != -1) {
-                player.addPotionEffect(
-                    PotionEffect(
-                        PotionEffectType.NIGHT_VISION,
-                        -1,
-                        0,
-                        ambient,
-                        showParticles
-                    )
+            player.addPotionEffect(
+                PotionEffect(
+                    PotionEffectType.NIGHT_VISION,
+                    400, // Long enough to avoid flickering, short enough to expire on ability removal
+                    0,
+                    false,
+                    false
                 )
-            }
+            )
         } else {
-            // Remove infinite night vision when not underwater
-            player.getPotionEffect(PotionEffectType.NIGHT_VISION)?.let { effect ->
-                if (effect.duration == -1) {
-                    player.removePotionEffect(PotionEffectType.NIGHT_VISION)
-                }
+            // Remove night vision when not underwater
+            if (player.hasPotionEffect(PotionEffectType.NIGHT_VISION)) {
+                player.removePotionEffect(PotionEffectType.NIGHT_VISION)
             }
         }
         true
@@ -145,22 +121,20 @@ val slowFalling = ability("slow_falling") {
     title = text("Featherweight")
     description("You fall as gently to the ground as a feather would, unless you sneak.")
 
-    option("effect_duration", -1)
-
     // Apply/remove slow falling based on sneaking state
+    // Uses finite duration (40 ticks) that gets refreshed each tick
+    // This ensures the effect naturally expires when the ability is removed (e.g., origin change)
     onTick(interval = 1) { player, _ ->
         if (!player.isSneaking) {
-            if (!player.hasPotionEffect(PotionEffectType.SLOW_FALLING)) {
-                player.addPotionEffect(
-                    PotionEffect(
-                        PotionEffectType.SLOW_FALLING,
-                        -1, // Infinite duration
-                        0,
-                        false,
-                        false
-                    )
+            player.addPotionEffect(
+                PotionEffect(
+                    PotionEffectType.SLOW_FALLING,
+                    40, // Short duration, refreshed every tick
+                    0,
+                    false,
+                    false
                 )
-            }
+            )
         } else {
             if (player.hasPotionEffect(PotionEffectType.SLOW_FALLING)) {
                 player.removePotionEffect(PotionEffectType.SLOW_FALLING)

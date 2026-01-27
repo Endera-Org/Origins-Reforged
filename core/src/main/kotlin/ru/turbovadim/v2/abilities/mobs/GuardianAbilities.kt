@@ -219,13 +219,11 @@ val surfaceWeakness = ability("surface_weakness", "moborigins") {
 
     onTick(interval = 20) { player, _ ->
         if (!player.isInWater) {
-            // Apply infinite duration weakness (-1 = infinite in Bukkit)
-            player.addPotionEffect(PotionEffect(PotionEffectType.WEAKNESS, -1, 0, true, true))
+            player.addPotionEffect(PotionEffect(PotionEffectType.WEAKNESS, 100, 0, true, true))
         } else {
-            // Remove the weakness effect if it's the infinite one we applied
-            player.getPotionEffect(PotionEffectType.WEAKNESS)
-                ?.takeIf { it.duration == -1 }
-                ?.let { player.removePotionEffect(PotionEffectType.WEAKNESS) }
+            if (player.hasPotionEffect(PotionEffectType.WEAKNESS)) {
+                player.removePotionEffect(PotionEffectType.WEAKNESS)
+            }
         }
         true
     }

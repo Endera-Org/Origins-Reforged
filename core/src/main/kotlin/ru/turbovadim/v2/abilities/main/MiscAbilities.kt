@@ -128,6 +128,8 @@ val phasing = ability("phasing") {
     )
 
     // Apply blindness when inside solid blocks, enable phasing when sneaking on ground
+    // Uses finite duration (40 ticks) that gets refreshed each tick
+    // This ensures the effect naturally expires when the ability is removed (e.g., origin change)
     onTick(interval = 1) { player, _ ->
         // Note: Full phasing requires NMS calls (setNoPhysics, sendPhasingGamemodeUpdate)
         // The executor handles the complex state management
@@ -135,11 +137,9 @@ val phasing = ability("phasing") {
         // Apply blindness if eye location is in a solid block
         val eyeBlock = player.eyeLocation.block
         if (eyeBlock.type.isCollidable) {
-            if (!player.hasPotionEffect(PotionEffectType.BLINDNESS)) {
-                player.addPotionEffect(
-                    PotionEffect(PotionEffectType.BLINDNESS, -1, 0, false, false)
-                )
-            }
+            player.addPotionEffect(
+                PotionEffect(PotionEffectType.BLINDNESS, 40, 0, false, false)
+            )
         } else {
             if (player.hasPotionEffect(PotionEffectType.BLINDNESS)) {
                 player.removePotionEffect(PotionEffectType.BLINDNESS)

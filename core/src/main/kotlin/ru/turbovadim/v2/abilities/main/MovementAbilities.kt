@@ -97,34 +97,24 @@ val swimSpeed = ability("swim_speed") {
     title = text("Fins")
     description("Your underwater speed is increased.")
 
-    option("check_interval", 6)
-    option("effect_duration", -1)
-
     // Apply dolphin's grace when underwater
+    // Uses finite duration (100 ticks) that gets refreshed every 6 ticks
+    // This ensures the effect naturally expires when the ability is removed (e.g., origin change)
     onTick(interval = 6) { player, _ ->
         if (player.isUnderWater) {
-            val currentEffect = player.getPotionEffect(PotionEffectType.DOLPHINS_GRACE)
-            val ambient = currentEffect?.isAmbient == true
-            val showParticles = currentEffect?.hasParticles() == true
-
-            // Apply infinite dolphin's grace if not already infinite
-            if (currentEffect == null || currentEffect.duration != -1) {
-                player.addPotionEffect(
-                    PotionEffect(
-                        PotionEffectType.DOLPHINS_GRACE,
-                        -1, // Infinite duration
-                        0,
-                        ambient,
-                        showParticles
-                    )
+            player.addPotionEffect(
+                PotionEffect(
+                    PotionEffectType.DOLPHINS_GRACE,
+                    100, // Refreshed every 6 ticks, expires on ability removal
+                    0,
+                    false,
+                    false
                 )
-            }
+            )
         } else {
-            // Remove infinite dolphin's grace when not underwater
-            player.getPotionEffect(PotionEffectType.DOLPHINS_GRACE)?.let { effect ->
-                if (effect.duration == -1) {
-                    player.removePotionEffect(PotionEffectType.DOLPHINS_GRACE)
-                }
+            // Remove dolphin's grace when not underwater
+            if (player.hasPotionEffect(PotionEffectType.DOLPHINS_GRACE)) {
+                player.removePotionEffect(PotionEffectType.DOLPHINS_GRACE)
             }
         }
         player.isUnderWater
