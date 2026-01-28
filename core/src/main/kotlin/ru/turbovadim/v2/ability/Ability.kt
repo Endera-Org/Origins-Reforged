@@ -144,11 +144,29 @@ class DependencyAbilityImpl(
     }
 
     override fun enable(player: Player): Boolean {
-        return enabledPlayers.add(player.uniqueId)
+        val changed = enabledPlayers.add(player.uniqueId)
+        if (changed) {
+            reapplyDependentPassiveEffects(player)
+        }
+        return changed
     }
 
     override fun disable(player: Player): Boolean {
-        return enabledPlayers.remove(player.uniqueId)
+        val changed = enabledPlayers.remove(player.uniqueId)
+        if (changed) {
+            reapplyDependentPassiveEffects(player)
+        }
+        return changed
+    }
+
+    /**
+     * Re-apply passive effects for abilities that depend on this one.
+     * Called when this dependency ability's state changes.
+     */
+    private fun reapplyDependentPassiveEffects(player: Player) {
+        val container = ru.turbovadim.v2.di.OriginsContainer.getOrNull() ?: return
+        val state = container.playerStateManager.getState(player) ?: return
+        container.passiveEffectProcessor.applyPassiveEffects(player, state)
     }
 }
 

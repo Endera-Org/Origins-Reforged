@@ -172,7 +172,10 @@ class PassiveEffectProcessor(private val container: OriginsContainer) {
         val flightAbilityKeys = container.abilityRegistry.getFlightAbilities()
         val playerAbilities = state.getAbilityKeys()
 
-        val activeFlightAbilities = flightAbilityKeys.intersect(playerAbilities)
+        // Filter to abilities the player has AND whose dependencies are satisfied
+        val activeFlightAbilities = flightAbilityKeys
+            .intersect(playerAbilities)
+            .filter { isDependencySatisfied(player, it) }
 
         if (activeFlightAbilities.isEmpty()) {
             // No flight abilities - reset to game mode defaults
@@ -229,7 +232,10 @@ class PassiveEffectProcessor(private val container: OriginsContainer) {
         val invisAbilityKeys = container.abilityRegistry.getInvisibilityAbilities()
         val playerAbilities = state.getAbilityKeys()
 
-        val activeInvisAbilities = invisAbilityKeys.intersect(playerAbilities)
+        // Filter to abilities the player has AND whose dependencies are satisfied
+        val activeInvisAbilities = invisAbilityKeys
+            .intersect(playerAbilities)
+            .filter { isDependencySatisfied(player, it) }
 
         if (activeInvisAbilities.isEmpty()) {
             player.isInvisible = false
@@ -255,5 +261,21 @@ class PassiveEffectProcessor(private val container: OriginsContainer) {
         }
 
         player.isInvisible = isInvisible
+    }
+
+    /**
+     * Check if an ability's dependency is satisfied.
+     * Returns true if the ability has no dependency, or if the dependency ability is enabled/disabled as required.
+     */
+    private fun isDependencySatisfied(player: Player, abilityKey: Key): Boolean {
+        val ability = container.abilityRegistry.get(abilityKey) ?: return true
+        val depKey = ability.dependencyKey ?: return true
+
+        val depAbility = container.abilityRegistry.getDependencyAbility(depKey) ?: return true
+        val isDepEnabled = depAbility.isEnabled(player)
+
+        // If dependencyInverse is true, the dependency must be DISABLED
+        // If dependencyInverse is false, the dependency must be ENABLED
+        return if (ability.dependencyInverse) !isDepEnabled else isDepEnabled
     }
 }
