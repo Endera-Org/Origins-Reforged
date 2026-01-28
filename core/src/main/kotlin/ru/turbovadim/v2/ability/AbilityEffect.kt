@@ -109,6 +109,18 @@ sealed interface AbilityEffect {
             override val intervalTicks: Int,
             val spawner: ParticleSpawner
         ) : Periodic
+
+        /**
+         * Runs at the end of server ticks (using ServerTickEndEvent).
+         * This ensures the handler runs AFTER player movement is processed,
+         * which is critical for abilities like phasing that modify collision.
+         *
+         * @param intervalTicks How often to run (1 = every tick end, 20 = every second)
+         */
+        data class TickEnd(
+            override val intervalTicks: Int,
+            val handler: EnvironmentCheckHandler
+        ) : Periodic
     }
 
     // ============================================
@@ -285,6 +297,29 @@ sealed interface AbilityEffect {
         data class OriginChanged(
             val handler: (Player, OriginChangedEvent, AbilityConfigAccessor) -> Unit
         ) : Listener
+    }
+
+    // ============================================
+    // LIFECYCLE EFFECTS - Dependency state changes
+    // ============================================
+
+    sealed interface Lifecycle : AbilityEffect {
+
+        /**
+         * Called when the dependency ability is enabled.
+         * Only triggers for abilities with `dependsOn` set.
+         */
+        data class OnDependencyEnabled(
+            val handler: LifecycleHandler
+        ) : Lifecycle
+
+        /**
+         * Called when the dependency ability is disabled.
+         * Only triggers for abilities with `dependsOn` set.
+         */
+        data class OnDependencyDisabled(
+            val handler: LifecycleHandler
+        ) : Lifecycle
     }
 }
 
@@ -488,6 +523,13 @@ fun interface EntityTargetHandler {
  */
 fun interface InteractHandler {
     fun onInteract(player: Player, event: PlayerInteractEvent, config: AbilityConfigAccessor): Boolean
+}
+
+/**
+ * Handler for lifecycle events (dependency enabled/disabled).
+ */
+fun interface LifecycleHandler {
+    fun onStateChange(player: Player, config: AbilityConfigAccessor)
 }
 
 /**

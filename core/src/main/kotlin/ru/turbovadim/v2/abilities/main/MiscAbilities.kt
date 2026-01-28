@@ -2,15 +2,19 @@ package ru.turbovadim.v2.abilities.main
 
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes
 import net.kyori.adventure.key.Key
+import com.destroystokyo.paper.event.server.ServerTickEndEvent
+import org.bukkit.Bukkit
 import org.bukkit.GameMode
 import org.bukkit.Material
+import org.bukkit.block.BlockFace
 import org.bukkit.entity.Player
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause
 import org.bukkit.event.entity.EntityExhaustionEvent
+import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import ru.turbovadim.OriginsReforged
 import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
-import ru.turbovadim.v2.abilities.main.isPhantomized
 import ru.turbovadim.v2.ability.FallDamageMode
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.immuneTo
@@ -109,12 +113,54 @@ val enderParticles = ability("ender_particles") {
 }
 
 /** Blocks that cannot be phased through */
-private val unphasableBlocks = setOf(Material.OBSIDIAN, Material.BEDROCK, Material.CRYING_OBSIDIAN)
+private val unphasableBlocks = listOf(Material.OBSIDIAN, Material.BEDROCK, Material.CRYING_OBSIDIAN)
 
 /** Tracks which players are currently phasing */
-private val phasingPlayers = mutableSetOf<UUID>()
+private val phasingPlayers = mutableMapOf<UUID, Boolean>()
 
 fun isPhantomized(player: Player): Boolean = phantomize.isEnabled(player)
+
+/**
+ * Check if entity is inside a solid block (excluding unphasable blocks).
+ * Uses multiple offset checks like the legacy implementation.
+ */
+private fun isInSolidBlock(player: Player): Boolean {
+    val location = player.location
+    val offsets = listOf(0.4, -0.4)
+    val checkLocations = listOf(
+        location.clone().add(0.0, 1.0, 0.0), // Eye level
+        location.clone() // Feet level
+    )
+
+    return checkLocations.any { base ->
+        offsets.any { dx ->
+            offsets.any { dz ->
+                val block = base.clone().add(dx, 0.0, dz).block
+                block.type.isSolid && block.type !in unphasableBlocks
+            }
+        }
+    }
+}
+
+/**
+ * Check if a location contains an unphasable block.
+ */
+private fun isInUnphasableBlock(player: Player): Boolean {
+    val location = player.location
+    val offsets = listOf(0.4, -0.4)
+    val checkLocations = listOf(
+        location.clone().add(0.0, 1.0, 0.0),
+        location.clone()
+    )
+
+    return checkLocations.any { base ->
+        offsets.any { dx ->
+            offsets.any { dz ->
+                base.clone().add(dx, 0.0, dz).block.type in unphasableBlocks
+            }
+        }
+    }
+}
 
 /**
  * Phasing - can walk through solid blocks while phantomized.
@@ -122,6 +168,7 @@ fun isPhantomized(player: Player): Boolean = phantomize.isEnabled(player)
  *
  * Implementation:
  * - Depends on phantomize ability
+ * - Activates when sneaking on ground OR when inside a solid block
  * - Sends SPECTATOR gamemode packet to allow no-clip
  * - Enables flight while phasing (speed 0.1f, no fall damage)
  * - Cancels suffocation damage
@@ -136,76 +183,112 @@ val phasing = ability("phasing") {
 
     option("flight_speed", 0.1f)
 
-    flight {
-        speed = 0.1f
-        fallDamage = FallDamageMode.NONE
-    }
+    // NO unconditional flight - flight is granted manually only when actively phasing
 
-    // Cancel suffocation damage
+    // Cancel suffocation damage (only when phantomized due to dependsOn)
     modifyDamage(
         incoming = immuneTo(DamageCause.SUFFOCATION)
     )
 
-    // Handle phasing state and blindness
-    onTick(interval = 1) { player, _ ->
+    // Handle phasing state and blindness (runs at end of each tick, after movement processing)
+    onTickEnd { player, config ->
         val uuid = player.uniqueId
-        val eyeBlock = player.eyeLocation.block
-        val feetBlock = player.location.block
+        val inBlock = isInSolidBlock(player)
+        val blockBelow = player.location.block.getRelative(BlockFace.DOWN).type
 
-        // Only phase when phantomized
-        if (!isPhantomized(player)) {
-            if (phasingPlayers.remove(uuid)) {
-                NMSInvoker.setNoPhysics(player, false)
+        // Phasing activates when: (on ground AND sneaking AND block below is phasable) OR already in a solid block
+        @Suppress("DEPRECATION")
+        val shouldPhase = (player.isOnGround && player.isSneaking && blockBelow !in unphasableBlocks) || inBlock
+
+        val currentlyPhasing = phasingPlayers[uuid] == true
+
+        // Update phasing state
+        if (shouldPhase != currentlyPhasing) {
+            phasingPlayers[uuid] = shouldPhase
+
+            if (shouldPhase) {
+                // Enable phasing - send spectator gamemode packet
+                val currentVelocity = player.velocity
+                NMSInvoker.sendPhasingGamemodeUpdate(player, GameMode.SPECTATOR)
+                // Restore velocity after gamemode packet
+                Bukkit.getScheduler().scheduleSyncDelayedTask(
+                    OriginsReforged.instance
+                ) { player.velocity = currentVelocity }
+                // Enable flight for phasing
+                player.allowFlight = true
+                player.flySpeed = config.getFloat("flight_speed", 0.1f)
+            } else {
+                // Disable phasing - restore normal gamemode
                 NMSInvoker.sendPhasingGamemodeUpdate(player, player.gameMode)
+                // Disable flight when not phasing (unless in creative/spectator)
+                if (player.gameMode != GameMode.CREATIVE && player.gameMode != GameMode.SPECTATOR) {
+                    player.allowFlight = false
+                    player.isFlying = false
+                }
             }
-            return@onTick true
         }
 
-        // Check if player is inside a solid block (needs phasing)
-        val insideSolid = eyeBlock.type.isCollidable || feetBlock.type.isCollidable
+        // Always update no-physics based on current state
+        val phasingActive = phasingPlayers[uuid] == true
+        NMSInvoker.setNoPhysics(player, player.gameMode == GameMode.SPECTATOR || phasingActive)
 
-        // Check for unphasable blocks
-        val nearUnphasable = unphasableBlocks.contains(eyeBlock.type) ||
-            unphasableBlocks.contains(feetBlock.type)
-
-        // Enable/disable phasing based on position
-        val shouldPhase = insideSolid && !nearUnphasable
-        val isPhasing = phasingPlayers.contains(uuid)
-
-        if (shouldPhase && !isPhasing) {
-            // Enable phasing
-            phasingPlayers.add(uuid)
-            NMSInvoker.setNoPhysics(player, true)
-            NMSInvoker.sendPhasingGamemodeUpdate(player, GameMode.SPECTATOR)
-            player.allowFlight = true
+        // Handle flight and fall damage when phasing
+        if (phasingActive) {
+            player.fallDistance = 0f
             player.isFlying = true
-        } else if (!shouldPhase && isPhasing) {
-            // Disable phasing
-            phasingPlayers.remove(uuid)
-            NMSInvoker.setNoPhysics(player, false)
-            NMSInvoker.sendPhasingGamemodeUpdate(player, player.gameMode)
+            // Enforce flight speed every tick to prevent scroll wheel changes
+            player.flySpeed = config.getFloat("flight_speed", 0.1f)
         }
 
-        // Apply blindness when inside solid blocks
-        if (eyeBlock.type.isCollidable) {
+        // Apply/remove blindness based on eye position
+        val eyeBlock = player.eyeLocation.block
+        if (eyeBlock.type.isCollidable && phasingActive) {
             player.addPotionEffect(
-                PotionEffect(PotionEffectType.BLINDNESS, 40, 0, false, false)
+                PotionEffect(PotionEffectType.BLINDNESS, -1, 0, false, false)
             )
         } else {
-            if (player.hasPotionEffect(PotionEffectType.BLINDNESS)) {
-                player.removePotionEffect(PotionEffectType.BLINDNESS)
-            }
+            player.removePotionEffect(PotionEffectType.BLINDNESS)
         }
+
         true
     }
 
-    // Clean up phasing state when origin changes
-    onOriginChanged { player, _, _ ->
+    // Block movement into unphasable blocks
+    listener<PlayerMoveEvent>(
+        playerFrom = { it.player }
+    ) { player, event, _ ->
+        if (phasingPlayers[player.uniqueId] == true) {
+            val to = event.to ?: return@listener
+            val offsets = listOf(0.4, -0.4)
+            val checkLocations = listOf(to.clone().add(0.0, 1.0, 0.0), to.clone())
+
+            val movingIntoUnphasable = checkLocations.any { base ->
+                offsets.any { dx ->
+                    offsets.any { dz ->
+                        base.clone().add(dx, 0.0, dz).block.type in unphasableBlocks
+                    }
+                }
+            }
+
+            if (movingIntoUnphasable) {
+                event.isCancelled = true
+            }
+        }
+    }
+
+    // Clean up phasing state when phantomize is disabled
+    onDependencyDisabled { player, _ ->
         val uuid = player.uniqueId
-        if (phasingPlayers.remove(uuid)) {
+        if (phasingPlayers.remove(uuid) == true) {
             NMSInvoker.setNoPhysics(player, false)
             NMSInvoker.sendPhasingGamemodeUpdate(player, player.gameMode)
         }
+        // Disable flight (unless in creative/spectator)
+        if (player.gameMode != GameMode.CREATIVE && player.gameMode != GameMode.SPECTATOR) {
+            player.allowFlight = false
+            player.isFlying = false
+        }
+        player.removePotionEffect(PotionEffectType.BLINDNESS)
     }
 }
 

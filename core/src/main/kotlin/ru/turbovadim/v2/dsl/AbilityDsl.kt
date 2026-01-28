@@ -189,6 +189,14 @@ class ToggleAbilityBuilder(@PublishedApi internal val key: Key) {
         effects += AbilityEffect.Periodic.EnvironmentCheck(interval, handler)
     }
 
+    /**
+     * Runs at the end of server ticks (using ServerTickEndEvent).
+     * Critical for abilities that modify collision like phasing.
+     */
+    fun onTickEnd(interval: Int = 1, handler: EnvironmentCheckHandler) {
+        effects += AbilityEffect.Periodic.TickEnd(interval, handler)
+    }
+
     fun applyPotion(interval: Int = 20, effect: org.bukkit.potion.PotionEffect) {
         effects += AbilityEffect.Periodic.ApplyPotion(interval, effect)
     }
@@ -505,6 +513,14 @@ class AbilityBuilder(@PublishedApi internal val key: Key) {
         effects += AbilityEffect.Periodic.EnvironmentCheck(interval, handler)
     }
 
+    /**
+     * Runs at the end of server ticks (using ServerTickEndEvent).
+     * Critical for abilities that modify collision like phasing.
+     */
+    fun onTickEnd(interval: Int = 1, handler: EnvironmentCheckHandler) {
+        effects += AbilityEffect.Periodic.TickEnd(interval, handler)
+    }
+
     fun applyPotion(interval: Int = 20, effect: PotionEffect) {
         effects += AbilityEffect.Periodic.ApplyPotion(interval, effect)
     }
@@ -685,6 +701,39 @@ class AbilityBuilder(@PublishedApi internal val key: Key) {
      */
     fun onLeftClickInteract(handler: InteractHandler) {
         onInteract(Action.LEFT_CLICK_AIR, Action.LEFT_CLICK_BLOCK, handler = handler)
+    }
+
+    // ========== Lifecycle effects ==========
+
+    /**
+     * Called when the dependency ability is enabled.
+     * Only useful for abilities with `dependsOn` set.
+     *
+     * Example:
+     * ```kotlin
+     * val phantomOverlay = ability("phantom_overlay") {
+     *     dependsOn = Key.key("origins", "phantomize")
+     *
+     *     onDependencyEnabled { player, _ ->
+     *         NMSInvoker.setWorldBorderOverlay(player, true)
+     *     }
+     *
+     *     onDependencyDisabled { player, _ ->
+     *         NMSInvoker.setWorldBorderOverlay(player, false)
+     *     }
+     * }
+     * ```
+     */
+    fun onDependencyEnabled(handler: LifecycleHandler) {
+        effects += AbilityEffect.Lifecycle.OnDependencyEnabled(handler)
+    }
+
+    /**
+     * Called when the dependency ability is disabled.
+     * Only useful for abilities with `dependsOn` set.
+     */
+    fun onDependencyDisabled(handler: LifecycleHandler) {
+        effects += AbilityEffect.Lifecycle.OnDependencyDisabled(handler)
     }
 
     fun build(): Ability = AbilityImpl(

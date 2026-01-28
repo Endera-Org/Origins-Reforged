@@ -157,6 +157,9 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
     ) {
         val state = container.playerStateManager.getState(player)
 
+        // Trigger lifecycle callbacks for abilities being removed
+        triggerRemovedAbilityLifecycles(player, oldOrigin, newOrigin)
+
         // Apply passive effects on main thread
         scope.launch(container.dispatchers.main) {
             container.passiveEffectProcessor.applyPassiveEffects(player, state)
@@ -180,6 +183,43 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
                     "OriginChangedListener failed for ${player.name} (layer: $layer): ${t.message}"
                 )
                 t.printStackTrace()
+            }
+        }
+    }
+
+    /**
+     * Trigger onDependencyDisabled lifecycle callbacks for abilities being removed.
+     */
+    private fun triggerRemovedAbilityLifecycles(
+        player: Player,
+        oldOrigin: Origin?,
+        newOrigin: Origin?
+    ) {
+        if (oldOrigin == null) return
+
+        val oldAbilities = oldOrigin.abilityKeys
+        val newAbilities = newOrigin?.abilityKeys ?: emptySet()
+
+        // Find abilities being removed
+        val removedAbilities = oldAbilities - newAbilities
+
+        for (abilityKey in removedAbilities) {
+            val ability = container.abilityRegistry.get(abilityKey) ?: continue
+
+            // Get config accessor for the ability
+            val config = container.configLoader.getAccessor(abilityKey, ability.defaultOptions)
+
+            // Trigger onDependencyDisabled for this ability (treating removal as "disabled")
+            for (effect in ability.effects) {
+                if (effect is ru.turbovadim.v2.ability.AbilityEffect.Lifecycle.OnDependencyDisabled) {
+                    try {
+                        effect.handler.onStateChange(player, config)
+                    } catch (t: Throwable) {
+                        container.plugin.logger.warning(
+                            "Lifecycle callback failed for ability $abilityKey: ${t.message}"
+                        )
+                    }
+                }
             }
         }
     }

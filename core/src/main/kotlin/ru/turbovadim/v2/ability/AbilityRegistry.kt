@@ -237,6 +237,9 @@ class AbilityRegistry(private val container: OriginsContainer) {
                 is AbilityEffect.Listener -> {
                     // Handled separately in register()
                 }
+                is AbilityEffect.Lifecycle -> {
+                    // Handled separately
+                }
                 is AttributeEffect.Static -> {
                     staticAttributeAbilities[ability.key] = effect
                 }

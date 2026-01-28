@@ -147,6 +147,7 @@ class DependencyAbilityImpl(
         val changed = enabledPlayers.add(player.uniqueId)
         if (changed) {
             reapplyDependentPassiveEffects(player)
+            triggerLifecycleCallbacks(player, enabled = true)
         }
         return changed
     }
@@ -154,6 +155,7 @@ class DependencyAbilityImpl(
     override fun disable(player: Player): Boolean {
         val changed = enabledPlayers.remove(player.uniqueId)
         if (changed) {
+            triggerLifecycleCallbacks(player, enabled = false)
             reapplyDependentPassiveEffects(player)
         }
         return changed
@@ -167,6 +169,38 @@ class DependencyAbilityImpl(
         val container = ru.turbovadim.v2.di.OriginsContainer.getOrNull() ?: return
         val state = container.playerStateManager.getState(player) ?: return
         container.passiveEffectProcessor.applyPassiveEffects(player, state)
+    }
+
+    /**
+     * Trigger lifecycle callbacks for abilities that depend on this one.
+     */
+    private fun triggerLifecycleCallbacks(player: Player, enabled: Boolean) {
+        val container = ru.turbovadim.v2.di.OriginsContainer.getOrNull() ?: return
+        val state = container.playerStateManager.getState(player) ?: return
+        val playerAbilities = state.getAbilityKeys()
+
+        // Find all abilities that depend on this one and the player has
+        for (abilityKey in playerAbilities) {
+            val ability = container.abilityRegistry.get(abilityKey) ?: continue
+
+            // Check if this ability depends on us
+            if (ability.dependencyKey != key) continue
+
+            // Get config accessor for the ability
+            val config = container.configLoader.getAccessor(abilityKey, ability.defaultOptions)
+
+            // Find and trigger lifecycle effects
+            for (effect in ability.effects) {
+                when {
+                    enabled && effect is AbilityEffect.Lifecycle.OnDependencyEnabled -> {
+                        effect.handler.onStateChange(player, config)
+                    }
+                    !enabled && effect is AbilityEffect.Lifecycle.OnDependencyDisabled -> {
+                        effect.handler.onStateChange(player, config)
+                    }
+                }
+            }
+        }
     }
 }
 

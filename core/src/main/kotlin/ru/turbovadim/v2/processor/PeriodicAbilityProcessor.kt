@@ -1,5 +1,6 @@
 package ru.turbovadim.v2.processor
 
+import com.destroystokyo.paper.event.server.ServerTickEndEvent
 import com.github.retrooper.packetevents.PacketEvents
 import com.github.retrooper.packetevents.protocol.particle.Particle
 import com.github.retrooper.packetevents.util.Vector3d
@@ -13,6 +14,7 @@ import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
 import org.bukkit.GameMode
 import org.bukkit.entity.Player
+import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import ru.turbovadim.v2.ability.AbilityEffect
 import ru.turbovadim.v2.di.OriginsContainer
@@ -45,6 +47,12 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
     // Tick interval -> tasks that run at this interval
     private val tickBuckets = ConcurrentHashMap<Int, MutableSet<PeriodicTask>>()
 
+    // Tick interval -> tasks that run at the end of ticks (using ServerTickEndEvent)
+    private val tickEndBuckets = ConcurrentHashMap<Int, MutableSet<PeriodicTask>>()
+
+    // Tick counter for ServerTickEndEvent
+    private val tickEndCounter = AtomicLong(0)
+
     // Scheduled task handle for cleanup
     private var scheduledTask: ScheduledTask? = null
 
@@ -67,6 +75,8 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
             1L,
             1L
         )
+        // Register event listener for ServerTickEndEvent
+        Bukkit.getPluginManager().registerEvents(this, container.plugin)
     }
 
     fun stop() {
@@ -74,6 +84,7 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
         scheduledTask = null
         playerTasks.clear()
         tickBuckets.clear()
+        tickEndBuckets.clear()
     }
     /**
      * Update periodic tasks for a player.
@@ -94,8 +105,13 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
                 val task = PeriodicTask(playerId, abilityKey, effect)
                 newTasks.add(task)
 
-                // Add to tick bucket
-                tickBuckets.getOrPut(effect.intervalTicks) { ConcurrentHashMap.newKeySet() }.add(task)
+                // TickEnd tasks go to a separate collection (processed by ServerTickEndEvent)
+                if (effect is AbilityEffect.Periodic.TickEnd) {
+                    tickEndBuckets.getOrPut(effect.intervalTicks) { ConcurrentHashMap.newKeySet() }.add(task)
+                } else {
+                    // Add to tick bucket
+                    tickBuckets.getOrPut(effect.intervalTicks) { ConcurrentHashMap.newKeySet() }.add(task)
+                }
             }
         }
 
@@ -112,12 +128,18 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
         val tasks = playerTasks.remove(playerId) ?: return
 
         for (task in tasks) {
-            tickBuckets[task.effect.intervalTicks]?.remove(task)
+            if (task.effect is AbilityEffect.Periodic.TickEnd) {
+                tickEndBuckets[task.effect.intervalTicks]?.remove(task)
+            } else {
+                tickBuckets[task.effect.intervalTicks]?.remove(task)
+            }
         }
     }
 
     /**
      * Single tick handler - replaces 78+ individual handlers.
+     *
+     * Uses runAtFixedRate bukkit function under the hood
      */
     private fun onServerTick() {
         val tick = tickCounter.incrementAndGet()
@@ -145,6 +167,7 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
                 is AbilityEffect.Periodic.EnvironmentCheck -> envCheckTasks.add(task)
                 is AbilityEffect.Periodic.Particles -> particleTasks.add(task)
                 is AbilityEffect.Periodic.CustomParticles -> customParticleTasks.add(task)
+                is AbilityEffect.Periodic.TickEnd -> {} // Handled by ServerTickEndEvent, not here
             }
         }
 
@@ -313,6 +336,46 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
         }
 
         return true
+    }
+
+    /**
+     * Handle ServerTickEndEvent - processes TickEnd tasks.
+     * This runs AFTER player movement is processed, which is critical
+     * for abilities like phasing that modify collision.
+     */
+    @EventHandler
+    fun onServerTickEnd(event: ServerTickEndEvent) {
+        val tick = tickEndCounter.incrementAndGet()
+
+        // Process each tick-end bucket that should fire this tick
+        for ((interval, tasks) in tickEndBuckets) {
+            if (tick % interval == 0L && tasks.isNotEmpty()) {
+                processTickEndTasks(tasks.toSet())
+            }
+        }
+    }
+
+    /**
+     * Process tick-end tasks (run at end of each server tick).
+     */
+    private fun processTickEndTasks(tasks: Set<PeriodicTask>) {
+        val byPlayer = tasks.groupBy { it.playerId }
+
+        for ((playerId, playerTasks) in byPlayer) {
+            val player = Bukkit.getPlayer(playerId) ?: continue
+
+            for (task in playerTasks) {
+                val effect = task.effect as AbilityEffect.Periodic.TickEnd
+
+                if (!isAbilityActive(player, task.abilityKey)) continue
+
+                val ability = container.abilityRegistry.get(task.abilityKey) ?: continue
+                val accessor = container.configLoader.getAccessor(task.abilityKey, ability.defaultOptions)
+
+                // Run the handler
+                effect.handler.check(player, accessor)
+            }
+        }
     }
 
     /**

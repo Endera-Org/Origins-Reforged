@@ -5,6 +5,7 @@ import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.EnderPearl
 import org.bukkit.entity.Player
+import org.bukkit.event.block.Action
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityToggleGlideEvent
 import org.bukkit.event.player.PlayerJoinEvent
@@ -42,19 +43,22 @@ val phantomize: DependencyAbility = toggleAbility("phantomize") {
 
     option("min_food_level", 6)
 
-    // Toggle phantomize state on primary action (left-click with empty hand)
-    onPrimaryAction { player, config ->
-        val minFood = config.getInt("min_food_level", 6)
-        if (player.inventory.itemInMainHand.type != Material.AIR) return@onPrimaryAction
+    // Toggle phantomize state on left-click with empty hand
+    onInteract(Action.LEFT_CLICK_AIR, Action.LEFT_CLICK_BLOCK) { player, _, config ->
+        // Must be holding nothing
+        if (player.inventory.itemInMainHand.type != Material.AIR) {
+            return@onInteract false
+        }
 
+        val minFood = config.getInt("min_food_level", 6)
 
         if (isEnabled(player)) {
-            println("Disable")
             disable(player)
         } else if (player.foodLevel > minFood) {
-            println("Enable")
             enable(player)
         }
+
+        false // Don't cancel the event
     }
 
     // Auto-disable when food level drops too low
@@ -86,7 +90,15 @@ val phantomizeOverlay = ability("phantomize_overlay") {
 
     dependsOn = Key.key("origins", "phantomize")
 
-    // Note: Visual overlay is handled via packet events in the executor
+    // Show overlay when phantomize is enabled
+    onDependencyEnabled { player, _ ->
+        OriginsReforged.NMSInvoker.setWorldBorderOverlay(player, true)
+    }
+
+    // Hide overlay when phantomize is disabled OR when ability is removed (origin change)
+    onDependencyDisabled { player, _ ->
+        OriginsReforged.NMSInvoker.setWorldBorderOverlay(player, false)
+    }
 }
 
 /**
