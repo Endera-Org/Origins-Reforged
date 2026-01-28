@@ -1,41 +1,49 @@
 package ru.turbovadim.v2.abilities.main
 
+import net.kyori.adventure.key.Key
+import org.bukkit.Bukkit
+import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.block.BlockFace
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.Player
 import org.bukkit.entity.Projectile
+import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.persistence.PersistentDataType
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.ability.FallDamageMode
+import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
+import java.util.concurrent.ConcurrentHashMap
 
 // ============================================
 // CREATURE-RELATED ABILITIES
 // ============================================
 
+/** Tracks temporary cobweb locations to prevent drops when broken */
+private val temporaryCobwebs = ConcurrentHashMap.newKeySet<Location>()
+
 /**
  * Master of Webs - can fly in cobwebs, traps enemies in webs, senses entities in webs.
  * Legacy: MasterOfWebs.kt
  *
- * The legacy implementation:
+ * Implementation:
  * - Grants flight when inside cobweb (speed 0.04f, no fall damage)
  * - Places temporary cobweb on melee hit (2 second cooldown, 3 second duration)
- * - Makes non-arthropods in cobwebs glow for the web master
- * - Adds crafting recipe: 2 string -> 1 cobweb
  * - Prevents drops from temporary cobwebs
+ * - Crafting recipe: 2 string -> 1 cobweb (handled in WebbingRecipe.kt)
  */
 val masterOfWebs = ability("master_of_webs") {
     title = text("Master of Webs")
     description("You navigate cobweb perfectly, and are able to climb in them. When you hit an enemy in melee, they get stuck in cobweb for a while. Non-arthropods stuck in cobweb will be sensed by you. You are able to craft cobweb from string.")
 
     option("flight_speed", 0.04f)
-    option("web_trap_cooldown", 120)
+    option("web_trap_cooldown", 40)
     option("web_trap_duration", 60)
     option("sense_range", 16.0)
 
@@ -71,21 +79,45 @@ val masterOfWebs = ability("master_of_webs") {
 
     // Place temporary cobweb on attack
     onAttack { player, target, config ->
-        val cooldownTicks = config.getInt("web_trap_cooldown", 120)
+        val abilityKey = Key.key("origins", "master_of_webs")
+        val cooldownManager = OriginsContainer.get().cooldownManager
+
+        // Check cooldown
+        if (cooldownManager.hasCooldown(player, abilityKey)) return@onAttack
+
+        val cooldownTicks = config.getInt("web_trap_cooldown", 40)
         val durationTicks = config.getInt("web_trap_duration", 60)
 
-        // Only place web if target location isn't solid
+        // Only place web if target location isn't solid and is air
         val targetBlock = target.location.block
-        if (targetBlock.type.isSolid) return@onAttack
+        if (targetBlock.type != Material.AIR) return@onAttack
 
-        // Note: Cooldown is handled by executor
+        // Set cooldown
+        cooldownManager.setCooldown(player, abilityKey, cooldownTicks, "cobweb")
+
         // Place temporary cobweb
-        val location = targetBlock.location
+        val location = targetBlock.location.clone()
         targetBlock.type = Material.COBWEB
+        temporaryCobwebs.add(location)
 
         // Schedule removal after duration
-        // Note: The executor should schedule this and track temporary cobwebs
-        // to prevent drops when broken
+        Bukkit.getScheduler().runTaskLater(OriginsReforged.instance, Runnable {
+            if (targetBlock.type == Material.COBWEB) {
+                targetBlock.type = Material.AIR
+            }
+            temporaryCobwebs.remove(location)
+        }, durationTicks.toLong())
+    }
+
+    // Prevent drops from temporary cobwebs
+    listener<BlockBreakEvent>(
+        playerFrom = { it.player }
+    ) { _, event, _ ->
+        val blockLocation = event.block.location
+        if (temporaryCobwebs.contains(blockLocation)) {
+            event.isDropItems = false
+            temporaryCobwebs.remove(blockLocation)
+        }
     }
 }
 

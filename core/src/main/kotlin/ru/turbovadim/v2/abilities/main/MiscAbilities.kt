@@ -2,13 +2,21 @@ package ru.turbovadim.v2.abilities.main
 
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes
 import net.kyori.adventure.key.Key
+import org.bukkit.GameMode
+import org.bukkit.Material
+import org.bukkit.entity.Player
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause
+import org.bukkit.event.entity.EntityExhaustionEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
+import ru.turbovadim.v2.abilities.main.isPhantomized
 import ru.turbovadim.v2.ability.FallDamageMode
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.immuneTo
+import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
+import java.util.UUID
 
 // ============================================
 // MISCELLANEOUS ABILITIES
@@ -42,8 +50,7 @@ val hungerOverTime = ability("hunger_over_time") {
  * More Exhaustion - exhaustion from actions is increased.
  * Legacy: MoreExhaustion.kt
  *
- * The legacy implementation multiplies exhaustion from EntityExhaustionEvent by 1.6.
- * Note: This requires event handling in the executor.
+ * Implementation: Multiplies exhaustion from EntityExhaustionEvent by 1.6.
  */
 val moreExhaustion = ability("more_exhaustion") {
     title = text("Large Appetite")
@@ -51,8 +58,12 @@ val moreExhaustion = ability("more_exhaustion") {
 
     option("exhaustion_multiplier", 1.6f)
 
-    // Note: The executor handles EntityExhaustionEvent and multiplies exhaustion
-    // event.exhaustion = event.exhaustion * 1.6f
+    listener<EntityExhaustionEvent>(
+        playerFrom = { it.entity as? Player }
+    ) { _, event, config ->
+        val multiplier = config.getFloat("exhaustion_multiplier", 1.6f)
+        event.exhaustion *= multiplier
+    }
 }
 
 /**
@@ -97,18 +108,25 @@ val enderParticles = ability("ender_particles") {
     )
 }
 
+/** Blocks that cannot be phased through */
+private val unphasableBlocks = setOf(Material.OBSIDIAN, Material.BEDROCK, Material.CRYING_OBSIDIAN)
+
+/** Tracks which players are currently phasing */
+private val phasingPlayers = mutableSetOf<UUID>()
+
+fun isPhantomized(player: Player): Boolean = phantomize.isEnabled(player)
+
 /**
  * Phasing - can walk through solid blocks while phantomized.
  * Legacy: Phasing.kt
  *
- * The legacy implementation:
+ * Implementation:
  * - Depends on phantomize ability
  * - Sends SPECTATOR gamemode packet to allow no-clip
  * - Enables flight while phasing (speed 0.1f, no fall damage)
  * - Cancels suffocation damage
  * - Applies blindness when inside solid blocks
  * - Cannot phase through obsidian or bedrock
- * - Uses BreakSpeedModifierAbility to allow mining while phased
  */
 val phasing = ability("phasing") {
     title = text("Phasing")
@@ -117,7 +135,6 @@ val phasing = ability("phasing") {
     dependsOn = Key.key("origins", "phantomize")
 
     option("flight_speed", 0.1f)
-    option("unphasable_blocks", listOf("OBSIDIAN", "BEDROCK"))
 
     flight {
         speed = 0.1f
@@ -129,15 +146,47 @@ val phasing = ability("phasing") {
         incoming = immuneTo(DamageCause.SUFFOCATION)
     )
 
-    // Apply blindness when inside solid blocks, enable phasing when sneaking on ground
-    // Uses finite duration (40 ticks) that gets refreshed each tick
-    // This ensures the effect naturally expires when the ability is removed (e.g., origin change)
+    // Handle phasing state and blindness
     onTick(interval = 1) { player, _ ->
-        // Note: Full phasing requires NMS calls (setNoPhysics, sendPhasingGamemodeUpdate)
-        // The executor handles the complex state management
-
-        // Apply blindness if eye location is in a solid block
+        val uuid = player.uniqueId
         val eyeBlock = player.eyeLocation.block
+        val feetBlock = player.location.block
+
+        // Only phase when phantomized
+        if (!isPhantomized(player)) {
+            if (phasingPlayers.remove(uuid)) {
+                NMSInvoker.setNoPhysics(player, false)
+                NMSInvoker.sendPhasingGamemodeUpdate(player, player.gameMode)
+            }
+            return@onTick true
+        }
+
+        // Check if player is inside a solid block (needs phasing)
+        val insideSolid = eyeBlock.type.isCollidable || feetBlock.type.isCollidable
+
+        // Check for unphasable blocks
+        val nearUnphasable = unphasableBlocks.contains(eyeBlock.type) ||
+            unphasableBlocks.contains(feetBlock.type)
+
+        // Enable/disable phasing based on position
+        val shouldPhase = insideSolid && !nearUnphasable
+        val isPhasing = phasingPlayers.contains(uuid)
+
+        if (shouldPhase && !isPhasing) {
+            // Enable phasing
+            phasingPlayers.add(uuid)
+            NMSInvoker.setNoPhysics(player, true)
+            NMSInvoker.sendPhasingGamemodeUpdate(player, GameMode.SPECTATOR)
+            player.allowFlight = true
+            player.isFlying = true
+        } else if (!shouldPhase && isPhasing) {
+            // Disable phasing
+            phasingPlayers.remove(uuid)
+            NMSInvoker.setNoPhysics(player, false)
+            NMSInvoker.sendPhasingGamemodeUpdate(player, player.gameMode)
+        }
+
+        // Apply blindness when inside solid blocks
         if (eyeBlock.type.isCollidable) {
             player.addPotionEffect(
                 PotionEffect(PotionEffectType.BLINDNESS, 40, 0, false, false)
@@ -148,6 +197,15 @@ val phasing = ability("phasing") {
             }
         }
         true
+    }
+
+    // Clean up phasing state when origin changes
+    onOriginChanged { player, _, _ ->
+        val uuid = player.uniqueId
+        if (phasingPlayers.remove(uuid)) {
+            NMSInvoker.setNoPhysics(player, false)
+            NMSInvoker.sendPhasingGamemodeUpdate(player, player.gameMode)
+        }
     }
 }
 

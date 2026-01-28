@@ -2,6 +2,7 @@ package ru.turbovadim.v2.abilities.main
 
 import org.bukkit.Material
 import org.bukkit.block.BlockFace
+import org.bukkit.event.block.Action
 import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.dsl.ability
@@ -123,16 +124,42 @@ val strongArms = ability("strong_arms") {
  * Unwieldy - cannot use shields.
  * Legacy: Unwieldy.kt
  *
- * The legacy implementation:
- * - Cancels USE_ITEM packet for shields
- * - Constantly sets shield cooldown via packet
+ * Implementation:
+ * - Cancels right-click when holding a shield
+ * - Applies shield cooldown periodically to prevent blocking
  */
 val unwieldy = ability("unwieldy") {
     title = text("Unwieldy")
     description("The way your hands are formed provide no way of holding a shield upright.")
 
-    // Note: Shield blocking is handled via packet events in the executor
-    // The executor intercepts USE_ITEM packets for shields and sends cooldown packets
+    option("cooldown_ticks", 10)
+
+    // Cancel shield use on right-click
+    onInteract(Action.RIGHT_CLICK_AIR, Action.RIGHT_CLICK_BLOCK) { player, _, config ->
+        val mainHand = player.inventory.itemInMainHand
+        val offHand = player.inventory.itemInOffHand
+
+        if (mainHand.type == Material.SHIELD || offHand.type == Material.SHIELD) {
+            // Apply shield cooldown to prevent blocking
+            val cooldownTicks = config.getInt("cooldown_ticks", 10)
+            player.setCooldown(Material.SHIELD, cooldownTicks)
+            true // Cancel the event
+        } else {
+            false
+        }
+    }
+
+    // Periodically apply shield cooldown while holding
+    onTick(interval = 5) { player, config ->
+        val mainHand = player.inventory.itemInMainHand
+        val offHand = player.inventory.itemInOffHand
+
+        if (mainHand.type == Material.SHIELD || offHand.type == Material.SHIELD) {
+            val cooldownTicks = config.getInt("cooldown_ticks", 10)
+            player.setCooldown(Material.SHIELD, cooldownTicks)
+        }
+        true
+    }
 }
 
 /**

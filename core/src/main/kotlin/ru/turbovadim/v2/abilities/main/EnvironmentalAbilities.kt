@@ -5,9 +5,12 @@ import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import org.bukkit.Material
+import org.bukkit.NamespacedKey
+import org.bukkit.Registry
 import org.bukkit.Tag
 import org.bukkit.World
 import org.bukkit.block.BlockFace
+import org.bukkit.enchantments.Enchantment
 import org.bukkit.event.player.PlayerItemConsumeEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
@@ -191,11 +194,28 @@ val claustrophobia = ability("claustrophobia") {
     }
 }
 
+/** Lazily resolve the Impaling enchantment (works across versions) */
+private val impalingEnchantment: Enchantment? by lazy {
+    try {
+        // Try registry lookup (1.20.5+)
+        @Suppress("DEPRECATION")
+        Registry.ENCHANTMENT.get(NamespacedKey.minecraft("impaling"))
+    } catch (_: Exception) {
+        try {
+            // Fallback for older versions
+            @Suppress("DEPRECATION")
+            Enchantment.getByName("IMPALING")
+        } catch (_: Exception) {
+            null
+        }
+    }
+}
+
 /**
  * Aquatic - takes extra damage from Impaling enchantment.
  * Legacy: Aquatic.kt
  *
- * The legacy implementation:
+ * Implementation:
  * - Adds 2.5 damage per Impaling level from tridents or melee weapons
  */
 val aquatic = ability("aquatic") {
@@ -207,11 +227,19 @@ val aquatic = ability("aquatic") {
 
     // Extra damage from Impaling enchantment
     modifyDamage(
-        incoming = { player, damage, _, config ->
-            // Note: The executor needs to check the damager for Impaling enchantment
-            // This handler is called with damage info; we need event context
-            // For now, return Allow and let executor handle the enchantment check
-            DamageResult.Allow
+        incomingFromEntity = { _, attacker, damage, _, config ->
+            val enchantment = impalingEnchantment ?: return@modifyDamage DamageResult.Allow
+            val equipment = attacker.equipment ?: return@modifyDamage DamageResult.Allow
+            val mainHand = equipment.itemInMainHand
+
+            if (!mainHand.containsEnchantment(enchantment)) {
+                return@modifyDamage DamageResult.Allow
+            }
+
+            val level = mainHand.getEnchantmentLevel(enchantment)
+            val bonusPerLevel = config.getDouble("impaling_bonus_per_level", 2.5)
+
+            DamageResult.Modify(damage + (bonusPerLevel * level))
         }
     )
 }

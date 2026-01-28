@@ -2,6 +2,7 @@ package ru.turbovadim.v2.ability
 
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
+import org.bukkit.entity.Player
 import ru.turbovadim.v2.ui.LineData
 import ru.turbovadim.v2.ui.LineDataCompat
 
@@ -87,12 +88,68 @@ data class AbilityImpl(
 
 /**
  * Marker interface for abilities that can be toggled on/off.
+ * Other abilities can depend on this via [Ability.dependencyKey].
  */
 interface DependencyAbility : Ability {
     /**
      * Check if this ability is currently enabled for the player.
      */
-    fun isEnabled(player: org.bukkit.entity.Player): Boolean
+    fun isEnabled(player: Player): Boolean
+
+    /**
+     * Enable this ability for the player.
+     * @return true if state changed, false if already enabled
+     */
+    fun enable(player: Player): Boolean
+
+    /**
+     * Disable this ability for the player.
+     * @return true if state changed, false if already disabled
+     */
+    fun disable(player: Player): Boolean
+
+    /**
+     * Toggle this ability for the player.
+     * @return true if now enabled, false if now disabled
+     */
+    fun toggle(player: Player): Boolean {
+        return if (isEnabled(player)) {
+            disable(player)
+            false
+        } else {
+            enable(player)
+            true
+        }
+    }
+}
+
+/**
+ * Implementation of DependencyAbility that tracks enabled state per player.
+ */
+class DependencyAbilityImpl(
+    override val key: Key,
+    override val title: Component,
+    override val description: List<Component>,
+    override val effects: List<AbilityEffect>,
+    override val isVisibleDefault: Boolean = true,
+    override val defaultOptions: Map<String, Any> = emptyMap(),
+    override val dependencyKey: Key? = null,
+    override val dependencyInverse: Boolean = false
+) : DependencyAbility {
+
+    private val enabledPlayers = java.util.concurrent.ConcurrentHashMap.newKeySet<java.util.UUID>()
+
+    override fun isEnabled(player: Player): Boolean {
+        return enabledPlayers.contains(player.uniqueId)
+    }
+
+    override fun enable(player: Player): Boolean {
+        return enabledPlayers.add(player.uniqueId)
+    }
+
+    override fun disable(player: Player): Boolean {
+        return enabledPlayers.remove(player.uniqueId)
+    }
 }
 
 /**

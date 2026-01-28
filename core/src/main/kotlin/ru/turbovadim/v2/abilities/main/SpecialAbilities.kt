@@ -2,17 +2,23 @@ package ru.turbovadim.v2.abilities.main
 
 import net.kyori.adventure.key.Key
 import org.bukkit.Material
+import org.bukkit.NamespacedKey
 import org.bukkit.entity.EnderPearl
 import org.bukkit.entity.Player
+import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityToggleGlideEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerToggleFlightEvent
+import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.Vector
+import ru.turbovadim.OriginsReforged
+import ru.turbovadim.v2.ability.DependencyAbility
 import ru.turbovadim.v2.ability.InvisibilityCondition
 import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
+import ru.turbovadim.v2.dsl.toggleAbility
 import ru.turbovadim.v2.event.OriginChangedEvent
 
 // ============================================
@@ -23,38 +29,46 @@ import ru.turbovadim.v2.event.OriginChangedEvent
  * Phantomize - toggleable phantom form activated by left-click with empty hand.
  * Legacy: Phantomize.kt
  *
- * The legacy implementation:
+ * Implementation:
  * - Toggles phantom state on left-click with empty hand
  * - Requires food level > 6 to enable
  * - Auto-disables when food level drops to 6 or below
- * - Fires AsyncPhantomizeToggleEvent for other abilities to react
- * - This is a DependencyAbility that other abilities check
+ * - As a DependencyAbility, other abilities can use `dependsOn` to depend on this
  */
-val phantomize = ability("phantomize") {
+val phantomize: DependencyAbility = toggleAbility("phantomize") {
     title = text("Phantom Form")
     description("Toggle phantom form by pressing the primary action key while holding nothing.")
     visible = false
 
     option("min_food_level", 6)
 
-    // Note: The phantomize state is tracked in the executor
-    // Other abilities depend on this via the dependsOn key
+    // Toggle phantomize state on primary action (left-click with empty hand)
     onPrimaryAction { player, config ->
         val minFood = config.getInt("min_food_level", 6)
-        if (player.foodLevel > minFood && player.inventory.itemInMainHand.type == Material.AIR) {
-            // Toggle phantomize state
-            // The executor maintains the state and fires the toggle event
+        if (player.inventory.itemInMainHand.type != Material.AIR) return@onPrimaryAction
+
+
+        if (isEnabled(player)) {
+            println("Disable")
+            disable(player)
+        } else if (player.foodLevel > minFood) {
+            println("Enable")
+            enable(player)
         }
     }
 
     // Auto-disable when food level drops too low
     onTick(interval = 20) { player, config ->
         val minFood = config.getInt("min_food_level", 6)
-        if (player.foodLevel <= minFood) {
-            // Disable phantomize if enabled
-            // The executor handles this state transition
+        if (player.foodLevel <= minFood && isEnabled(player)) {
+            disable(player)
         }
         true
+    }
+
+    // Clean up state on origin change
+    onOriginChanged { player, _, _ ->
+        disable(player)
     }
 }
 
@@ -80,6 +94,7 @@ val phantomizeOverlay = ability("phantomize_overlay") {
  * Legacy: Invisibility.kt
  *
  * The legacy implementation makes the player invisible when phantomize is enabled.
+ * Uses dependsOn to automatically activate only when phantomize (a DependencyAbility) is enabled.
  */
 val invisibility = ability("invisibility") {
     title = text("Invisibility")
@@ -87,23 +102,22 @@ val invisibility = ability("invisibility") {
 
     dependsOn = Key.key("origins", "phantomize")
 
-    // Note: The executor checks phantomize state to determine invisibility
-    invisible(InvisibilityCondition.Custom { player ->
-        // This would check the phantomize state from the executor
-        // Placeholder - actual implementation needs DependencyAbility access
-        false
-    })
+    // Invisibility is always active when this ability is active
+    // The dependency system handles checking phantomize.isEnabled(player)
+    invisible(InvisibilityCondition.Always)
 }
+
+/** Key for marking no-damage ender pearls */
+private val noDamagePearlKey by lazy { NamespacedKey(OriginsReforged.instance, "no-damage-pearl") }
 
 /**
  * Throw Ender Pearl - throw ender pearl by left-clicking with empty hand.
  * Legacy: ThrowEnderPearl.kt
  *
- * The legacy implementation:
+ * Implementation:
  * - Left-click with empty hand while not looking at a block
  * - Has 1.5 second cooldown (30 ticks)
- * - The pearl does no damage on hit
- * - Uses persistent data to mark pearls as "false" (no damage)
+ * - The pearl does no damage on hit (marked via persistent data)
  */
 val throwEnderPearl = ability("throw_ender_pearl") {
     title = text("Teleportation")
@@ -126,10 +140,22 @@ val throwEnderPearl = ability("throw_ender_pearl") {
         val cooldownTicks = config.getInt("cooldown_ticks", 30)
         cooldownManager.setCooldown(player, abilityKey, cooldownTicks, "ender_pearl")
 
-        // Launch ender pearl
+        // Launch ender pearl and mark it as no-damage
         val pearl = player.launchProjectile(EnderPearl::class.java)
-        // The executor should mark this pearl as no-damage using persistent data
-        // and handle the teleport without damage on hit
+        pearl.persistentDataContainer.set(noDamagePearlKey, PersistentDataType.BYTE, 1)
+    }
+
+    // Cancel damage from our no-damage pearls
+    listener<EntityDamageByEntityEvent>(
+        playerFrom = { it.entity as? Player }
+    ) { player, event, _ ->
+        val damager = event.damager
+        if (damager !is EnderPearl) return@listener
+
+        // Check if this pearl is marked as no-damage
+        if (damager.persistentDataContainer.has(noDamagePearlKey, PersistentDataType.BYTE)) {
+            event.isCancelled = true
+        }
     }
 }
 

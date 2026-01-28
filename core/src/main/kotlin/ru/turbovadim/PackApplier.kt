@@ -30,7 +30,7 @@ class PackApplier : Listener {
         }
 
         fun getPackURL(): String {
-            return "https://github.com/Endera-Org/Origins-Reborn-Enhanced/raw/refs/heads/master/OriginsPack.zip"
+            return "https://raw.githubusercontent.com/Endera-Org/Origins-Reforged/refs/heads/master/OriginsPack.zip"
         }
 
         /**

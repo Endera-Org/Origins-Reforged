@@ -1,12 +1,16 @@
 package ru.turbovadim.v2.abilities.main
 
+import org.bukkit.entity.Player
+import org.bukkit.entity.Snowball
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause
+import org.bukkit.event.entity.ProjectileHitEvent
 import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.ability.DamageResult
 import ru.turbovadim.v2.ability.PotionReactionResult
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.immuneTo
+import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
 
 // ============================================
@@ -123,23 +127,36 @@ val damageFromPotions = ability("damage_from_potions") {
 /**
  * Damage From Snowballs - takes freeze damage when hit by snowballs.
  * Legacy: DamageFromSnowballs.kt
- * Note: This requires a ProjectileHitEvent handler for SNOWBALL projectiles.
- * The v2 system would need an onProjectileHit handler or similar.
- * For now, this is metadata-only; the event handler is in the executor.
+ *
+ * Implementation:
+ * - Listens for ProjectileHitEvent with SNOWBALL projectiles
+ * - Deals freeze damage and applies knockback
  */
 val damageFromSnowballs = ability("damage_from_snowballs") {
     title = text("Extinguish")
     description("Snowballs deal damage to you.")
     visible = false
 
-    option("damage_amount", 3.0)
+    option("damage_amount", 3)
     option("knockback_strength", 0.5)
 
-    // Note: Full implementation requires ProjectileHitEvent handling
-    // Legacy logic:
-    // - Check if projectile is SNOWBALL
-    // - Deal freeze damage: NMSInvoker.dealFreezeDamage(player, 3)
-    // - Apply knockback: NMSInvoker.knockback(player, 0.5, -direction.x, -direction.z)
+    // Handle snowball hits
+    listener<ProjectileHitEvent>(
+        playerFrom = { it.hitEntity as? Player }
+    ) { player, event, config ->
+        val projectile = event.entity
+        if (projectile !is Snowball) return@listener
+
+        val damage = config.getInt("damage_amount", 3)
+        val knockback = config.getDouble("knockback_strength", 0.5)
+
+        // Deal freeze damage
+        NMSInvoker.dealFreezeDamage(player, damage)
+
+        // Apply knockback away from snowball direction
+        val direction = projectile.velocity.normalize()
+        NMSInvoker.knockback(player, knockback, -direction.x, -direction.z)
+    }
 }
 
 /**
