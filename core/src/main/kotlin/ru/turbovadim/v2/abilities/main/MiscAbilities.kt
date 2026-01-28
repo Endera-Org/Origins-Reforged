@@ -16,6 +16,7 @@ import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.v2.ability.FallDamageMode
+import ru.turbovadim.v2.ability.StateKey
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.immuneTo
 import ru.turbovadim.v2.dsl.listener
@@ -115,8 +116,13 @@ val enderParticles = ability("ender_particles") {
 /** Blocks that cannot be phased through */
 private val unphasableBlocks = listOf(Material.OBSIDIAN, Material.BEDROCK, Material.CRYING_OBSIDIAN)
 
-/** Tracks which players are currently phasing */
-private val phasingPlayers = mutableMapOf<UUID, Boolean>()
+/** State key for tracking phasing status - defined at file level for access from lifecycle callbacks */
+private val isPhasingState = StateKey(
+    Key.key("origins", "phasing"),
+    "active",
+    false,
+    Boolean::class
+)
 
 fun isPhantomized(player: Player): Boolean = phantomize.isEnabled(player)
 
@@ -137,26 +143,6 @@ private fun isInSolidBlock(player: Player): Boolean {
             offsets.any { dz ->
                 val block = base.clone().add(dx, 0.0, dz).block
                 block.type.isSolid && block.type !in unphasableBlocks
-            }
-        }
-    }
-}
-
-/**
- * Check if a location contains an unphasable block.
- */
-private fun isInUnphasableBlock(player: Player): Boolean {
-    val location = player.location
-    val offsets = listOf(0.4, -0.4)
-    val checkLocations = listOf(
-        location.clone().add(0.0, 1.0, 0.0),
-        location.clone()
-    )
-
-    return checkLocations.any { base ->
-        offsets.any { dx ->
-            offsets.any { dz ->
-                base.clone().add(dx, 0.0, dz).block.type in unphasableBlocks
             }
         }
     }
@@ -192,7 +178,6 @@ val phasing = ability("phasing") {
 
     // Handle phasing state and blindness (runs at end of each tick, after movement processing)
     onTickEnd { player, config ->
-        val uuid = player.uniqueId
         val inBlock = isInSolidBlock(player)
         val blockBelow = player.location.block.getRelative(BlockFace.DOWN).type
 
@@ -200,11 +185,11 @@ val phasing = ability("phasing") {
         @Suppress("DEPRECATION")
         val shouldPhase = (player.isOnGround && player.isSneaking && blockBelow !in unphasableBlocks) || inBlock
 
-        val currentlyPhasing = phasingPlayers[uuid] == true
+        val currentlyPhasing = isPhasingState[player]
 
         // Update phasing state
         if (shouldPhase != currentlyPhasing) {
-            phasingPlayers[uuid] = shouldPhase
+            isPhasingState[player] = shouldPhase
 
             if (shouldPhase) {
                 // Enable phasing - send spectator gamemode packet
@@ -229,7 +214,7 @@ val phasing = ability("phasing") {
         }
 
         // Always update no-physics based on current state
-        val phasingActive = phasingPlayers[uuid] == true
+        val phasingActive = isPhasingState[player]
         NMSInvoker.setNoPhysics(player, player.gameMode == GameMode.SPECTATOR || phasingActive)
 
         // Handle flight and fall damage when phasing
@@ -257,7 +242,7 @@ val phasing = ability("phasing") {
     listener<PlayerMoveEvent>(
         playerFrom = { it.player }
     ) { player, event, _ ->
-        if (phasingPlayers[player.uniqueId] == true) {
+        if (isPhasingState[player]) {
             val to = event.to ?: return@listener
             val offsets = listOf(0.4, -0.4)
             val checkLocations = listOf(to.clone().add(0.0, 1.0, 0.0), to.clone())
@@ -278,8 +263,8 @@ val phasing = ability("phasing") {
 
     // Clean up phasing state when phantomize is disabled
     onDependencyDisabled { player, _ ->
-        val uuid = player.uniqueId
-        if (phasingPlayers.remove(uuid) == true) {
+        if (isPhasingState[player]) {
+            isPhasingState[player] = false
             NMSInvoker.setNoPhysics(player, false)
             NMSInvoker.sendPhasingGamemodeUpdate(player, player.gameMode)
         }

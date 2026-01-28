@@ -62,7 +62,7 @@ val fragile = ability("fragile") {
     title = text("Fragile")
     description("You have 3 less hearts of health than humans.")
 
-    attribute(AttributeType.MAX_HEALTH, -6.0, configKey = "health_reduction")
+    attribute(AttributeType.MAX_HEALTH, -3.0, configKey = "health_reduction")
 }
 
 /**
