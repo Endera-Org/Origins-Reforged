@@ -13,6 +13,7 @@ import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.v2.ability.*
+import ru.turbovadim.v2.ability.DependencyAbilityImpl
 import ru.turbovadim.v2.event.OriginChangedEvent
 
 /**
@@ -54,6 +55,199 @@ fun ability(
 ): Ability {
     val key = Key.key(namespace, name)
     return AbilityBuilder(key).apply(block).build()
+}
+
+/**
+ * Top-level DSL function to create a toggle ability (DependencyAbility).
+ *
+ * Toggle abilities can be enabled/disabled per player, and other abilities
+ * can depend on their state via [AbilityBuilder.dependsOn].
+ *
+ * Example usage:
+ * ```kotlin
+ * val phantomize = toggleAbility("phantomize") {
+ *     title = text("Phantom Form")
+ *     description("Toggle phantom form by pressing the primary action key.")
+ *
+ *     option("min_food_level", 6)
+ *
+ *     // Toggle on primary action
+ *     onPrimaryAction { player, config ->
+ *         val minFood = config.getInt("min_food_level", 6)
+ *         if (player.foodLevel > minFood) {
+ *             toggle(player) // Built-in toggle function
+ *         }
+ *     }
+ * }
+ *
+ * // Other abilities can depend on it
+ * val invisibility = ability("invisibility") {
+ *     dependsOn = Key.key("origins", "phantomize")
+ *     invisible(InvisibilityCondition.Always) // Only active when phantomize is enabled
+ * }
+ * ```
+ */
+fun toggleAbility(
+    name: String,
+    namespace: String = "origins",
+    block: ToggleAbilityBuilder.() -> Unit
+): DependencyAbility {
+    val key = Key.key(namespace, name)
+    return ToggleAbilityBuilder(key).apply(block).build()
+}
+
+/**
+ * Builder for creating toggle abilities (DependencyAbility) via DSL.
+ *
+ * Extends the standard ability builder with toggle-specific functionality.
+ */
+class ToggleAbilityBuilder(@PublishedApi internal val key: Key) {
+
+    var title: Component = Component.text(key.value())
+    private var descriptionLines: MutableList<Component> = mutableListOf()
+    var visible: Boolean = true
+    var dependsOn: Key? = null
+    var dependencyInverse: Boolean = false
+
+    @PublishedApi
+    internal val effects = mutableListOf<AbilityEffect>()
+    private val options = mutableMapOf<String, Any>()
+
+    // The built ability instance (created lazily for self-reference in handlers)
+    private var builtAbility: DependencyAbilityImpl? = null
+
+    // ========== Description helpers ==========
+
+    fun description(vararg lines: String) {
+        descriptionLines.addAll(lines.map { Component.text(it) })
+    }
+
+    fun description(vararg lines: Component) {
+        descriptionLines.addAll(lines)
+    }
+
+    // ========== Config options ==========
+
+    fun option(name: String, default: Any) {
+        options[name] = default
+    }
+
+    // ========== Toggle-specific helpers ==========
+
+    /**
+     * Check if this ability is enabled for the player.
+     * Can be called from within handlers.
+     */
+    fun isEnabled(player: Player): Boolean {
+        return builtAbility?.isEnabled(player) ?: false
+    }
+
+    /**
+     * Enable this ability for the player.
+     * Can be called from within handlers.
+     */
+    fun enable(player: Player): Boolean {
+        return builtAbility?.enable(player) ?: false
+    }
+
+    /**
+     * Disable this ability for the player.
+     * Can be called from within handlers.
+     */
+    fun disable(player: Player): Boolean {
+        return builtAbility?.disable(player) ?: false
+    }
+
+    /**
+     * Toggle this ability for the player.
+     * Can be called from within handlers.
+     * @return true if now enabled, false if now disabled
+     */
+    fun toggle(player: Player): Boolean {
+        return builtAbility?.toggle(player) ?: false
+    }
+
+    // ========== State declarations ==========
+
+    inline fun <reified T : Any> state(name: String, default: T): StateKey<T> {
+        return StateKey(key, name, default, T::class)
+    }
+
+    // ========== Passive effects ==========
+
+    fun flight(block: FlightBuilder.() -> Unit = {}) {
+        effects += FlightBuilder().apply(block).build()
+    }
+
+    fun invisible(condition: InvisibilityCondition = InvisibilityCondition.Always) {
+        effects += AbilityEffect.Passive.Invisibility(condition)
+    }
+
+    // ========== Periodic effects ==========
+
+    fun onTick(interval: Int = 20, handler: EnvironmentCheckHandler) {
+        effects += AbilityEffect.Periodic.EnvironmentCheck(interval, handler)
+    }
+
+    fun applyPotion(interval: Int = 20, effect: org.bukkit.potion.PotionEffect) {
+        effects += AbilityEffect.Periodic.ApplyPotion(interval, effect)
+    }
+
+    // ========== Reactive effects ==========
+
+    fun modifyDamage(
+        incoming: DamageHandler? = null,
+        outgoing: DamageHandler? = null,
+        incomingFromEntity: EntityDamageHandler? = null
+    ) {
+        effects += AbilityEffect.Reactive.DamageModifier(incoming, outgoing, incomingFromEntity)
+    }
+
+    // ========== Triggered effects ==========
+
+    fun onPrimaryAction(handler: KeyBindHandler) {
+        effects += AbilityEffect.Triggered.OnKeyBind(KeyBindType.PRIMARY, handler)
+    }
+
+    fun onSecondaryAction(handler: KeyBindHandler) {
+        effects += AbilityEffect.Triggered.OnKeyBind(KeyBindType.SECONDARY, handler)
+    }
+
+    fun onSneak(handler: SneakHandler) {
+        effects += AbilityEffect.Triggered.OnSneak(handler)
+    }
+
+    fun onJump(handler: JumpHandler) {
+        effects += AbilityEffect.Triggered.OnJump(handler)
+    }
+
+    fun onInteract(vararg actions: Action, handler: InteractHandler) {
+        val actionFilter = if (actions.isEmpty()) null else actions.toSet()
+        effects += AbilityEffect.Triggered.OnInteract(actionFilter, handler)
+    }
+
+    // ========== Listener effects ==========
+
+    fun onOriginChanged(handler: (Player, ru.turbovadim.v2.event.OriginChangedEvent, AbilityConfigAccessor) -> Unit) {
+        effects += AbilityEffect.Listener.OriginChanged(handler)
+    }
+
+    // ========== Build ==========
+
+    fun build(): DependencyAbilityImpl {
+        val ability = DependencyAbilityImpl(
+            key = key,
+            title = title,
+            description = descriptionLines.toList(),
+            effects = effects.toList(),
+            isVisibleDefault = visible,
+            defaultOptions = options.toMap(),
+            dependencyKey = dependsOn,
+            dependencyInverse = dependencyInverse
+        )
+        builtAbility = ability
+        return ability
+    }
 }
 
 /**
