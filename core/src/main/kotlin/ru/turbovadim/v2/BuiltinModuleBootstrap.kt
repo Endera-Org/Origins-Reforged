@@ -3,7 +3,7 @@ package ru.turbovadim.v2
 import org.bukkit.plugin.java.JavaPlugin
 import ru.turbovadim.v2.api.BuiltinRegistrationModule
 import ru.turbovadim.v2.api.OriginsApi
-import java.util.ServiceLoader
+import java.util.*
 
 /**
  * Discovers and executes built-in registration modules via ServiceLoader.

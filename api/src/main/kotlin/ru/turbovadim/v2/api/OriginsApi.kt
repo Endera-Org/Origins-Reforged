@@ -3,7 +3,6 @@ package ru.turbovadim.v2.api
 import net.kyori.adventure.key.Key
 import org.bukkit.entity.Player
 import ru.turbovadim.v2.ability.Ability
-import ru.turbovadim.v2.ability.AbilityCheckResult
 import ru.turbovadim.v2.ability.DependencyAbility
 import ru.turbovadim.v2.addon.AbilityCheckHook
 import ru.turbovadim.v2.addon.ResourcePackInfo

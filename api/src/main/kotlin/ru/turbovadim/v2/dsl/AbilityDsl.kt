@@ -13,7 +13,6 @@ import org.bukkit.event.entity.EntityDamageEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.v2.ability.*
-import ru.turbovadim.v2.ability.DependencyAbilityImpl
 import ru.turbovadim.v2.event.OriginChangedEvent
 
 /**

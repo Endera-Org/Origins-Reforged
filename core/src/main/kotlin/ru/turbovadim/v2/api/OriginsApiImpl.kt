@@ -2,10 +2,13 @@ package ru.turbovadim.v2.api
 
 import net.kyori.adventure.key.Key
 import org.bukkit.entity.Player
-import ru.turbovadim.PackApplier
 import ru.turbovadim.OriginsReforged
+import ru.turbovadim.PackApplier
 import ru.turbovadim.packetsenders.OriginsReforgedResourcePackInfo
-import ru.turbovadim.v2.ability.*
+import ru.turbovadim.v2.ability.Ability
+import ru.turbovadim.v2.ability.AbilityEffect
+import ru.turbovadim.v2.ability.DependencyAbility
+import ru.turbovadim.v2.ability.StateKey
 import ru.turbovadim.v2.addon.AbilityCheckHook
 import ru.turbovadim.v2.addon.ResourcePackInfo
 import ru.turbovadim.v2.di.OriginsContainer
