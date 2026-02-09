@@ -34,6 +34,9 @@ interface OriginsApi {
     /** Register a resource pack from an addon. */
     fun registerResourcePack(namespace: String, packInfo: ResourcePackInfo)
 
+    /** Load bundled origin YAMLs from the main plugin JAR into the origin registry. */
+    fun loadBundledOrigins(addonId: String, folderName: String = "originsMain")
+
     // ========== Ability queries ==========
 
     /** Get an ability by key, or null. */

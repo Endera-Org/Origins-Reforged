@@ -15,7 +15,7 @@ import org.bukkit.persistence.PersistentDataType
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.ability.FallDamageMode
-import ru.turbovadim.v2.di.OriginsContainer
+import ru.turbovadim.v2.api.OriginsApi
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
@@ -80,10 +80,10 @@ val masterOfWebs = ability("master_of_webs") {
     // Place temporary cobweb on attack
     onAttack { player, target, config ->
         val abilityKey = Key.key("origins", "master_of_webs")
-        val cooldownManager = OriginsContainer.get().cooldownManager
+        val api = OriginsApi.getOrNull() ?: return@onAttack
 
         // Check cooldown
-        if (cooldownManager.hasCooldown(player, abilityKey)) return@onAttack
+        if (api.hasCooldown(player, abilityKey)) return@onAttack
 
         val cooldownTicks = config.getInt("web_trap_cooldown", 40)
         val durationTicks = config.getInt("web_trap_duration", 60)
@@ -93,7 +93,7 @@ val masterOfWebs = ability("master_of_webs") {
         if (targetBlock.type != Material.AIR) return@onAttack
 
         // Set cooldown
-        cooldownManager.setCooldown(player, abilityKey, cooldownTicks, "cobweb")
+        api.setCooldown(player, abilityKey, cooldownTicks, "cobweb")
 
         // Place temporary cobweb
         val location = targetBlock.location.clone()

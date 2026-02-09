@@ -13,6 +13,7 @@ plugins {
 rootProject.name = "Origins-Reforged"
 include("api")
 include("core")
+include("builtin")
 include("version")
 include("1.20")
 include("1.20.1")

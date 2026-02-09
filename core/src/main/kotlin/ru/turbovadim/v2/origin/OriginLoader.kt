@@ -44,13 +44,14 @@ class OriginLoader(private val container: OriginsContainer) {
     fun loadOriginsForAddon(
         addonId: String,
         dataFolder: File,
-        jarFile: File
+        jarFile: File,
+        folderName: String = "originsMain"
     ) {
         val addonFiles = mutableListOf<File>()
         originFiles[addonId] = addonFiles
 
         // Load bundled origins
-        loadOriginsFromFolder(addonId, dataFolder, jarFile, "originsMain", addonFiles)
+        loadOriginsFromFolder(addonId, dataFolder, jarFile, folderName, addonFiles)
 
         logger.info("Loaded ${addonFiles.size} origin files for addon: $addonId")
     }

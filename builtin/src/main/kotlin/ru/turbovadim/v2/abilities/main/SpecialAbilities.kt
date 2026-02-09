@@ -15,7 +15,7 @@ import org.bukkit.util.Vector
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.ability.DependencyAbility
 import ru.turbovadim.v2.ability.InvisibilityCondition
-import ru.turbovadim.v2.di.OriginsContainer
+import ru.turbovadim.v2.api.OriginsApi
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
@@ -143,14 +143,14 @@ val throwEnderPearl = ability("throw_ender_pearl") {
         if (player.getTargetBlockExact(6) != null) return@onPrimaryAction
 
         val abilityKey = Key.key("origins", "throw_ender_pearl")
-        val cooldownManager = OriginsContainer.get().cooldownManager
+        val api = OriginsApi.getOrNull() ?: return@onPrimaryAction
 
         // Check cooldown
-        if (cooldownManager.hasCooldown(player, abilityKey)) return@onPrimaryAction
+        if (api.hasCooldown(player, abilityKey)) return@onPrimaryAction
 
         // Set cooldown with ender_pearl icon
         val cooldownTicks = config.getInt("cooldown_ticks", 30)
-        cooldownManager.setCooldown(player, abilityKey, cooldownTicks, "ender_pearl")
+        api.setCooldown(player, abilityKey, cooldownTicks, "ender_pearl")
 
         // Launch ender pearl and mark it as no-damage
         val pearl = player.launchProjectile(EnderPearl::class.java)
@@ -271,14 +271,14 @@ val launchIntoAir = ability("launch_into_air") {
         if (!player.isGliding) return@onSneak
 
         val abilityKey = Key.key("origins", "launch_into_air")
-        val cooldownManager = OriginsContainer.get().cooldownManager
+        val api = OriginsApi.getOrNull() ?: return@onSneak
 
         // Check cooldown
-        if (cooldownManager.hasCooldown(player, abilityKey)) return@onSneak
+        if (api.hasCooldown(player, abilityKey)) return@onSneak
 
         // Set cooldown with launch icon
         val cooldownTicks = config.getInt("cooldown_ticks", 600)
-        cooldownManager.setCooldown(player, abilityKey, cooldownTicks, "launch")
+        api.setCooldown(player, abilityKey, cooldownTicks, "launch")
 
         val velocity = config.getDouble("launch_velocity", 2.0)
         player.velocity = player.velocity.add(Vector(0.0, velocity, 0.0))

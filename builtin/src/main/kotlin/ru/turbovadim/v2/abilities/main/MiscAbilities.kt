@@ -312,7 +312,7 @@ val webbing = ability("webbing") {
     visible = false
 
     // Recipe registration is handled in WebbingRecipe.register()
-    // which is called from V2Initializer
+    // which is called from the built-in registration module.
 }
 
 /**

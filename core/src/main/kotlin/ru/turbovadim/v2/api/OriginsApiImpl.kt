@@ -3,6 +3,7 @@ package ru.turbovadim.v2.api
 import net.kyori.adventure.key.Key
 import org.bukkit.entity.Player
 import ru.turbovadim.PackApplier
+import ru.turbovadim.OriginsReforged
 import ru.turbovadim.packetsenders.OriginsReforgedResourcePackInfo
 import ru.turbovadim.v2.ability.*
 import ru.turbovadim.v2.addon.AbilityCheckHook
@@ -43,6 +44,21 @@ class OriginsApiImpl(private val container: OriginsContainer) : OriginsApi {
         } catch (e: Exception) {
             container.plugin.logger.warning("Failed to register resource pack: ${e.message}")
         }
+    }
+
+    override fun loadBundledOrigins(addonId: String, folderName: String) {
+        val plugin = container.plugin
+        val jarFile = (plugin as? OriginsReforged)?.file
+        if (jarFile == null) {
+            plugin.logger.warning("Failed to load bundled origins for '$addonId': plugin jar file unavailable")
+            return
+        }
+        container.originLoader.loadOriginsForAddon(
+            addonId = addonId,
+            dataFolder = plugin.dataFolder,
+            jarFile = jarFile,
+            folderName = folderName
+        )
     }
 
     // ========== Ability queries ==========

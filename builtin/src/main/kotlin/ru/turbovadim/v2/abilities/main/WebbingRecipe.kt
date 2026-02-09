@@ -11,7 +11,7 @@ import org.bukkit.event.inventory.PrepareItemCraftEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.ShapelessRecipe
 import org.bukkit.plugin.java.JavaPlugin
-import ru.turbovadim.v2.di.OriginsContainer
+import ru.turbovadim.v2.api.OriginsApi
 
 /**
  * Recipe registration and crafting restriction for the Webbing ability.
@@ -56,15 +56,14 @@ object WebbingRecipe : Listener {
         val recipe = event.recipe ?: return
         if (recipe.result.type != Material.COBWEB) return
 
-        val container = OriginsContainer.getOrNull() ?: return
+        val api = OriginsApi.getOrNull() ?: return
 
         // Check all viewers - if ANY viewer doesn't have the ability, cancel
         for (viewer in event.inventory.viewers) {
             val player = viewer as? Player ?: continue
-            val state = container.playerStateManager.getState(player)
 
             // Allow if player has either webbing or master_of_webs ability
-            val hasWebbing = state.hasAbility(webbingKey) || state.hasAbility(masterOfWebsKey)
+            val hasWebbing = api.hasAbility(player, webbingKey) || api.hasAbility(player, masterOfWebsKey)
             if (!hasWebbing) {
                 event.inventory.result = null
                 return

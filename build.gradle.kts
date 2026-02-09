@@ -23,6 +23,7 @@ dependencies {
     implementation("net.objecthunter:exp4j:0.4.8")
     implementation(project(":api"))
     implementation(project(":core"))
+    implementation(project(":builtin"))
     implementation(project(":version"))
     implementation(project(":1.20", "reobf"))
     implementation(project(":1.20.1", "reobf"))

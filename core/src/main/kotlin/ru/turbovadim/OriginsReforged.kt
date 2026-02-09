@@ -14,7 +14,7 @@ import ru.turbovadim.commands.OriginCommand
 import ru.turbovadim.config.*
 import ru.turbovadim.database.initDb
 import ru.turbovadim.packetsenders.*
-import ru.turbovadim.v2.V2Initializer
+import ru.turbovadim.v2.BuiltinModuleBootstrap
 import ru.turbovadim.v2.di.OriginsContainer
 import java.io.File
 
@@ -134,7 +134,7 @@ class OriginsReforged : JavaPlugin() {
         // Initialize v2 container
         v2Container = OriginsContainer.create(this, NMSInvoker, bukkitDispatcher)
         v2Container?.let { container ->
-            V2Initializer.registerAbilities(container)
+            BuiltinModuleBootstrap.registerAll(this)
             container.initialize()
         }
 
