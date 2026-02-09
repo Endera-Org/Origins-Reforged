@@ -40,30 +40,17 @@ class OriginLoader(private val container: OriginsContainer) {
      * @param addonId Unique identifier for the addon
      * @param dataFolder The addon's data folder
      * @param jarFile The addon's JAR file (for extracting defaults)
-     * @param modules Which modules to load (main is always loaded)
      */
     fun loadOriginsForAddon(
         addonId: String,
         dataFolder: File,
-        jarFile: File,
-        modules: OriginModules = OriginModules()
+        jarFile: File
     ) {
         val addonFiles = mutableListOf<File>()
         originFiles[addonId] = addonFiles
 
-        // Always load main origins
+        // Load bundled origins
         loadOriginsFromFolder(addonId, dataFolder, jarFile, "originsMain", addonFiles)
-
-        // Load module-specific origins
-        if (modules.fantasy) {
-            loadOriginsFromFolder(addonId, dataFolder, jarFile, "originsFantasy", addonFiles)
-        }
-        if (modules.mobs) {
-            loadOriginsFromFolder(addonId, dataFolder, jarFile, "originsMobs", addonFiles)
-        }
-        if (modules.monsters) {
-            loadOriginsFromFolder(addonId, dataFolder, jarFile, "originsMonsters", addonFiles)
-        }
 
         logger.info("Loaded ${addonFiles.size} origin files for addon: $addonId")
     }

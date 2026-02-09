@@ -30,7 +30,6 @@ class OriginsReforged : JavaPlugin() {
 
         lateinit var mainConfig: MainConfig
         lateinit var charactersConfig: CharactersConfig
-        lateinit var modulesConfig: ModulesConfig
 
         lateinit var NMSInvoker: NMSInvoker
             private set
@@ -117,20 +116,10 @@ class OriginsReforged : JavaPlugin() {
             clazz = CharactersConfig::class,
         )
 
-        val modulesConfigManager = ConfigurationManager(
-            configFile = File("${dataFolder}/modules.yml"),
-            dataFolder = dataFolder,
-            defaultConfig = defaultModulesConfig,
-            logger = logger,
-            serializer = ModulesConfig.serializer(),
-            clazz = ModulesConfig::class,
-        )
-
         multiConfigurationManager = MultiConfigurationManager(
             listOf(
                 mainConfigManager,
-                charactersConfigManager,
-                modulesConfigManager
+                charactersConfigManager
             )
         )
 
@@ -139,7 +128,6 @@ class OriginsReforged : JavaPlugin() {
         }
         mainConfig = ConfigRegistry.get(MainConfig::class)!!
         charactersConfig = ConfigRegistry.get(CharactersConfig::class)!!
-        modulesConfig = ConfigRegistry.get(ModulesConfig::class)!!
 
         initializeNMSInvoker(this)
 
