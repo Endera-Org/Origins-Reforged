@@ -71,7 +71,8 @@ class PlayerStateManager(
         reason: OriginChangeReason = OriginChangeReason.PLUGIN
     ) {
         val result = container.eventBus.processOriginChangeSync(player, layer, origin, reason)
-        if (result.cancelled || result.newOrigin == null) {
+        val newOrigin = result.newOrigin
+        if (result.cancelled || newOrigin == null) {
             return
         }
 
@@ -81,11 +82,11 @@ class PlayerStateManager(
                 DatabaseManager.updateOrigin(
                     player.uniqueId.toString(),
                     result.layer,
-                    result.newOrigin.name
+                    newOrigin.name
                 )
             } catch (t: Throwable) {
                 container.plugin.logger.severe(
-                    "Failed to persist origin '${result.newOrigin.name}' for ${player.name} " +
+                    "Failed to persist origin '${newOrigin.name}' for ${player.name} " +
                         "(layer: ${result.layer}): ${t.message}"
                 )
                 t.printStackTrace()

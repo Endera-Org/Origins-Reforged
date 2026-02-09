@@ -3,14 +3,10 @@ package ru.turbovadim.v2.addon
 import net.kyori.adventure.key.Key
 import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
-import ru.turbovadim.PackApplier
-import ru.turbovadim.packetsenders.OriginsReforgedResourcePackInfo
 import ru.turbovadim.v2.ability.Ability
 import ru.turbovadim.v2.ability.AbilityCheckResult
-import ru.turbovadim.v2.di.OriginsContainer
+import ru.turbovadim.v2.api.OriginsApi
 import ru.turbovadim.v2.origin.Origin
-import java.net.URI
-import net.kyori.adventure.resource.ResourcePackInfo as AdventureResourcePackInfo
 
 /**
  * Base class for Origins addons.
@@ -60,10 +56,10 @@ abstract class OriginsAddon : JavaPlugin() {
         get() = name.lowercase().replace(" ", "_")
 
     /**
-     * The container is injected during onEnable.
-     * Use this to access registries and services.
+     * The API facade is injected during onEnable.
+     * Use this to interact with the Origins system.
      */
-    protected lateinit var container: OriginsContainer
+    protected lateinit var api: OriginsApi
         private set
 
     /**
@@ -105,38 +101,28 @@ abstract class OriginsAddon : JavaPlugin() {
     // Lifecycle methods - do not override
 
     final override fun onEnable() {
-        // Get or wait for container
-        container = OriginsContainer.get()
+        // Get the API facade
+        api = OriginsApi.get()
 
         // Register abilities
         val abilities = abilities()
         abilities.forEach { ability ->
-            container.abilityRegistry.register(ability)
-            container.configLoader.registerDefaults(ability.key, ability.defaultOptions)
+            api.registerAbility(ability)
         }
 
         // Register origins
         val origins = origins()
         origins.forEach { origin ->
-            container.originRegistry.register(origin)
+            api.registerOrigin(origin)
         }
 
         // Register ability check hook if overridden
         val hook = AbilityCheckHook { player, ability -> onAbilityCheck(player, ability) }
-        container.addonAbilityCheckRegistry.register(hook)
+        api.registerAbilityCheckHook(hook)
 
         // Register resource pack
         resourcePack()?.let { pack ->
-            try {
-                val adventurePackInfo = AdventureResourcePackInfo.resourcePackInfo()
-                    .uri(URI.create(pack.url))
-                    .hash(pack.hash)
-                    .build()
-                PackApplier.addResourcePack(namespace, OriginsReforgedResourcePackInfo(adventurePackInfo))
-                logger.info("Registered resource pack from ${pack.url}")
-            } catch (e: Exception) {
-                logger.warning("Failed to register resource pack: ${e.message}")
-            }
+            api.registerResourcePack(namespace, pack)
         }
 
         logger.info("Registered ${abilities.size} abilities and ${origins.size} origins")
@@ -147,51 +133,4 @@ abstract class OriginsAddon : JavaPlugin() {
     final override fun onDisable() {
         onAddonDisable()
     }
-}
-
-/**
- * Information about a resource pack provided by an addon.
- */
-data class ResourcePackInfo(
-    /** URL to the resource pack */
-    val url: String,
-    /** SHA-1 hash of the resource pack */
-    val hash: String,
-    /** Whether the pack is required */
-    val required: Boolean = false,
-    /** Prompt shown to the player */
-    val prompt: String? = null
-)
-
-/**
- * Registry for addon-provided ability check hooks.
- */
-class AddonAbilityCheckRegistry {
-    private val hooks = mutableListOf<AbilityCheckHook>()
-
-    fun register(hook: AbilityCheckHook) {
-        hooks.add(hook)
-    }
-
-    fun unregister(hook: AbilityCheckHook) {
-        hooks.remove(hook)
-    }
-
-    /**
-     * Check all hooks and return first non-null result.
-     */
-    fun check(player: Player, ability: Key): AbilityCheckResult? {
-        for (hook in hooks) {
-            val result = hook.check(player, ability)
-            if (result != null) return result
-        }
-        return null
-    }
-}
-
-/**
- * Hook interface for addon-provided ability checks.
- */
-fun interface AbilityCheckHook {
-    fun check(player: Player, ability: Key): AbilityCheckResult?
 }

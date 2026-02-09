@@ -3,8 +3,7 @@ package ru.turbovadim.v2.ability
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import org.bukkit.entity.Player
-import ru.turbovadim.v2.ui.LineData
-import ru.turbovadim.v2.ui.LineDataCompat
+import ru.turbovadim.v2.api.OriginsApi
 
 /**
  * Represents an ability in the Origins system.
@@ -15,10 +14,6 @@ import ru.turbovadim.v2.ui.LineDataCompat
  * - Display information (title, description)
  * - A list of effects that define its behavior
  * - Configuration options with default values
- *
- * ## UI Integration
- * This interface provides [titleLines] and [descriptionLines] properties
- * that return [LineComponent] lists for rendering in the origin selection UI.
  */
 interface Ability {
     /** Unique identifier for this ability */
@@ -29,16 +24,6 @@ interface Ability {
 
     /** Description lines shown in the UI (as Adventure Components) */
     val description: List<Component>
-
-    /**
-     * Whether this ability is visible in the origin selection UI.
-     * Default is true, can be overridden in abilities.yml config.
-     */
-    val isVisible: Boolean
-        get() {
-            val container = ru.turbovadim.v2.di.OriginsContainer.getOrNull()
-            return container?.configLoader?.isVisible(key, isVisibleDefault) ?: isVisibleDefault
-        }
 
     /** Default visibility (before config override). Override this in implementations. */
     val isVisibleDefault: Boolean get() = true
@@ -54,22 +39,6 @@ interface Ability {
 
     /** Whether the dependency must be enabled or disabled */
     val dependencyInverse: Boolean get() = false
-
-    // ========== UI Integration ==========
-
-    /**
-     * Title formatted for the UI system.
-     * Returns LineComponents for rendering in the origin selection GUI.
-     */
-    val titleLines: List<LineData.LineComponent>
-        get() = LineDataCompat.makeTitleLines(this)
-
-    /**
-     * Description formatted for the UI system.
-     * Returns LineComponents for rendering in the origin selection GUI.
-     */
-    val descriptionLines: MutableList<LineData.LineComponent>
-        get() = LineDataCompat.makeDescriptionLines(this)
 }
 
 /**
@@ -146,8 +115,9 @@ class DependencyAbilityImpl(
     override fun enable(player: Player): Boolean {
         val changed = enabledPlayers.add(player.uniqueId)
         if (changed) {
-            reapplyDependentPassiveEffects(player)
-            triggerLifecycleCallbacks(player, enabled = true)
+            val api = OriginsApi.getOrNull() ?: return changed
+            api.reapplyPassiveEffects(player)
+            api.triggerDependencyLifecycle(player, key, enabled = true)
         }
         return changed
     }
@@ -155,52 +125,11 @@ class DependencyAbilityImpl(
     override fun disable(player: Player): Boolean {
         val changed = enabledPlayers.remove(player.uniqueId)
         if (changed) {
-            triggerLifecycleCallbacks(player, enabled = false)
-            reapplyDependentPassiveEffects(player)
+            val api = OriginsApi.getOrNull() ?: return changed
+            api.triggerDependencyLifecycle(player, key, enabled = false)
+            api.reapplyPassiveEffects(player)
         }
         return changed
-    }
-
-    /**
-     * Re-apply passive effects for abilities that depend on this one.
-     * Called when this dependency ability's state changes.
-     */
-    private fun reapplyDependentPassiveEffects(player: Player) {
-        val container = ru.turbovadim.v2.di.OriginsContainer.getOrNull() ?: return
-        val state = container.playerStateManager.getState(player) ?: return
-        container.passiveEffectProcessor.applyPassiveEffects(player, state)
-    }
-
-    /**
-     * Trigger lifecycle callbacks for abilities that depend on this one.
-     */
-    private fun triggerLifecycleCallbacks(player: Player, enabled: Boolean) {
-        val container = ru.turbovadim.v2.di.OriginsContainer.getOrNull() ?: return
-        val state = container.playerStateManager.getState(player) ?: return
-        val playerAbilities = state.getAbilityKeys()
-
-        // Find all abilities that depend on this one and the player has
-        for (abilityKey in playerAbilities) {
-            val ability = container.abilityRegistry.get(abilityKey) ?: continue
-
-            // Check if this ability depends on us
-            if (ability.dependencyKey != key) continue
-
-            // Get config accessor for the ability
-            val config = container.configLoader.getAccessor(abilityKey, ability.defaultOptions)
-
-            // Find and trigger lifecycle effects
-            for (effect in ability.effects) {
-                when {
-                    enabled && effect is AbilityEffect.Lifecycle.OnDependencyEnabled -> {
-                        effect.handler.onStateChange(player, config)
-                    }
-                    !enabled && effect is AbilityEffect.Lifecycle.OnDependencyDisabled -> {
-                        effect.handler.onStateChange(player, config)
-                    }
-                }
-            }
-        }
     }
 }
 

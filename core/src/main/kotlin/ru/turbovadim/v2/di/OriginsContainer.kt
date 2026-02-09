@@ -7,6 +7,8 @@ import org.endera.enderalib.utils.async.BukkitDispatcher
 import ru.turbovadim.packetsenders.NMSInvoker
 import ru.turbovadim.v2.ability.AbilityRegistry
 import ru.turbovadim.v2.addon.AddonAbilityCheckRegistry
+import ru.turbovadim.v2.api.OriginsApi
+import ru.turbovadim.v2.api.OriginsApiImpl
 import ru.turbovadim.v2.config.AbilityConfigLoader
 import ru.turbovadim.v2.cooldown.CooldownManager
 import ru.turbovadim.v2.event.OriginEventBus
@@ -84,6 +86,8 @@ class OriginsContainer private constructor(
         periodicAbilityProcessor.stop()
         attributeAbilityProcessor.stop()
         playerStateManager.clearAll()
+        OriginsApi.unregister()
+        instance = null
     }
 
     companion object {
@@ -107,6 +111,7 @@ class OriginsContainer private constructor(
 
             return OriginsContainer(plugin, nmsInvoker, dispatchers, configLoader).also {
                 instance = it
+                OriginsApi.register(OriginsApiImpl(it))
             }
         }
 

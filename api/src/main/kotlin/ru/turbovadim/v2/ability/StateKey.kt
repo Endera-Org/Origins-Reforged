@@ -2,7 +2,7 @@ package ru.turbovadim.v2.ability
 
 import net.kyori.adventure.key.Key
 import org.bukkit.entity.Player
-import ru.turbovadim.v2.di.OriginsContainer
+import ru.turbovadim.v2.api.OriginsApi
 import kotlin.reflect.KClass
 
 /**
@@ -43,24 +43,21 @@ class StateKey<T : Any>(
      * Returns the default if not set.
      */
     operator fun get(player: Player): T {
-        val state = OriginsContainer.get().playerStateManager.getState(player)
-        return state.getTypedState(this)
+        return OriginsApi.get().getState(player, this)
     }
 
     /**
      * Set the state value for a player.
      */
     operator fun set(player: Player, value: T) {
-        val state = OriginsContainer.get().playerStateManager.getState(player)
-        state.setTypedState(this, value)
+        OriginsApi.get().setState(player, this, value)
     }
 
     /**
      * Reset the state to its default value for a player.
      */
     fun reset(player: Player) {
-        val state = OriginsContainer.get().playerStateManager.getState(player)
-        state.removeTypedState(this)
+        OriginsApi.get().resetState(player, this)
     }
 
     /**

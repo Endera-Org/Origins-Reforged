@@ -328,12 +328,3 @@ class OriginLoader(private val container: OriginsContainer) {
         return item
     }
 }
-
-/**
- * Configuration for which origin modules to load.
- */
-data class OriginModules(
-    val fantasy: Boolean = false,
-    val mobs: Boolean = false,
-    val monsters: Boolean = false
-)

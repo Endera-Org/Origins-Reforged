@@ -21,6 +21,7 @@ repositories {
 dependencies {
     implementation("org.json:json:20250517")
     implementation("net.objecthunter:exp4j:0.4.8")
+    implementation(project(":api"))
     implementation(project(":core"))
     implementation(project(":version"))
     implementation(project(":1.20", "reobf"))

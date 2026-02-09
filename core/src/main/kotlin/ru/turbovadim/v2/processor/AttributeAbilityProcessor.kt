@@ -102,8 +102,9 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
                 val attribute = modifierDef.attributeType.resolve(container.nmsInvoker) ?: continue
 
                 // Get value from config if configKey is set, otherwise use default
-                val value = if (modifierDef.configKey != null) {
-                    accessor.getDouble(modifierDef.configKey, modifierDef.defaultValue)
+                val cfgKey = modifierDef.configKey
+                val value = if (cfgKey != null) {
+                    accessor.getDouble(cfgKey, modifierDef.defaultValue)
                 } else {
                     modifierDef.defaultValue
                 }
