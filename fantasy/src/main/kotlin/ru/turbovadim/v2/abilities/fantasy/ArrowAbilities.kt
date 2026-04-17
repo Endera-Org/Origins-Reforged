@@ -4,25 +4,29 @@ import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.AbstractArrow
 import org.bukkit.entity.Arrow
+import org.bukkit.entity.Player
+import org.bukkit.entity.Projectile
+import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.Vector
+import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.dsl.ability
+import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
 import kotlin.random.Random
 
 /**
  * Arrow-related abilities for the Fantasy Origins module.
- * These abilities modify arrow behavior, damage, and speed.
  */
 
-// Namespace key for tracking arrows with increased damage
-private val INCREASED_DAMAGE_KEY = NamespacedKey.fromString("originsreforged:increased_arrow_damage")!!
+internal val INCREASED_DAMAGE_KEY: NamespacedKey =
+    NamespacedKey.fromString("originsreforged:increased_arrow_damage")!!
 
 /**
  * Piercing Shot - All arrows deal increased damage.
- * Legacy: IncreasedArrowDamage
  *
- * Implementation: Marks arrows when shot, then adds extra damage when they hit.
+ * The arrow is marked in onBowShoot with the bonus damage; the outgoing damage
+ * handler reads the bonus from the projectile's PDC when the arrow hits.
  */
 val increasedArrowDamage = ability("increased_arrow_damage", "fantasyorigins") {
     title = text("Piercing Shot")
@@ -30,8 +34,7 @@ val increasedArrowDamage = ability("increased_arrow_damage", "fantasyorigins") {
 
     option("extra_damage", 3.0)
 
-    onBowShoot { player, projectile, config ->
-        // Mark the arrow so we can identify it on hit
+    onBowShoot { _, projectile, config ->
         projectile.persistentDataContainer.set(
             INCREASED_DAMAGE_KEY,
             PersistentDataType.DOUBLE,
@@ -39,15 +42,25 @@ val increasedArrowDamage = ability("increased_arrow_damage", "fantasyorigins") {
         )
     }
 
-    // Note: The actual damage increase is handled by a global listener that checks
-    // for the INCREASED_DAMAGE_KEY on arrows that hit entities
+    // When the marked arrow hits, add the stored bonus to the event damage.
+    listener<EntityDamageByEntityEvent>(
+        playerFrom = { event ->
+            val projectile = event.damager as? Projectile ?: return@listener null
+            if (!projectile.persistentDataContainer.has(INCREASED_DAMAGE_KEY, PersistentDataType.DOUBLE)) {
+                return@listener null
+            }
+            projectile.shooter as? Player
+        }
+    ) { _, event, _ ->
+        val projectile = event.damager as? Projectile ?: return@listener
+        val bonus = projectile.persistentDataContainer
+            .get(INCREASED_DAMAGE_KEY, PersistentDataType.DOUBLE) ?: return@listener
+        event.damage += bonus
+    }
 }
 
 /**
  * Swift Shot - Arrows fly faster through the air.
- * Legacy: IncreasedArrowSpeed
- *
- * Implementation: Multiplies arrow velocity when shot.
  */
 val increasedArrowSpeed = ability("increased_arrow_speed", "fantasyorigins") {
     title = text("Swift Shot")
@@ -55,58 +68,40 @@ val increasedArrowSpeed = ability("increased_arrow_speed", "fantasyorigins") {
 
     option("velocity_multiplier", 2.0)
 
-    onBowShoot { player, projectile, config ->
+    onBowShoot { _, projectile, config ->
         val multiplier = config.getDouble("velocity_multiplier", 2.0)
         projectile.velocity = projectile.velocity.multiply(multiplier)
     }
 }
 
 /**
- * Arrow Lord - Boosts potion effects on arrows.
- * Legacy: ArrowEffectBooster
- *
- * Note: This requires NMSInvoker.boostArrow() which is version-specific.
- * The DSL marks arrows for boosting; the actual boost is done by NMS code.
+ * Arrow Lord - Boosts potion effects on arrows via NMS.
  */
 val arrowEffectBooster = ability("arrow_effect_booster", "fantasyorigins") {
     title = text("Arrow Lord")
     description("Your connection to your bow and arrow enhances any potion effects placed on your arrows.")
 
-    onBowShoot { player, projectile, config ->
-        // Mark arrow for effect boosting - requires NMSInvoker integration
+    onBowShoot { _, projectile, _ ->
         val arrow = projectile as? Arrow ?: return@onBowShoot
-        // Note: Actual boosting done via NMSInvoker.boostArrow(arrow) in event handler
-        projectile.persistentDataContainer.set(
-            NamespacedKey.fromString("originsreforged:boost_arrow_effects")!!,
-            PersistentDataType.BOOLEAN,
-            true
-        )
+        OriginsReforged.NMSInvoker.boostArrow(arrow)
     }
 }
 
 /**
- * Perfect Shot - Arrows always fly straight.
- * Legacy: PerfectShot
- *
- * Implementation: Normalizes arrow velocity to remove any spread while maintaining speed.
+ * Perfect Shot - Arrows always fly straight (zero velocity spread).
  */
 val perfectShot = ability("perfect_shot", "fantasyorigins") {
     title = text("Perfect Shot")
     description("Your arrows always fly perfectly straight and true.")
 
-    onBowShoot { player, projectile, config ->
-        val velocity = projectile.velocity
-        val speed = velocity.length()
-        // Normalize to get direction, then scale back to original speed
-        projectile.velocity = velocity.normalize().multiply(speed)
+    onBowShoot { player, projectile, _ ->
+        val speed = projectile.velocity.length()
+        projectile.velocity = player.location.direction.normalize().multiply(speed)
     }
 }
 
 /**
  * Poor Shot - Arrows have random spread.
- * Legacy: PoorShot
- *
- * Implementation: Adds random deviation to arrow velocity.
  */
 val poorShot = ability("poor_shot", "fantasyorigins") {
     title = text("Poor Shot")
@@ -114,7 +109,7 @@ val poorShot = ability("poor_shot", "fantasyorigins") {
 
     option("spread", 0.3)
 
-    onBowShoot { player, projectile, config ->
+    onBowShoot { _, projectile, config ->
         val spread = config.getDouble("spread", 0.3)
         val randomX = (Random.nextDouble() - 0.5) * spread
         val randomY = (Random.nextDouble() - 0.5) * spread
@@ -124,12 +119,7 @@ val poorShot = ability("poor_shot", "fantasyorigins") {
 }
 
 /**
- * Bow Burst - Instantly shoot 3 arrows at once.
- * Legacy: BowBurst
- *
- * Implementation: On left-click with a bow, consumes an arrow and fires 3 arrows
- * with a cooldown applied to the bow.
- * Note: Requires NMSInvoker.launchArrow() for proper directional spread.
+ * Bow Burst - Fire 3 arrows with one shot and apply a 7 second bow cooldown.
  */
 val bowBurst = ability("bow_burst", "fantasyorigins") {
     title = text("Bow Burst")
@@ -140,46 +130,35 @@ val bowBurst = ability("bow_burst", "fantasyorigins") {
 
     option("cooldown_ticks", 140)
     option("arrow_count", 3)
+    option("arrow_force", 3.0)
+    option("arrow_divergence", 1.0)
 
     onLeftClick { player, item, config ->
         if (item?.type != Material.BOW) return@onLeftClick false
         if (player.getCooldown(Material.BOW) > 0) return@onLeftClick false
         if (!player.inventory.contains(Material.ARROW)) return@onLeftClick false
 
-        // Consume one arrow
-        player.inventory.firstOrNull { it?.type == Material.ARROW }?.let {
-            it.amount--
+        player.inventory.firstOrNull { it?.type == Material.ARROW }?.let { stack ->
+            stack.amount--
         }
 
-        // Set cooldown
         val cooldown = config.getInt("cooldown_ticks", 140)
         player.setCooldown(Material.BOW, cooldown)
 
-        // Launch 3 arrows
-        // Note: For proper spread, NMSInvoker.launchArrow should be used
-        // This is a simplified version that launches arrows in the player's direction
-        val arrow1 = player.launchProjectile(Arrow::class.java)
-        val arrow2 = player.launchProjectile(Arrow::class.java)
-        val arrow3 = player.launchProjectile(Arrow::class.java)
+        val count = config.getInt("arrow_count", 3)
+        val force = config.getDouble("arrow_force", 3.0).toFloat()
+        val divergence = config.getDouble("arrow_divergence", 1.0).toFloat()
 
-        // Apply slight spread
-        val baseDirection = player.location.direction
-        arrow1.velocity = baseDirection.clone().rotateAroundY(Math.toRadians(15.0)).multiply(3.0)
-        arrow2.velocity = baseDirection.clone().multiply(3.0)
-        arrow3.velocity = baseDirection.clone().rotateAroundY(Math.toRadians(-15.0)).multiply(3.0)
+        repeat(count) {
+            val arrow: Projectile = player.launchProjectile(Arrow::class.java)
+            OriginsReforged.NMSInvoker.launchArrow(arrow, player, 0f, force, divergence)
+            (arrow as? AbstractArrow)?.pickupStatus = AbstractArrow.PickupStatus.CREATIVE_ONLY
+        }
 
-        // Prevent arrow pickup
-        arrow1.pickupStatus = AbstractArrow.PickupStatus.CREATIVE_ONLY
-        arrow2.pickupStatus = AbstractArrow.PickupStatus.CREATIVE_ONLY
-        arrow3.pickupStatus = AbstractArrow.PickupStatus.CREATIVE_ONLY
-
-        true // Event was handled
+        true
     }
 }
 
-/**
- * Collection of all arrow-related abilities.
- */
 val arrowAbilities = listOf(
     increasedArrowDamage,
     increasedArrowSpeed,

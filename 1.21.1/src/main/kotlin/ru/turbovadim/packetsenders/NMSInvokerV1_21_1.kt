@@ -1,11 +1,6 @@
 package ru.turbovadim.packetsenders
 
 import com.destroystokyo.paper.entity.ai.Goal
-import net.kyori.adventure.key.Key
-import net.kyori.adventure.resource.ResourcePackInfo
-import net.kyori.adventure.resource.ResourcePackRequest
-import net.kyori.adventure.text.Component
-import net.kyori.adventure.util.TriState
 import net.minecraft.Optionull
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
@@ -20,32 +15,19 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal
 import net.minecraft.world.entity.ai.memory.MemoryModuleType
 import net.minecraft.world.level.GameType
 import net.minecraft.world.phys.Vec3
-import org.bukkit.*
+import org.bukkit.GameMode
+import org.bukkit.Location
+import org.bukkit.Material
 import org.bukkit.attribute.Attribute
-import org.bukkit.attribute.AttributeInstance
-import org.bukkit.attribute.AttributeModifier
 import org.bukkit.craftbukkit.CraftWorld
 import org.bukkit.craftbukkit.block.CraftBlockState
 import org.bukkit.craftbukkit.entity.*
 import org.bukkit.craftbukkit.inventory.CraftItemStack
-import org.bukkit.damage.DamageSource
-import org.bukkit.damage.DamageType
-import org.bukkit.enchantments.Enchantment
 import org.bukkit.entity.*
-import org.bukkit.event.EventHandler
-import org.bukkit.event.block.BlockDamageAbortEvent
-import org.bukkit.event.entity.EntityDamageEvent
-import org.bukkit.event.entity.EntityDismountEvent
-import org.bukkit.event.entity.EntityMountEvent
-import org.bukkit.inventory.EquipmentSlot
-import org.bukkit.inventory.EquipmentSlotGroup
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
-import org.bukkit.potion.PotionEffectType
 import org.bukkit.util.Vector
-import java.net.URI
 import java.util.*
-import java.util.concurrent.ExecutionException
 import java.util.function.Function
 import java.util.function.Predicate
 
@@ -87,7 +69,6 @@ class NMSInvokerV1_21_1 : NMSInvoker() {
             .orElse(null)
     }
 
-
     override fun throwItem(piglin: Piglin, itemStack: ItemStack, pos: Location) {
         BehaviorUtils.throwItem(
             (piglin as CraftLivingEntity).handle,
@@ -96,27 +77,9 @@ class NMSInvokerV1_21_1 : NMSInvoker() {
         )
     }
 
-
-
     override fun dealThornsDamage(target: Entity, amount: Int, attacker: Entity) {
         val entity = (target as CraftEntity).handle
         entity.hurt(entity.damageSources().thorns((attacker as CraftEntity).handle), amount.toFloat())
-    }
-
-    override fun getSmiteEnchantment(): Enchantment {
-        return Enchantment.SMITE
-    }
-
-    override fun getElderGuardianParticle(): Particle {
-        return Particle.ELDER_GUARDIAN
-    }
-
-    override fun getWitchParticle(): Particle {
-        return Particle.WITCH
-    }
-
-    override fun damageItem(item: ItemStack, amount: Int, player: Player) {
-        item.damage(amount, player)
     }
 
     override fun startAutoSpinAttack(
@@ -162,33 +125,9 @@ class NMSInvokerV1_21_1 : NMSInvoker() {
         lastVec3Map.put(player, p.deltaMovement)
     }
 
-
-
-
-    override val genericScaleAttribute: Attribute? = Attribute.GENERIC_SCALE
+    override val genericScaleAttribute: Attribute = Attribute.GENERIC_SCALE
 
     override val genericJumpStrengthAttribute: Attribute = Attribute.GENERIC_JUMP_STRENGTH
-
-    @Suppress("UnstableApiUsage")
-    override fun transferDamageEvent(entity: LivingEntity, event: EntityDamageEvent) {
-        entity.damage(event.damage, event.damageSource)
-    }
-
-    @EventHandler
-    fun onEntityDismount(event: EntityDismountEvent) {
-        event.isCancelled = !FantasyEntityDismountEvent(
-            event.entity,
-            event.dismounted,
-            event.isCancellable
-        ).callEvent()
-    }
-
-    @EventHandler
-    fun onEntityMount(event: EntityMountEvent) {
-        event.isCancelled = !FantasyEntityMountEvent(event.entity, event.mount).callEvent()
-    }
-
-    override fun getFortuneEnchantment(): Enchantment = Enchantment.FORTUNE
 
     override fun launchArrow(projectile: Entity, entity: Entity, roll: Float, force: Float, divergence: Float) {
         (projectile as AbstractProjectile).handle.shootFromRotation(
@@ -201,15 +140,6 @@ class NMSInvokerV1_21_1 : NMSInvoker() {
         )
     }
 
-    override fun boostArrow(arrow: Arrow) {
-        for (effect in arrow.basePotionType?.potionEffects.orEmpty()) {
-            arrow.addCustomEffect(
-                effect.withDuration(effect.duration).withAmplifier(effect.amplifier + 1),
-                true
-            )
-        }
-    }
-
     override fun duplicateAllay(allay: Allay): Boolean {
         if (allay.duplicationCooldown > 0) return false
         allay.duplicateAllay()
@@ -218,10 +148,10 @@ class NMSInvokerV1_21_1 : NMSInvoker() {
         return true
     }
 
-    override val miningEfficiencyAttribute: Attribute? = Attribute.PLAYER_MINING_EFFICIENCY
-    override val sneakingSpeedAttribute: Attribute? = Attribute.PLAYER_SNEAKING_SPEED
-    override val submergedMiningSpeedAttribute: Attribute? = Attribute.PLAYER_SUBMERGED_MINING_SPEED
-    override val sweepingDamageRatioAttribute: Attribute? = Attribute.PLAYER_SWEEPING_DAMAGE_RATIO
+    override val miningEfficiencyAttribute: Attribute = Attribute.PLAYER_MINING_EFFICIENCY
+    override val sneakingSpeedAttribute: Attribute = Attribute.PLAYER_SNEAKING_SPEED
+    override val submergedMiningSpeedAttribute: Attribute = Attribute.PLAYER_SUBMERGED_MINING_SPEED
+    override val sweepingDamageRatioAttribute: Attribute = Attribute.PLAYER_SWEEPING_DAMAGE_RATIO
     override val flyingSpeedAttribute: Attribute = Attribute.GENERIC_FLYING_SPEED
     override val attackKnockbackAttribute: Attribute = Attribute.GENERIC_ATTACK_KNOCKBACK
     override val attackSpeedAttribute: Attribute = Attribute.GENERIC_ATTACK_SPEED
@@ -231,42 +161,26 @@ class NMSInvokerV1_21_1 : NMSInvoker() {
     override val spawnReinforcementsAttribute: Attribute = Attribute.ZOMBIE_SPAWN_REINFORCEMENTS
     override val followRangeAttribute: Attribute = Attribute.GENERIC_FOLLOW_RANGE
     override val knockbackResistanceAttribute: Attribute = Attribute.GENERIC_KNOCKBACK_RESISTANCE
-    override val fallDamageMultiplierAttribute: Attribute? = Attribute.GENERIC_FALL_DAMAGE_MULTIPLIER
-    override val maxAbsorptionAttribute: Attribute? = Attribute.GENERIC_MAX_ABSORPTION
-    override val safeFallDistanceAttribute: Attribute? = Attribute.GENERIC_SAFE_FALL_DISTANCE
-    override val scaleAttribute: Attribute? = Attribute.GENERIC_SCALE
-    override val stepHeightAttribute: Attribute? = Attribute.GENERIC_STEP_HEIGHT
-    override val gravityAttribute: Attribute? = Attribute.GENERIC_GRAVITY
-    override val jumpStrengthAttribute: Attribute? = Attribute.GENERIC_JUMP_STRENGTH
-    override val burningTimeAttribute: Attribute? = Attribute.GENERIC_BURNING_TIME
-    override val explosionKnockbackResistanceAttribute: Attribute? = Attribute.GENERIC_EXPLOSION_KNOCKBACK_RESISTANCE
-    override val movementEfficiencyAttribute: Attribute? = Attribute.GENERIC_MOVEMENT_EFFICIENCY
-    override val oxygenBonusAttribute: Attribute? = Attribute.GENERIC_OXYGEN_BONUS
-    override val waterMovementEfficiencyAttribute: Attribute? = Attribute.GENERIC_WATER_MOVEMENT_EFFICIENCY
+    override val fallDamageMultiplierAttribute: Attribute = Attribute.GENERIC_FALL_DAMAGE_MULTIPLIER
+    override val maxAbsorptionAttribute: Attribute = Attribute.GENERIC_MAX_ABSORPTION
+    override val safeFallDistanceAttribute: Attribute = Attribute.GENERIC_SAFE_FALL_DISTANCE
+    override val scaleAttribute: Attribute = Attribute.GENERIC_SCALE
+    override val stepHeightAttribute: Attribute = Attribute.GENERIC_STEP_HEIGHT
+    override val gravityAttribute: Attribute = Attribute.GENERIC_GRAVITY
+    override val jumpStrengthAttribute: Attribute = Attribute.GENERIC_JUMP_STRENGTH
+    override val burningTimeAttribute: Attribute = Attribute.GENERIC_BURNING_TIME
+    override val explosionKnockbackResistanceAttribute: Attribute = Attribute.GENERIC_EXPLOSION_KNOCKBACK_RESISTANCE
+    override val movementEfficiencyAttribute: Attribute = Attribute.GENERIC_MOVEMENT_EFFICIENCY
+    override val oxygenBonusAttribute: Attribute = Attribute.GENERIC_OXYGEN_BONUS
+    override val waterMovementEfficiencyAttribute: Attribute = Attribute.GENERIC_WATER_MOVEMENT_EFFICIENCY
     override val temptRangeAttribute: Attribute? = null
     override val armorAttribute: Attribute = Attribute.GENERIC_ARMOR
     override val maxHealthAttribute: Attribute = Attribute.GENERIC_MAX_HEALTH
     override val movementSpeedAttribute: Attribute = Attribute.GENERIC_MOVEMENT_SPEED
     override val attackDamageAttribute: Attribute = Attribute.GENERIC_ATTACK_DAMAGE
-    override val nauseaEffect: PotionEffectType = PotionEffectType.NAUSEA
-    override val miningFatigueEffect: PotionEffectType = PotionEffectType.MINING_FATIGUE
-    override val hasteEffect: PotionEffectType = PotionEffectType.HASTE
-    override val jumpBoostEffect: PotionEffectType = PotionEffectType.JUMP_BOOST
-    override val unbreakingEnchantment: Enchantment = Enchantment.UNBREAKING
-    override val efficiencyEnchantment: Enchantment = Enchantment.EFFICIENCY
-    override val respirationEnchantment: Enchantment = Enchantment.RESPIRATION
-    override val aquaAffinityEnchantment: Enchantment = Enchantment.AQUA_AFFINITY
-    override val slownessEffect: PotionEffectType = PotionEffectType.SLOWNESS
-    override val baneOfArthropodsEnchantment: Enchantment = Enchantment.BANE_OF_ARTHROPODS
-    override val strengthEffect: PotionEffectType = PotionEffectType.STRENGTH
-    override val blockInteractionRangeAttribute: Attribute? = Attribute.PLAYER_BLOCK_INTERACTION_RANGE
-    override val entityInteractionRangeAttribute: Attribute? = Attribute.PLAYER_ENTITY_INTERACTION_RANGE
-    override val blockBreakSpeedAttribute: Attribute? = Attribute.PLAYER_BLOCK_BREAK_SPEED
-    override val ominousBottle: Material? = Material.OMINOUS_BOTTLE
-
-    override fun applyFont(component: Component, font: Key): Component {
-        return component.font(font)
-    }
+    override val blockInteractionRangeAttribute: Attribute = Attribute.PLAYER_BLOCK_INTERACTION_RANGE
+    override val entityInteractionRangeAttribute: Attribute = Attribute.PLAYER_ENTITY_INTERACTION_RANGE
+    override val blockBreakSpeedAttribute: Attribute = Attribute.PLAYER_BLOCK_BREAK_SPEED
 
     override fun sendEntityData(player: Player, entity: Entity, bytes: Byte) {
         val serverPlayer = (player as CraftPlayer).handle
@@ -352,107 +266,8 @@ class NMSInvokerV1_21_1 : NMSInvoker() {
         serverPlayer.connection.send(packet)
     }
 
-    override fun sendResourcePacks(
-        player: Player,
-        pack: String,
-        extraPacks: MutableMap<*, OriginsReforgedResourcePackInfo>
-    ) {
-        try {
-            val packInfo = ResourcePackInfo.resourcePackInfo()
-                .uri(URI.create(pack))
-                .computeHashAndBuild().get()
-            val packs: MutableList<ResourcePackInfo?> = ArrayList<ResourcePackInfo?>()
-            packs.add(packInfo)
-            for (originsReforgedResourcePackInfo in extraPacks.values) {
-                val info = originsReforgedResourcePackInfo.packInfo as? ResourcePackInfo
-                if (info != null) {
-                    packs.add(info)
-                }
-            }
-            player.sendResourcePacks(
-                ResourcePackRequest.resourcePackRequest()
-                    .packs(packs)
-                    .required(true)
-                    .build()
-            )
-        } catch (e: InterruptedException) {
-            throw RuntimeException(e)
-        } catch (e: ExecutionException) {
-            throw RuntimeException(e)
-        }
-    }
-
     override fun setCustomModelData(meta: ItemMeta, cmd: Int): ItemMeta {
         meta.setCustomModelData(cmd)
         return meta
-    }
-
-    override fun getRespawnLocation(player: Player): Location? {
-        return player.respawnLocation
-    }
-
-    override fun resetRespawnLocation(player: Player) {
-        player.respawnLocation = null
-    }
-
-    override fun getAttributeModifier(instance: AttributeInstance, key: NamespacedKey): AttributeModifier? {
-        return instance.getModifier(key)
-    }
-
-    override fun addAttributeModifier(
-        instance: AttributeInstance,
-        key: NamespacedKey,
-        name: String,
-        amount: Double,
-        operation: AttributeModifier.Operation
-    ) {
-        instance.addModifier(AttributeModifier(key, amount, operation, EquipmentSlotGroup.ANY))
-    }
-
-    override fun dealDryOutDamage(entity: LivingEntity, amount: Int) {
-        entity.damage(amount.toDouble(), DamageSource.builder(DamageType.DRY_OUT).build())
-    }
-
-    override fun dealFreezeDamage(entity: LivingEntity, amount: Int) {
-        entity.damage(amount.toDouble(), DamageSource.builder(DamageType.FREEZE).build())
-    }
-
-    override fun isUnderWater(entity: LivingEntity): Boolean {
-        return entity.isUnderWater
-    }
-
-    override fun knockback(entity: LivingEntity, strength: Double, x: Double, z: Double) {
-        entity.knockback(strength, x, z)
-    }
-
-    override fun setFlyingFallDamage(player: Player, state: TriState) {
-        player.setFlyingFallDamage(state)
-    }
-
-    override fun broadcastSlotBreak(player: Player, slot: EquipmentSlot, players: MutableCollection<Player>) {
-        player.broadcastSlotBreak(slot, players)
-    }
-
-    override fun sendBlockDamage(player: Player, location: Location, damage: Float, entity: Entity) {
-        player.sendBlockDamage(location, damage, entity)
-    }
-
-    override fun setWorldBorderOverlay(player: Player, show: Boolean) {
-        if (show) {
-            val border = Bukkit.createWorldBorder()
-            border.center = player.world.worldBorder.center
-            border.size = player.world.worldBorder.size
-            border.warningDistance = (player.world.worldBorder.size * 2).toInt()
-            player.worldBorder = border
-        } else player.worldBorder = null
-    }
-
-    override fun dealDrowningDamage(entity: LivingEntity, amount: Int) {
-        entity.damage(amount.toDouble(), DamageSource.builder(DamageType.DROWN).build())
-    }
-
-    @EventHandler
-    fun onBlockDamageAbort(event: BlockDamageAbortEvent) {
-        OriginsReforgedBlockDamageAbortEvent(event.player, event.getBlock(), event.itemInHand).callEvent()
     }
 }
