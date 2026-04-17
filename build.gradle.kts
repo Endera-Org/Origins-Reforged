@@ -2,7 +2,7 @@ plugins {
     id("java")
     id("com.gradleup.shadow") version "9.2.2"
     id("io.papermc.paperweight.userdev") version "2.0.0-beta.19" apply false
-    kotlin("jvm") version "2.2.21"
+    kotlin("jvm") version "2.3.20"
 }
 
 group = "ru.turbovadim"
@@ -25,19 +25,12 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":builtin"))
     implementation(project(":version"))
-    implementation(project(":1.20", "reobf"))
-    implementation(project(":1.20.1", "reobf"))
-    implementation(project(":1.20.2", "reobf"))
-    implementation(project(":1.20.3", "reobf"))
-    implementation(project(":1.20.4", "reobf"))
-    implementation(project(":1.20.6", "reobf"))
-//    implementation(project(":1.21", "reobf"))
-    implementation(project(":1.21.1", "reobf"))
-    implementation(project(":1.21.3", "reobf"))
-    implementation(project(":1.21.4", "reobf"))
-    implementation(project(":1.21.6", "reobf"))
-    implementation(project(":1.21.7", "reobf"))
-    implementation(project(":1.21.10", "reobf"))
+    implementation(project(":1.21.1"))
+    implementation(project(":1.21.3"))
+    implementation(project(":1.21.4"))
+    implementation(project(":1.21.6"))
+    implementation(project(":1.21.7"))
+    implementation(project(":1.21.10"))
     implementation("net.kyori:adventure-platform-bukkit:4.3.4")
 }
 

@@ -2,7 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("java-library")
-    kotlin("jvm") version "2.2.21"
+    kotlin("jvm") version "2.3.20"
     kotlin("plugin.serialization") version "2.2.21" apply true
 }
 
@@ -44,13 +44,6 @@ dependencies {
     compileOnly("com.github.retrooper:packetevents-spigot:2.10.0-SNAPSHOT")
 
     compileOnly(project(":version"))
-    compileOnly(project(":1.20"))
-    compileOnly(project(":1.20.1"))
-    compileOnly(project(":1.20.2"))
-    compileOnly(project(":1.20.3"))
-    compileOnly(project(":1.20.4"))
-    compileOnly(project(":1.20.6"))
-//    compileOnly(project(":1.21"))
     compileOnly(project(":1.21.1"))
     compileOnly(project(":1.21.3"))
     compileOnly(project(":1.21.4"))
