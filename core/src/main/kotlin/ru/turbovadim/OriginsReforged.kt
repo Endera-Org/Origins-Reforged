@@ -35,15 +35,8 @@ class OriginsReforged : JavaPlugin() {
             private set
 
         private fun initializeNMSInvoker(instance: OriginsReforged) {
-            val version =
-                Bukkit.getBukkitVersion().split("-".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()[0]
+            val version = Bukkit.getMinecraftVersion()
             NMSInvoker = when (version) {
-                "1.20" -> NMSInvokerV1_20()
-                "1.20.1" -> NMSInvokerV1_20_1()
-                "1.20.2" -> NMSInvokerV1_20_2()
-                "1.20.3" -> NMSInvokerV1_20_3()
-                "1.20.4" -> NMSInvokerV1_20_4()
-                "1.20.5", "1.20.6" -> NMSInvokerV1_20_6()
                 "1.21.1" -> NMSInvokerV1_21_1()
                 "1.21.2", "1.21.3" -> NMSInvokerV1_21_3()
                 "1.21.4" -> NMSInvokerV1_21_4()
@@ -51,9 +44,15 @@ class OriginsReforged : JavaPlugin() {
                 "1.21.7", "1.21.8" -> NMSInvokerV1_21_7()
                 "1.21.9", "1.21.10" -> NMSInvokerV1_21_10()
                 "1.21.11" -> NMSInvokerV1_21_11()
+                "26.1.1", "26.1.2" -> loadNMSInvoker("ru.turbovadim.packetsenders.NMSInvokerV26_1")
                 else -> throw IllegalStateException("Unsupported version: " + Bukkit.getMinecraftVersion())
             }
             Bukkit.getPluginManager().registerEvents(NMSInvoker, instance)
+        }
+
+        private fun loadNMSInvoker(className: String): NMSInvoker {
+            val clazz = Class.forName(className, true, OriginsReforged::class.java.classLoader)
+            return clazz.getDeclaredConstructor().newInstance() as NMSInvoker
         }
 
         /** v2 container - initialized in onEnable() */

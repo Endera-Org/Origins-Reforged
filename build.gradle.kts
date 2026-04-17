@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("com.gradleup.shadow") version "9.2.2"
-    id("io.papermc.paperweight.userdev") version "2.0.0-beta.19" apply false
+    id("io.papermc.paperweight.userdev") version "2.0.0-beta.21" apply false
     kotlin("jvm") version "2.3.20"
 }
 
@@ -31,6 +31,8 @@ dependencies {
     implementation(project(":1.21.6"))
     implementation(project(":1.21.7"))
     implementation(project(":1.21.10"))
+    implementation(project(":1.21.11"))
+    implementation(project(":26.1"))
     implementation("net.kyori:adventure-platform-bukkit:4.3.4")
 }
 
