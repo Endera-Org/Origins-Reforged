@@ -107,7 +107,7 @@ val noteBlockPower = ability("note_block_power", "fantasyorigins") {
         if (player.location.distance(block.location) > radius) return@onNoteBlockPlay
 
         player.addPotionEffect(PotionEffect(PotionEffectType.SPEED, duration, amplifier))
-        player.addPotionEffect(PotionEffect(PotionEffectType.INCREASE_DAMAGE, duration, amplifier))
+        player.addPotionEffect(PotionEffect(PotionEffectType.STRENGTH, duration, amplifier))
     }
 }
 

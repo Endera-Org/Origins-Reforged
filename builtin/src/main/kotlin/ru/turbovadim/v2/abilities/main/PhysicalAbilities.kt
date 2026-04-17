@@ -51,8 +51,7 @@ val weakArms = ability("weak_arms") {
     modifyBreakSpeed { player, baseSpeed, context, config ->
         val threshold = config.getInt("adjacent_stone_threshold", 2)
 
-        // Check if player has strength effect (bypasses restriction)
-        val hasStrength = player.hasPotionEffect(PotionEffectType.INCREASE_DAMAGE) // STRENGTH in older versions
+        val hasStrength = player.hasPotionEffect(PotionEffectType.STRENGTH)
         if (hasStrength) {
             return@modifyBreakSpeed baseSpeed
         }

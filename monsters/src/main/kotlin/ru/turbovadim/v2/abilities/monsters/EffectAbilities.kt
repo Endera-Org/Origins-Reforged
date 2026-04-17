@@ -2,53 +2,38 @@ package ru.turbovadim.v2.abilities.monsters
 
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.LivingEntity
+import org.bukkit.entity.Player
+import org.bukkit.event.entity.EntityPotionEffectEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.dsl.ability
+import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
 
 /**
  * Potion effect abilities for monster origins.
- * Includes passive effects, immunities, and effect applications.
  */
 
-// ============================================
-// VISION ABILITIES
-// ============================================
-
-/**
- * Night vision when on land (for drowned-type origins).
- * Grants infinite night vision when not underwater, restores previous effect when entering water.
- */
 val landNightVision = ability("land_night_vision", "monsterorigins") {
     title = text("Dark Sight")
     description("You can see in the dark when on land.")
 
-    option("check_interval", 1)
-    option("effect_duration", 400)
-
-    // Night vision when not underwater
-    // Note: Full implementation with effect storage/restoration requires state management
-    // Legacy behavior: stores existing night vision, applies infinite amplifier -1 effect,
-    // restores original when entering water
-    onTick(interval = 1) { player, config ->
+    onTick(interval = 1) { player, _ ->
         if (!player.isUnderWater) {
             val currentEffect = player.getPotionEffect(PotionEffectType.NIGHT_VISION)
             val ambient = currentEffect?.isAmbient ?: false
             val showParticles = currentEffect?.hasParticles() ?: false
-
-            // Apply infinite night vision with amplifier -1 (special marker)
             player.addPotionEffect(
                 PotionEffect(
                     PotionEffectType.NIGHT_VISION,
-                    Int.MAX_VALUE, // Infinite duration
-                    -1, // Special amplifier to identify ability-granted effect
+                    Int.MAX_VALUE,
+                    -1,
                     ambient,
                     showParticles
                 )
             )
         } else {
-            // Remove ability-granted night vision when underwater
             val effect = player.getPotionEffect(PotionEffectType.NIGHT_VISION)
             if (effect != null && effect.amplifier == -1) {
                 player.removePotionEffect(PotionEffectType.NIGHT_VISION)
@@ -58,9 +43,6 @@ val landNightVision = ability("land_night_vision", "monsterorigins") {
     }
 }
 
-/**
- * Blindness effect - uses darkness when player has night vision, blindness otherwise.
- */
 val blindness = ability("blindness", "monsterorigins") {
     title = text("Blindness")
     description(
@@ -69,19 +51,16 @@ val blindness = ability("blindness", "monsterorigins") {
     )
 
     option("effect_duration", 240)
-    option("check_interval", 5)
 
     onTick(interval = 5) { player, config ->
         val duration = config.getInt("effect_duration", 240)
 
         if (player.hasPotionEffect(PotionEffectType.NIGHT_VISION)) {
-            // Has night vision: use darkness instead of blindness
             player.removePotionEffect(PotionEffectType.BLINDNESS)
             player.addPotionEffect(
                 PotionEffect(PotionEffectType.DARKNESS, duration, 0, false, false)
             )
         } else {
-            // No night vision: use blindness
             player.removePotionEffect(PotionEffectType.DARKNESS)
             player.addPotionEffect(
                 PotionEffect(PotionEffectType.BLINDNESS, duration, 0, false, false)
@@ -91,29 +70,21 @@ val blindness = ability("blindness", "monsterorigins") {
     }
 }
 
-// ============================================
-// POTION IMMUNITIES
-// ============================================
-
-/**
- * Immunity to Wither effect.
- * Note: This requires event-based handling (EntityPotionEffectEvent) to cancel wither application.
- * The v2 DSL doesn't have a direct potion immunity handler yet.
- */
 val witherImmunity = ability("wither_immunity", "monsterorigins") {
     title = text("Wither Immunity")
     description("You are immune to the Wither effect.")
     visible = false
 
-    // Note: Full implementation requires EntityPotionEffectEvent handling
-    // to cancel wither effect application. Legacy behavior:
-    // if (event.newEffect?.type == PotionEffectType.WITHER) event.isCancelled = true
+    listener<EntityPotionEffectEvent>(
+        ignoreCancelled = false,
+        playerFrom = { it.entity as? Player }
+    ) { _, event, _ ->
+        if (event.newEffect?.type == PotionEffectType.WITHER) {
+            event.isCancelled = true
+        }
+    }
 }
 
-/**
- * Immunity to freeze damage.
- * Periodically resets freeze ticks to 0.
- */
 val freezeImmune = ability("freeze_immune", "monsterorigins") {
     title = text("Freeze Immunity")
     description("You are immune to freezing.")
@@ -125,20 +96,12 @@ val freezeImmune = ability("freeze_immune", "monsterorigins") {
     }
 }
 
-// ============================================
-// FEAR/DEBUFF EFFECTS
-// ============================================
-
-/**
- * Fear of cats - causes nausea and weakness near cats.
- */
 val fearCats = ability("fear_cats", "monsterorigins") {
     title = text("Afraid of Cats")
     description("You get nausea and weakness when around cats.")
 
     option("detection_radius", 8.0)
     option("effect_duration", 200)
-    option("check_interval", 5)
 
     onTick(interval = 5) { player, config ->
         val radius = config.getDouble("detection_radius", 8.0)
@@ -148,15 +111,8 @@ val fearCats = ability("fear_cats", "monsterorigins") {
             .any { it.type == EntityType.CAT }
 
         if (catsNearby) {
-            // Apply nausea (CONFUSION in older API versions)
-            @Suppress("DEPRECATION")
-            val nauseaEffect = try {
-                PotionEffectType.getByName("NAUSEA") ?: PotionEffectType.CONFUSION
-            } catch (_: Exception) {
-                PotionEffectType.CONFUSION
-            }
             player.addPotionEffect(
-                PotionEffect(nauseaEffect, duration, 0, false, true)
+                PotionEffect(OriginsReforged.NMSInvoker.nauseaEffect, duration, 0, false, true)
             )
             player.addPotionEffect(
                 PotionEffect(PotionEffectType.WEAKNESS, duration, 0, false, true)
@@ -166,13 +122,6 @@ val fearCats = ability("fear_cats", "monsterorigins") {
     }
 }
 
-// ============================================
-// ON-HIT EFFECTS
-// ============================================
-
-/**
- * Apply Wither effect on hit.
- */
 val applyWitherEffect = ability("apply_wither_effect", "monsterorigins") {
     title = text("Wither")
     description("Anything you hit gets the Wither effect.")
@@ -181,19 +130,15 @@ val applyWitherEffect = ability("apply_wither_effect", "monsterorigins") {
     option("effect_amplifier", 0)
 
     onAttack { _, target, config ->
-        if (target is LivingEntity) {
-            val duration = config.getInt("effect_duration", 200)
-            val amplifier = config.getInt("effect_amplifier", 0)
-            target.addPotionEffect(
-                PotionEffect(PotionEffectType.WITHER, duration, amplifier, false, true)
-            )
-        }
+        if (target !is LivingEntity) return@onAttack
+        val duration = config.getInt("effect_duration", 200)
+        val amplifier = config.getInt("effect_amplifier", 0)
+        target.addPotionEffect(
+            PotionEffect(PotionEffectType.WITHER, duration, amplifier, false, true)
+        )
     }
 }
 
-/**
- * Apply Hunger effect on hit.
- */
 val applyHungerEffect = ability("apply_hunger_effect", "monsterorigins") {
     title = text("Hunger")
     description("Anything you hit gets the Hunger effect.")
@@ -202,12 +147,11 @@ val applyHungerEffect = ability("apply_hunger_effect", "monsterorigins") {
     option("effect_amplifier", 0)
 
     onAttack { _, target, config ->
-        if (target is LivingEntity) {
-            val duration = config.getInt("effect_duration", 200)
-            val amplifier = config.getInt("effect_amplifier", 0)
-            target.addPotionEffect(
-                PotionEffect(PotionEffectType.HUNGER, duration, amplifier, false, true)
-            )
-        }
+        if (target !is LivingEntity) return@onAttack
+        val duration = config.getInt("effect_duration", 200)
+        val amplifier = config.getInt("effect_amplifier", 0)
+        target.addPotionEffect(
+            PotionEffect(PotionEffectType.HUNGER, duration, amplifier, false, true)
+        )
     }
 }

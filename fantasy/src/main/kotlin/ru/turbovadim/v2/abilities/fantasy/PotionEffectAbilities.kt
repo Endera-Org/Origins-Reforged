@@ -52,7 +52,7 @@ val infiniteHaste = ability("infinite_haste", "fantasyorigins") {
     option("amplifier", 1)
 
     applyPotion(
-        type = PotionEffectType.FAST_DIGGING,
+        type = PotionEffectType.HASTE,
         duration = 30,
         amplifier = 1,
         interval = 20

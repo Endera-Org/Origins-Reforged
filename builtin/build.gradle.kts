@@ -16,7 +16,7 @@ dependencies {
     compileOnly(project(":core"))
     compileOnly(project(":version"))
     compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
-    compileOnly("com.github.retrooper:packetevents-spigot:2.10.0-SNAPSHOT")
+    compileOnly("com.github.retrooper:packetevents-spigot:2.12.0-SNAPSHOT")
     implementation(kotlin("stdlib-jdk8"))
 }
 

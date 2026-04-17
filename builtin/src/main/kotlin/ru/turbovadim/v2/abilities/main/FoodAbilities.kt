@@ -131,25 +131,15 @@ val pumpkinHate = ability("pumpkin_hate") {
     // Cannot eat pumpkin pie - causes severe negative effects
     restrictFood { player, item, config ->
         if (item.type == Material.PUMPKIN_PIE) {
-            // Apply hunger effect
             val hungerDuration = config.getInt("hunger_duration", 300)
             val hungerAmplifier = config.getInt("hunger_amplifier", 2)
             player.addPotionEffect(PotionEffect(PotionEffectType.HUNGER, hungerDuration, hungerAmplifier, false, true))
 
-            // Apply nausea effect (use NAUSEA, Paper 1.20.1 compatible)
             val nauseaDuration = config.getInt("nausea_duration", 300)
             val nauseaAmplifier = config.getInt("nausea_amplifier", 1)
-            // Note: NMSInvoker.nauseaEffect handles version differences
-            // For v2, we use the standard NAUSEA type
-            try {
-                @Suppress("DEPRECATION")
-                val nauseaType = PotionEffectType.getByName("NAUSEA") ?: PotionEffectType.CONFUSION
-                player.addPotionEffect(PotionEffect(nauseaType, nauseaDuration, nauseaAmplifier, false, true))
-            } catch (_: Exception) {
-                // Fallback - nausea might have different name in older versions
-            }
+            val nauseaType = PotionEffectType.NAUSEA
+            player.addPotionEffect(PotionEffect(nauseaType, nauseaDuration, nauseaAmplifier, false, true))
 
-            // Apply poison effect
             val poisonDuration = config.getInt("poison_duration", 1200)
             val poisonAmplifier = config.getInt("poison_amplifier", 1)
             player.addPotionEffect(PotionEffect(PotionEffectType.POISON, poisonDuration, poisonAmplifier, false, true))

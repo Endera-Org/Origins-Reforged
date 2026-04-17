@@ -41,7 +41,7 @@ dependencies {
     compileOnly("net.objecthunter:exp4j:0.4.8")
 
     implementation("com.noxcrew.interfaces:interfaces:2.0.2-SNAPSHOT")
-    compileOnly("com.github.retrooper:packetevents-spigot:2.10.0-SNAPSHOT")
+    compileOnly("com.github.retrooper:packetevents-spigot:2.12.0-SNAPSHOT")
 
     compileOnly(project(":version"))
     compileOnly(project(":1.21.1"))

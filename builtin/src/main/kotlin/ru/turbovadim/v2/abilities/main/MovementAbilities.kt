@@ -187,7 +187,7 @@ val sprintJump = ability("sprint_jump") {
             val duration = config.getInt("effect_duration", 5)
             player.addPotionEffect(
                 PotionEffect(
-                    PotionEffectType.JUMP, // Use JUMP for 1.20.1 compatibility
+                    PotionEffectType.JUMP_BOOST,
                     duration,
                     amplifier,
                     false,
