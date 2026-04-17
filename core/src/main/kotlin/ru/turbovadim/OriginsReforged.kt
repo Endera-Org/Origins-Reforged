@@ -16,6 +16,7 @@ import ru.turbovadim.database.initDb
 import ru.turbovadim.packetsenders.*
 import ru.turbovadim.v2.BuiltinModuleBootstrap
 import ru.turbovadim.v2.di.OriginsContainer
+import ru.turbovadim.v2.ui.ShulkerInventoryUI
 import java.io.File
 
 class OriginsReforged : JavaPlugin() {
@@ -151,6 +152,7 @@ class OriginsReforged : JavaPlugin() {
         // Register event listeners
         Bukkit.getPluginManager().registerEvents(PackApplier(), this)
         Bukkit.getPluginManager().registerEvents(OrbOfOrigin(), this)
+        Bukkit.getPluginManager().registerEvents(ShulkerInventoryUI, this)
 
         // Register commands
         val originCommand = OriginCommand()

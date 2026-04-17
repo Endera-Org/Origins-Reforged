@@ -40,7 +40,7 @@ dependencies {
     implementation("org.json:json:20250517")
     compileOnly("net.objecthunter:exp4j:0.4.8")
 
-    implementation("com.noxcrew.interfaces:interfaces:2.0.2-SNAPSHOT")
+    implementation("com.noxcrew.interfaces:interfaces:2.1.0-SNAPSHOT")
     compileOnly("com.github.retrooper:packetevents-spigot:2.12.0-SNAPSHOT")
 
     compileOnly(project(":version"))
