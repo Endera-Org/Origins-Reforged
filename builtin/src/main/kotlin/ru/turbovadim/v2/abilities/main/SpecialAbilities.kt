@@ -8,11 +8,14 @@ import org.bukkit.entity.Player
 import org.bukkit.event.block.Action
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityToggleGlideEvent
+import org.bukkit.event.inventory.InventoryClickEvent
+import org.bukkit.event.inventory.InventoryType
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerToggleFlightEvent
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.Vector
 import ru.turbovadim.OriginsReforged
+import ru.turbovadim.ShortcutUtils.isBedrockPlayer
 import ru.turbovadim.v2.ability.DependencyAbility
 import ru.turbovadim.v2.ability.InvisibilityCondition
 import ru.turbovadim.v2.api.OriginsApi
@@ -21,6 +24,7 @@ import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
 import ru.turbovadim.v2.dsl.toggleAbility
 import ru.turbovadim.v2.event.OriginChangedEvent
+import ru.turbovadim.v2.ui.ShulkerInventoryUI
 
 // ============================================
 // SPECIAL ABILITIES
@@ -190,17 +194,33 @@ val layEggs = ability("lay_eggs") {
 }
 
 /**
- * Shulker Inventory - extra 9-slot inventory accessible by right-clicking helmet slot.
+ * Shulker Inventory - extra 9-slot persistent inventory backed by [ShulkerInventoryUI].
  * Legacy: ShulkerInventory.kt
  *
- * Note: This requires special UI handling and persistent storage.
- * The executor needs to create a custom inventory GUI.
+ * Opens via:
+ *  - Java: right-click the helmet armor slot.
+ *  - Bedrock: primary action with empty hand and no block target.
  */
 val shulkerInventory = ability("shulker_inventory") {
     title = text("Hoarder")
     description("You have access to an additional 9 slots of inventory, which keep the items on death.")
 
-    // Note: Special inventory handling is done via custom events in the executor
+    onPrimaryAction { player, _ ->
+        if (!isBedrockPlayer(player.uniqueId)) return@onPrimaryAction
+        if (player.inventory.itemInMainHand.type != Material.AIR) return@onPrimaryAction
+        if (player.getTargetBlockExact(6) != null) return@onPrimaryAction
+        ShulkerInventoryUI.openFor(player)
+    }
+
+    listener<InventoryClickEvent>(
+        ignoreCancelled = false,
+        playerFrom = { it.whoClicked as? Player }
+    ) { player, event, _ ->
+        if (event.isRightClick && event.slotType == InventoryType.SlotType.ARMOR && event.slot == 38) {
+            event.isCancelled = true
+            ShulkerInventoryUI.openFor(player)
+        }
+    }
 }
 
 /**
