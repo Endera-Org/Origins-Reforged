@@ -1,0 +1,8 @@
+name: OriginsReforged-Mobs
+version: ${version}
+main: ru.turbovadim.addon.mobs.MobsAddon
+description: Mob origins addon for Origins-Reforged
+api-version: '1.20'
+author: turbovadim
+depend:
+  - Origins-Reforged

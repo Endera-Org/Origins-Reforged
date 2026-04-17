@@ -1,0 +1,8 @@
+name: OriginsReforged-Monsters
+version: ${version}
+main: ru.turbovadim.addon.monsters.MonstersAddon
+description: Monster origins addon for Origins-Reforged
+api-version: '1.20'
+author: turbovadim
+depend:
+  - Origins-Reforged

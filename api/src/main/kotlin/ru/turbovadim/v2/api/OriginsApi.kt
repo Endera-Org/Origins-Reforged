@@ -8,6 +8,7 @@ import ru.turbovadim.v2.addon.AbilityCheckHook
 import ru.turbovadim.v2.addon.ResourcePackInfo
 import ru.turbovadim.v2.event.OriginChangeReason
 import ru.turbovadim.v2.origin.Origin
+import java.io.File
 
 /**
  * Public API facade for the Origins system.
@@ -33,8 +34,20 @@ interface OriginsApi {
     /** Register a resource pack from an addon. */
     fun registerResourcePack(namespace: String, packInfo: ResourcePackInfo)
 
-    /** Load bundled origin YAMLs from the main plugin JAR into the origin registry. */
-    fun loadBundledOrigins(addonId: String, folderName: String = "originsMain")
+    /**
+     * Load bundled origin YAMLs from a plugin JAR into the origin registry.
+     *
+     * @param addonId Unique identifier for the source.
+     * @param folderName Folder name inside the JAR (and the destination in [dataFolder]).
+     * @param jarFile Source JAR to extract from. Defaults to the main plugin JAR.
+     * @param dataFolder Destination data folder for extracted files. Defaults to main plugin's.
+     */
+    fun loadBundledOrigins(
+        addonId: String,
+        folderName: String = "originsMain",
+        jarFile: File? = null,
+        dataFolder: File? = null
+    )
 
     // ========== Ability queries ==========
 

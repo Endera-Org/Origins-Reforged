@@ -14,6 +14,7 @@ import ru.turbovadim.v2.addon.ResourcePackInfo
 import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.event.OriginChangeReason
 import ru.turbovadim.v2.origin.Origin
+import java.io.File
 import java.net.URI
 import net.kyori.adventure.resource.ResourcePackInfo as AdventureResourcePackInfo
 
@@ -49,17 +50,22 @@ class OriginsApiImpl(private val container: OriginsContainer) : OriginsApi {
         }
     }
 
-    override fun loadBundledOrigins(addonId: String, folderName: String) {
+    override fun loadBundledOrigins(
+        addonId: String,
+        folderName: String,
+        jarFile: File?,
+        dataFolder: File?
+    ) {
         val plugin = container.plugin
-        val jarFile = (plugin as? OriginsReforged)?.file
-        if (jarFile == null) {
-            plugin.logger.warning("Failed to load bundled origins for '$addonId': plugin jar file unavailable")
+        val effectiveJar = jarFile ?: (plugin as? OriginsReforged)?.file
+        if (effectiveJar == null) {
+            plugin.logger.warning("Failed to load bundled origins for '$addonId': no jar file provided")
             return
         }
         container.originLoader.loadOriginsForAddon(
             addonId = addonId,
-            dataFolder = plugin.dataFolder,
-            jarFile = jarFile,
+            dataFolder = dataFolder ?: plugin.dataFolder,
+            jarFile = effectiveJar,
             folderName = folderName
         )
     }
