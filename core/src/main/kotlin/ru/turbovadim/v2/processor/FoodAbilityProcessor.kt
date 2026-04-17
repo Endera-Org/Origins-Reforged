@@ -169,7 +169,7 @@ class FoodAbilityProcessor(private val container: OriginsContainer) : Listener {
         // Try older API (basePotionData, Paper 1.20-1.20.3)
         try {
             @Suppress("DEPRECATION")
-            val data = potionMeta.basePotionData
+            val data = potionMeta.basePotionData ?: return null
             val type = data.type
             // In older versions, PotionType has getEffectType() not getPotionEffects()
             // We need to construct the effect manually

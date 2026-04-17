@@ -17,7 +17,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.20.1-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
     compileOnly(project(":version"))
     compileOnly("com.github.retrooper:packetevents-spigot:2.10.0-SNAPSHOT")
     compileOnly("com.github.Endera-Org:EnderaLib:1.4.7")

@@ -30,7 +30,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
     compileOnly("com.viaversion:viaversion-api:5.0.0")
-    compileOnly("io.papermc.paper:paper-api:1.20.1-R0.1-SNAPSHOT") // Paper
+    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT") // Paper
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
     compileOnly("com.github.aromaa:WorldGuardExtraFlags:v4.2.4")
     compileOnly("org.geysermc.geyser:api:2.9.0-SNAPSHOT")

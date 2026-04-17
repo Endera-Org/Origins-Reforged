@@ -1,27 +1,24 @@
 package ru.turbovadim.v2.abilities.mobs
 
 import org.bukkit.Bukkit
+import org.bukkit.entity.EntityType
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
+import org.bukkit.event.entity.EntityTargetEvent
+import org.bukkit.event.entity.EntityTargetLivingEntityEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.v2.dsl.ability
+import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
 
 /**
  * Bee-related abilities for the Mobs module.
  */
 
-// State tracking for double-tap sneak detection
 private val lastSneakTick = mutableMapOf<Player, Int>()
-
-// State tracking for stinger cooldown (per-player)
 private val lastStungTicks = mutableMapOf<Player, Int>()
 
-/**
- * Bee Wings - double-tap sneak to get slow falling.
- * Legacy: Double-tap sneak within 10 ticks triggers slow falling.
- */
 val beeWings = ability("bee_wings", "moborigins") {
     title = text("Bee Wings")
     description("You can use your tiny bee wings to descend slower as an ability.")
@@ -38,11 +35,8 @@ val beeWings = ability("bee_wings", "moborigins") {
         val lastTick = lastSneakTick.getOrDefault(player, currentTick - doubleTapWindow - 1)
 
         if (currentTick - lastTick <= doubleTapWindow) {
-            // Double-tap detected - apply slow falling
-            // Note: Cooldown management would be handled by the v2 cooldown system
             val duration = config.getInt("effect_duration", 100)
             player.addPotionEffect(PotionEffect(PotionEffectType.SLOW_FALLING, duration, 0, false, true))
-            // Reset to prevent triple-tap
             lastSneakTick.remove(player)
         } else {
             lastSneakTick[player] = currentTick
@@ -50,10 +44,6 @@ val beeWings = ability("bee_wings", "moborigins") {
     }
 }
 
-/**
- * Stinger - poison enemies when attacking with bare hands.
- * Legacy: Has internal 100-tick cooldown between stings.
- */
 val stinger = ability("stinger", "moborigins") {
     title = text("Stinger")
     description("When you punch someone with your fist, you poison them for a few seconds.")
@@ -80,26 +70,23 @@ val stinger = ability("stinger", "moborigins") {
 }
 
 /**
- * Queen Bee - bees won't attack you when collecting honey.
- * Legacy: Cancels EntityTargetEvent when entity is BEE with CLOSEST_PLAYER reason.
- * Note: This ability requires EntityTargetLivingEntityEvent handling.
- * The v2 DSL doesn't have a direct handler for mob targeting events,
- * so this would need reactive event handler registration via a processor.
+ * Queen Bee - bees won't target you when collecting honey.
  */
 val queenBee = ability("queen_bee", "moborigins") {
     title = text("Queen Bee")
     description("When you collect honey, the bees won't try to attack you.")
 
-    // This ability requires EntityTargetLivingEntityEvent handling:
-    // - When entity type is BEE
-    // - And target reason is CLOSEST_PLAYER
-    // - Cancel the event if target has this ability
-    // Implementation note: Requires reactive event processor registration
+    listener<EntityTargetLivingEntityEvent>(
+        playerFrom = { event ->
+            if (event.entity.type != EntityType.BEE) return@listener null
+            if (event.reason != EntityTargetEvent.TargetReason.CLOSEST_PLAYER) return@listener null
+            event.target as? Player
+        }
+    ) { _, event, _ ->
+        event.isCancelled = true
+    }
 }
 
-/**
- * Collection of all bee-related abilities.
- */
 val beeAbilities = listOf(
     beeWings,
     stinger,
