@@ -7,6 +7,7 @@ plugins {
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/")
     //maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots") } // Spigot
@@ -40,7 +41,7 @@ dependencies {
     implementation("org.json:json:20250517")
     compileOnly("net.objecthunter:exp4j:0.4.8")
 
-    implementation("com.noxcrew.interfaces:interfaces:2.1.0-SNAPSHOT")
+    implementation("com.noxcrew.interfaces:interfaces:2.1.0-folia-SNAPSHOT")
     compileOnly("com.github.retrooper:packetevents-spigot:2.12.0-SNAPSHOT")
 
     compileOnly(project(":version"))

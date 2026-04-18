@@ -1,13 +1,18 @@
 package ru.turbovadim.v2.abilities.main
 
+import com.destroystokyo.paper.event.player.PlayerJumpEvent
+import org.bukkit.GameMode
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.block.BlockFace
+import org.bukkit.event.player.PlayerToggleFlightEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.ability.FallDamageMode
 import ru.turbovadim.v2.dsl.ability
+import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
+import java.time.Instant
 
 // ============================================
 // MOVEMENT ABILITIES
@@ -19,33 +24,41 @@ import ru.turbovadim.v2.dsl.text
 private val cardinalFaces = listOf(BlockFace.WEST, BlockFace.EAST, BlockFace.NORTH, BlockFace.SOUTH)
 
 /**
- * Climbing - can climb walls by flying near solid blocks.
+ * Climbing - can climb walls by flying only while next to a solid block.
  * Legacy: Climbing.kt
  *
- * The legacy implementation:
- * - Checks cardinal directions for solid blocks
- * - Enables flight when adjacent to a wall
- * - Uses persistent data to track climbing state
- * - Flight speed is 0.05f with normal fall damage
+ * Behavior:
+ * - Only grants flight while adjacent to a solid block (so you can't free-fly).
+ * - Auto-engages flight when there's a wall above and the player is airborne,
+ *   unless the player has manually stopped climbing (by pressing jump mid-climb).
+ * - Resets the manual-stop flag when the player lands on the ground.
+ * - Prevents immediate flight cancellation within a short window after a jump,
+ *   so the initial jump-to-start-climbing keystroke doesn't toggle flight off.
+ *
+ * NOTE: flight is intentionally NOT declared via the `flight { }` DSL block,
+ * because that would make PassiveEffectProcessor grant unconditional flight.
+ * Climbing needs conditional flight, so allowFlight/isFlying/flySpeed are
+ * managed manually below.
  */
 val climbing = ability("climbing") {
     title = text("Climbing")
     description("You are able to climb up any kind of wall, not just ladders.")
 
     option("flight_speed", 0.05f)
+    option("jump_stop_cooldown_seconds", 2)
 
-    flight {
-        speed = 0.05f
-        fallDamage = FallDamageMode.NORMAL
-    }
+    val stoppedClimbing = boolState("stopped_climbing", false)
+    val lastJumpEpochSeconds = longState("last_jump_epoch_seconds", 0L)
 
-    // Check for adjacent solid blocks and enable flight
-    onTick(interval = 1) { player, _ ->
+    onTick(interval = 1) { player, config ->
+        if (player.gameMode == GameMode.CREATIVE || player.gameMode == GameMode.SPECTATOR) {
+            return@onTick false
+        }
+
         val baseBlock = player.location.block
         var hasSolidAdjacent = false
         var hasSolidAbove = false
 
-        // Check all cardinal directions for solid blocks
         for (face in cardinalFaces) {
             if (baseBlock.getRelative(face).isSolid) {
                 hasSolidAdjacent = true
@@ -53,19 +66,50 @@ val climbing = ability("climbing") {
             if (baseBlock.getRelative(BlockFace.UP).getRelative(face).isSolid) {
                 hasSolidAbove = true
             }
-            if (hasSolidAdjacent) break
+            if (hasSolidAdjacent && hasSolidAbove) break
         }
 
-        // Return true if adjacent to wall (enables flight condition)
-        // The executor should handle allowFlight and isFlying state
+        if (player.isOnGround && stoppedClimbing[player]) {
+            stoppedClimbing[player] = false
+        }
+
+        val speed = config.getFloat("flight_speed", 0.05f).coerceIn(0.0001f, 1.0f)
+
         if (hasSolidAdjacent) {
-            player.allowFlight = true
-            // Auto-climb when near wall above and not on ground
-            if (hasSolidAbove && !player.isOnGround) {
-                player.isFlying = true
+            if (!player.allowFlight) player.allowFlight = true
+            player.flySpeed = speed
+            if (hasSolidAbove && !player.isOnGround && !stoppedClimbing[player]) {
+                if (!player.isFlying) player.isFlying = true
             }
+        } else {
+            if (player.isFlying) player.isFlying = false
+            if (player.allowFlight) player.allowFlight = false
         }
         hasSolidAdjacent
+    }
+
+    listener<PlayerToggleFlightEvent>(
+        playerFrom = { it.player }
+    ) { player, event, config ->
+        if (player.gameMode == GameMode.CREATIVE || player.gameMode == GameMode.SPECTATOR) {
+            return@listener
+        }
+
+        if (!event.isFlying) {
+            val cooldownSeconds = config.getInt("jump_stop_cooldown_seconds", 2).toLong()
+            val lastJump = lastJumpEpochSeconds[player]
+            if (lastJump != 0L && (Instant.now().epochSecond - lastJump) < cooldownSeconds) {
+                event.isCancelled = true
+                return@listener
+            }
+        }
+        stoppedClimbing[player] = !event.isFlying
+    }
+
+    listener<PlayerJumpEvent>(
+        playerFrom = { it.player }
+    ) { player, _, _ ->
+        lastJumpEpochSeconds[player] = Instant.now().epochSecond
     }
 }
 

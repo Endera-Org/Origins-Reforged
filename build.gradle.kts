@@ -9,6 +9,7 @@ group = "ru.turbovadim"
 version = "4.0.0-SNAPSHOT"
 
 repositories {
+    mavenLocal()
     mavenCentral()
 
     maven("https://repo.papermc.io/repository/maven-public/")
