@@ -1,5 +1,7 @@
 package ru.turbovadim.commands
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Bukkit
@@ -9,8 +11,12 @@ import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
 import ru.turbovadim.OrbOfOrigin
+import ru.turbovadim.OriginsReforged.Companion.bukkitDispatcher
+import ru.turbovadim.OriginsReforged.Companion.mainConfig
 import ru.turbovadim.OriginsReforged.Companion.v2Container
+import ru.turbovadim.ShortcutUtils
 import ru.turbovadim.v2.event.OriginChangeReason
+import ru.turbovadim.v2.ui.OriginSelectorUI
 
 /**
  * Main command handler for /origin.
@@ -21,6 +27,7 @@ import ru.turbovadim.v2.event.OriginChangeReason
  * - /origin set <player> <origin> [layer] - Set a player's origin
  * - /origin get [player] - Get a player's origin(s)
  * - /origin list [layer] - List available origins
+ * - /origin swap [layer] - Open the origin selector to swap your origin
  * - /origin reload - Reload configuration
  */
 class OriginCommand : CommandExecutor, TabCompleter {
@@ -36,6 +43,7 @@ class OriginCommand : CommandExecutor, TabCompleter {
             "set" -> setOrigin(sender, args)
             "get" -> getOrigin(sender, args)
             "list" -> listOrigins(sender, args)
+            "swap" -> swapOrigin(sender, args)
             "reload" -> reload(sender)
             else -> {
                 sender.sendMessage(Component.text("Unknown subcommand. Use /origin help for a list of commands.", NamedTextColor.RED))
@@ -51,8 +59,54 @@ class OriginCommand : CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text("/origin set <player> <origin> [layer]", NamedTextColor.YELLOW).append(Component.text(" - Set a player's origin", NamedTextColor.GRAY)))
         sender.sendMessage(Component.text("/origin get [player]", NamedTextColor.YELLOW).append(Component.text(" - Get a player's origins", NamedTextColor.GRAY)))
         sender.sendMessage(Component.text("/origin list [layer]", NamedTextColor.YELLOW).append(Component.text(" - List available origins", NamedTextColor.GRAY)))
+        if (mainConfig.swapCommand.enabled) {
+            sender.sendMessage(Component.text("/origin swap [layer]", NamedTextColor.YELLOW).append(Component.text(" - Swap your current origin", NamedTextColor.GRAY)))
+        }
         if (sender.hasPermission("originsreforged.admin")) {
             sender.sendMessage(Component.text("/origin reload", NamedTextColor.YELLOW).append(Component.text(" - Reload configuration", NamedTextColor.GRAY)))
+        }
+        return true
+    }
+
+    private fun swapOrigin(sender: CommandSender, args: Array<out String>): Boolean {
+        val config = mainConfig
+
+        if (!config.swapCommand.enabled) {
+            sender.sendMessage(Component.text("The /origin swap command is disabled on this server.", NamedTextColor.RED))
+            return true
+        }
+
+        if (sender !is Player) {
+            sender.sendMessage(Component.text("Only players can use /origin swap.", NamedTextColor.RED))
+            return true
+        }
+
+        if (!sender.hasPermission(config.swapCommand.permission)) {
+            sender.sendMessage(ShortcutUtils.getColored(config.messages.noSwapCommandPermissions))
+            return true
+        }
+
+        val container = v2Container ?: run {
+            sender.sendMessage(Component.text("Origins system not initialized.", NamedTextColor.RED))
+            return true
+        }
+
+        val requestedLayer = args.getOrNull(1)
+        val layer = when {
+            requestedLayer != null && requestedLayer in container.originLoader.layers -> requestedLayer
+            requestedLayer != null -> {
+                sender.sendMessage(Component.text("Unknown layer: $requestedLayer", NamedTextColor.RED))
+                return true
+            }
+            else -> container.originLoader.layers.firstOrNull() ?: "origin"
+        }
+
+        CoroutineScope(bukkitDispatcher).launch {
+            OriginSelectorUI.open(
+                player = sender,
+                layer = layer,
+                reason = OriginSelectorUI.OpenReason.SWAP
+            )
         }
         return true
     }
@@ -219,6 +273,9 @@ class OriginCommand : CommandExecutor, TabCompleter {
         return when (args.size) {
             1 -> {
                 val subcommands = mutableListOf("help", "orb", "get", "list")
+                if (mainConfig.swapCommand.enabled && sender.hasPermission(mainConfig.swapCommand.permission)) {
+                    subcommands.add("swap")
+                }
                 if (sender.hasPermission("originsreforged.admin")) {
                     subcommands.addAll(listOf("set", "reload"))
                 }
@@ -227,7 +284,7 @@ class OriginCommand : CommandExecutor, TabCompleter {
             2 -> {
                 when (args[0].lowercase()) {
                     "orb", "set", "get" -> Bukkit.getOnlinePlayers().map { it.name }.filter { it.lowercase().startsWith(args[1].lowercase()) }
-                    "list" -> container.originRegistry.layers.filter { it.lowercase().startsWith(args[1].lowercase()) }
+                    "list", "swap" -> container.originRegistry.layers.filter { it.lowercase().startsWith(args[1].lowercase()) }
                     else -> emptyList()
                 }
             }

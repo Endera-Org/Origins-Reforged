@@ -172,37 +172,44 @@ class PlayerStateManager(
      * Load player's origins from the database and apply them.
      */
     private suspend fun loadOriginsFromDatabase(player: Player) {
-        val savedOrigins = try {
-            DatabaseManager.getSelectedOrigins(player.uniqueId.toString())
-        } catch (t: Throwable) {
-            container.plugin.logger.severe(
-                "Failed to load saved origins for ${player.name}: ${t.message}"
-            )
-            t.printStackTrace()
-            null
-        } ?: return // No saved origins (or load failed) for this player
-
-        // Resolve each layer-origin pair and apply
-        for ((layer, originName) in savedOrigins.layerOriginPairs) {
-            if (originName == null) continue
-
-            val origin = container.originRegistry.getByName(originName)
-            if (origin == null) {
-                container.plugin.logger.warning(
-                    "Could not find origin '$originName' for player ${player.name} (layer: $layer)"
+        try {
+            val savedOrigins = try {
+                DatabaseManager.getSelectedOrigins(player.uniqueId.toString())
+            } catch (t: Throwable) {
+                container.plugin.logger.severe(
+                    "Failed to load saved origins for ${player.name}: ${t.message}"
                 )
-                continue
+                t.printStackTrace()
+                null
             }
 
-            // Apply via pipeline on the main thread without re-saving to database
-            if (player.isOnline) {
-                container.eventBus.processOriginChange(
-                    player = player,
-                    layer = layer,
-                    newOrigin = origin,
-                    reason = OriginChangeReason.DATABASE_LOAD
-                )
+            if (savedOrigins != null) {
+                // Resolve each layer-origin pair and apply
+                for ((layer, originName) in savedOrigins.layerOriginPairs) {
+                    if (originName == null) continue
+
+                    val origin = container.originRegistry.getByName(originName)
+                    if (origin == null) {
+                        container.plugin.logger.warning(
+                            "Could not find origin '$originName' for player ${player.name} (layer: $layer)"
+                        )
+                        continue
+                    }
+
+                    // Apply via pipeline on the main thread without re-saving to database
+                    if (player.isOnline) {
+                        container.eventBus.processOriginChange(
+                            player = player,
+                            layer = layer,
+                            newOrigin = origin,
+                            reason = OriginChangeReason.DATABASE_LOAD
+                        )
+                    }
+                }
             }
+        } finally {
+            // Mark load complete so join-flow listeners can proceed.
+            getStateOrNull(player.uniqueId)?.dbLoadComplete = true
         }
     }
 

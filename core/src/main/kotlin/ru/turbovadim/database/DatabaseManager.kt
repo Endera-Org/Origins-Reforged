@@ -18,10 +18,12 @@ object DatabaseManager {
 
     private val originCache = Collections.synchronizedMap(HashMap<Pair<String, String>, String?>())
     private val allUsedOriginsCache = Collections.synchronizedList(mutableListOf<String>())
+    private val usedOriginsByUuid = java.util.concurrent.ConcurrentHashMap<String, MutableList<String>>()
 
     suspend fun fillOriginCache() = dbQuery {
         originCache.clear()
         allUsedOriginsCache.clear()
+        usedOriginsByUuid.clear()
 
         // Build an id -> uuid map once, then materialize all layer/origin pairs.
         val idToUuid = UUIDOrigins.selectAll()
@@ -32,11 +34,44 @@ object DatabaseManager {
             originCache[uuid to row[OriginKeyValuePairs.layer]] = row[OriginKeyValuePairs.origin]
         }
 
-        allUsedOriginsCache.addAll(
-            UsedOrigins.selectAll()
-                .orderBy(UsedOrigins.id to SortOrder.ASC)
-                .map { it[UsedOrigins.usedOrigin] }
-        )
+        UsedOrigins.selectAll()
+            .orderBy(UsedOrigins.id to SortOrder.ASC)
+            .forEach { row ->
+                val used = row[UsedOrigins.usedOrigin]
+                allUsedOriginsCache.add(used)
+
+                val parentId = row[UsedOrigins.parent].value
+                val uuid = idToUuid[parentId] ?: return@forEach
+                usedOriginsByUuid.getOrPut(uuid) { mutableListOf() }.add(used)
+            }
+    }
+
+    /**
+     * Synchronous accessor for all used origins (uses cache).
+     * Safe to call from the main thread.
+     */
+    fun getAllUsedOriginsSync(): List<String> = allUsedOriginsCache.toList()
+
+    /**
+     * Synchronous accessor for a player's used origins (uses cache).
+     * Safe to call from the main thread.
+     */
+    fun getUsedOriginsSync(uuid: String): List<String> {
+        return usedOriginsByUuid[uuid]?.toList() ?: emptyList()
+    }
+
+    /**
+     * Record an origin in this player's history (cache-first).
+     * Called from the main thread; schedules an async DB insert.
+     */
+    fun recordUsedOriginSync(uuid: String, origin: String) {
+        val list = usedOriginsByUuid.getOrPut(uuid) { java.util.Collections.synchronizedList(mutableListOf()) }
+        synchronized(list) {
+            if (!list.contains(origin)) list.add(origin)
+        }
+        synchronized(allUsedOriginsCache) {
+            if (!allUsedOriginsCache.contains(origin)) allUsedOriginsCache.add(origin)
+        }
     }
 
     /**

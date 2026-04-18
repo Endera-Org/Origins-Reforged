@@ -19,6 +19,7 @@ import ru.turbovadim.OriginsReforged.Companion.mainConfig
 import ru.turbovadim.OriginsReforged.Companion.v2Container
 import ru.turbovadim.v2.event.OriginChangeReason
 import ru.turbovadim.v2.ui.OriginSelectorUI
+import ru.turbovadim.v2.util.PlayerResetter
 
 /**
  * Handles the Orb of Origin item.
@@ -88,6 +89,11 @@ class OrbOfOrigin : Listener {
             // Give random origin directly
             val randomOrigin = container.originRegistry.getRandomOrigin(layer)
             if (randomOrigin != null) {
+                // Apply reset BEFORE setOrigin so passive effects land on the fresh player.
+                if (mainConfig.orbOfOrigin.resetPlayer) {
+                    PlayerResetter.reset(player)
+                }
+
                 container.playerStateManager.setOrigin(player, layer, randomOrigin, OriginChangeReason.ORB)
                 player.sendMessage(
                     Component.text("You are now a ")
@@ -110,7 +116,8 @@ class OrbOfOrigin : Listener {
                     player = player,
                     layer = layer,
                     consumeOrb = true,
-                    orbSlot = orbSlot
+                    orbSlot = orbSlot,
+                    reason = OriginSelectorUI.OpenReason.ORB
                 )
             }
         }

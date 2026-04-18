@@ -33,6 +33,7 @@ class OriginLoader(private val container: OriginsContainer) {
     private val layerPriorities = mutableMapOf<String, Int>()
     private val defaultOrigins = mutableMapOf<String, String>()
     private val randomOnOrb = mutableMapOf<String, Boolean>()
+    private val randomOnSelection = mutableMapOf<String, Boolean>()
 
     /**
      * Load origins for an addon from its data folder.
@@ -155,14 +156,64 @@ class OriginLoader(private val container: OriginsContainer) {
     }
 
     /**
+     * Set whether initial/join selection should randomize for a layer.
+     */
+    fun setRandomOnSelection(layer: String, random: Boolean) {
+        randomOnSelection[layer] = random
+    }
+
+    /**
+     * Check if initial/join selection should randomize for a layer.
+     */
+    fun isRandomOnSelection(layer: String): Boolean {
+        return randomOnSelection[layer] ?: false
+    }
+
+    /**
+     * Override the priority for a layer (and re-sort the layer list).
+     */
+    fun setLayerPriority(layer: String, priority: Int) {
+        layerPriorities[layer] = priority
+        sortLayers()
+    }
+
+    /**
      * Get layer priority for sorting.
      */
     fun getLayerPriority(layer: String): Int {
         return layerPriorities[layer] ?: 0
     }
 
+    /**
+     * Push config-derived settings (layer priorities, default origins,
+     * randomize flags, orb-random flags) into the loader.
+     *
+     * Call this after origins have been loaded and registered.
+     */
+    fun applyMainConfig(
+        layerOrders: Map<String, Int>,
+        defaultOriginsByLayer: Map<String, String>,
+        randomizeByLayer: Map<String, Boolean>,
+        orbRandomByLayer: Map<String, Boolean>
+    ) {
+        for ((layer, priority) in layerOrders) {
+            layerPriorities[layer] = priority
+        }
+        for ((layer, originName) in defaultOriginsByLayer) {
+            setDefaultOrigin(layer, originName)
+        }
+        for ((layer, randomize) in randomizeByLayer) {
+            setRandomOnSelection(layer, randomize)
+        }
+        for ((layer, orbRandom) in orbRandomByLayer) {
+            setRandomOnOrb(layer, orbRandom)
+        }
+        sortLayers()
+    }
+
     private fun sortLayers() {
-        _layers.sortBy { layerPriorities[it] ?: 0 }
+        // Higher priority = selected first, so sort descending.
+        _layers.sortByDescending { layerPriorities[it] ?: 0 }
     }
 
     private fun loadOriginsFromFolder(

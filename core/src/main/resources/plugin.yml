@@ -34,6 +34,9 @@ permissions:
   originsreforged.flight:
     default: op
     description: Use /fly
+  originsreforged.swap:
+    default: op
+    description: Default permission node for /origin swap (actual node is configurable via swap-command.permission)
 
 commands:
   origin:

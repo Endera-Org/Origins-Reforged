@@ -19,19 +19,11 @@ data class MainConfig(
     val commandsOnOrigin: Map<String, List<String>>,
 
     @Spacer(1)
-    @Comment("A list of WorldGuard regions in which to prevent the use of certain abilities, use 'all' for all abilities")
-    val preventAbilitiesIn: Map<String, List<String>>,
-
-    @Spacer(1)
     @Comment("""
         Disables every cooldown
         To modify specific cooldowns, edit the cooldown-config.yml file
     """)
     val cooldowns: Cooldowns,
-
-    @Spacer(1)
-    @Comment("Miscellaneous settings")
-    val miscSettings: MiscSettings,
 
     @Spacer(1)
     @Comment("The /origin swap command, allowing players to switch origin at will")
@@ -54,10 +46,6 @@ data class MainConfig(
     val resourcePack: ResourcePack,
 
     @Spacer(1)
-    @Comment("Miscellaneous display options")
-    val display: Display,
-
-    @Spacer(1)
     @Comment("""
         Rule for reusing origins
         "NONE" allows origins to be reused
@@ -72,15 +60,7 @@ data class MainConfig(
 
     @Spacer(1)
     @Comment("Settings for using GeyserMC")
-    val geyser: Geyser,
-
-    @Spacer(1)
-    @Comment("Extra settings for abilities")
-    val extraSettings: ExtraSettings,
-
-    @Spacer(1)
-    @Comment("Config version - do not touch this!")
-    val configVersion: String
+    val geyser: Geyser
 )
 
 // --- Nested Data Classes ---
@@ -92,9 +72,6 @@ data class Worlds(
 
     @Comment("Nether dimension")
     val worldNether: String,
-
-    @Comment("End dimension")
-    val worldTheEnd: String,
 
     @Comment("Worlds to disable origins in")
     val disabledWorlds: List<String>
@@ -113,12 +90,6 @@ data class Cooldowns(
         You may want to disable this if using another plugin that requires the actionbar
     """)
     val showCooldownIcons: Boolean
-)
-
-@Serializable
-data class MiscSettings(
-    @Comment("Disable all flight-related features. This does not hide the abilities themselves, they must be removed from the .yml files in the ~/plugins/Origins-Reborn/origins/ folder")
-    val disableFlightStuff: Boolean
 )
 
 @Serializable
@@ -251,12 +222,6 @@ data class ResourcePack(
 )
 
 @Serializable
-data class Display(
-    @Comment("Enable prefixes in tab and on display names with the names of origins")
-    val enablePrefixes: Boolean
-)
-
-@Serializable
 data class Restrictions(
     @Comment("""
         Rule for reusing origins
@@ -282,33 +247,19 @@ data class Geyser(
     val joinFormDelay: Int
 )
 
-@Serializable
-data class ExtraSettings(
-    @Comment("Required sleep height for origins with the Fresh Air ability")
-    val freshAirRequiredSleepHeight: Int
-)
-
 // --- Default Configuration Instance ---
 val defaultMainConfig = MainConfig(
     worlds = Worlds(
         world = "world",
         worldNether = "world_nether",
-        worldTheEnd = "world_the_end",
         disabledWorlds = listOf("example_world")
     ),
     commandsOnOrigin = mapOf(
         "example" to listOf("example %player%", "example %uuid%")
     ),
-    preventAbilitiesIn = mapOf(
-        "no-water-breathing" to listOf("water_breathing"),
-        "no-abilities" to listOf("all")
-    ),
     cooldowns = Cooldowns(
         disableAllCooldowns = false,
         showCooldownIcons = true
-    ),
-    miscSettings = MiscSettings(
-        disableFlightStuff = false
     ),
     swapCommand = SwapCommand(
         enabled = true,
@@ -355,9 +306,6 @@ val defaultMainConfig = MainConfig(
     resourcePack = ResourcePack(
         enabled = true
     ),
-    display = Display(
-        enablePrefixes = false
-    ),
     restrictions = Restrictions(
         reusingOrigins = "NONE",
         preventSameOrigins = false
@@ -367,9 +315,5 @@ val defaultMainConfig = MainConfig(
     ),
     geyser = Geyser(
         joinFormDelay = 20
-    ),
-    extraSettings = ExtraSettings(
-        freshAirRequiredSleepHeight = 86
-    ),
-    configVersion = "2.4.2"
+    )
 )

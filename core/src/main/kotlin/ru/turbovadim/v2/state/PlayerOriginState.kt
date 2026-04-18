@@ -34,6 +34,10 @@ class PlayerOriginState(
     @Volatile private var _cachedIsInvisible: Boolean? = null
     @Volatile private var _cachedAttributes: Map<Attribute, Double>? = null
 
+    /** Whether this player's origins have finished loading from the database. */
+    @Volatile var dbLoadComplete: Boolean = false
+        internal set
+
     // Ability-specific state storage (legacy - uses ability key)
     // Each ability can store its own state here using its key
     private val abilityState = ConcurrentHashMap<Key, Any>()

@@ -16,6 +16,12 @@ import ru.turbovadim.database.initDb
 import ru.turbovadim.packetsenders.*
 import ru.turbovadim.v2.BuiltinModuleBootstrap
 import ru.turbovadim.v2.di.OriginsContainer
+import ru.turbovadim.v2.listener.OriginCommandDispatcher
+import ru.turbovadim.v2.listener.OriginDeathListener
+import ru.turbovadim.v2.listener.OriginJoinFlowListener
+import ru.turbovadim.v2.listener.OriginSelectionInvulnerabilityListener
+import ru.turbovadim.v2.listener.OriginUsageTracker
+import ru.turbovadim.v2.restriction.OriginRestrictionInterceptor
 import ru.turbovadim.v2.ui.ShulkerInventoryUI
 import java.io.File
 
@@ -88,6 +94,7 @@ class OriginsReforged : JavaPlugin() {
     }
 
     override fun onDisable() {
+        OrbRecipe.unregister()
         v2Container?.shutdown()
         PacketEvents.getAPI().terminate()
     }
@@ -136,6 +143,24 @@ class OriginsReforged : JavaPlugin() {
         v2Container?.let { container ->
             BuiltinModuleBootstrap.registerAll(this)
             container.initialize()
+
+            // Push config-driven layer priorities, default origins, randomize flags.
+            container.originLoader.applyMainConfig(
+                layerOrders = mainConfig.originSelection.layerOrders,
+                defaultOriginsByLayer = mainConfig.originSelection.defaultOrigin,
+                randomizeByLayer = mainConfig.originSelection.randomize,
+                orbRandomByLayer = mainConfig.orbOfOrigin.random
+            )
+
+            // Register the origin-change interceptor + post-change listeners.
+            container.eventBus.registerInterceptor(OriginRestrictionInterceptor(container))
+            container.eventBus.registerChangedListener(OriginUsageTracker(container))
+            container.eventBus.registerChangedListener(OriginCommandDispatcher(container))
+
+            // Register Bukkit listeners for join flow, invulnerability, death-change.
+            Bukkit.getPluginManager().registerEvents(OriginJoinFlowListener(container), this)
+            Bukkit.getPluginManager().registerEvents(OriginSelectionInvulnerabilityListener(container), this)
+            Bukkit.getPluginManager().registerEvents(OriginDeathListener(container), this)
         }
 
         PacketEvents.getAPI().init()
@@ -153,6 +178,11 @@ class OriginsReforged : JavaPlugin() {
         Bukkit.getPluginManager().registerEvents(PackApplier(), this)
         Bukkit.getPluginManager().registerEvents(OrbOfOrigin(), this)
         Bukkit.getPluginManager().registerEvents(ShulkerInventoryUI, this)
+
+        // Orb of Origin crafting recipe (gated by orbOfOrigin.enableRecipe).
+        if (mainConfig.orbOfOrigin.enableRecipe) {
+            OrbRecipe.register(this, mainConfig.orbOfOrigin.recipe)
+        }
 
         // Register commands
         val originCommand = OriginCommand()

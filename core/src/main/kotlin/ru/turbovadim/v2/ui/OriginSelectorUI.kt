@@ -22,9 +22,13 @@ import ru.turbovadim.OriginsReforged.Companion.mainConfig
 import ru.turbovadim.OriginsReforged.Companion.v2Container
 import ru.turbovadim.ShortcutUtils
 import ru.turbovadim.config.MainConfig
+import ru.turbovadim.database.DatabaseManager
 import ru.turbovadim.ui.TextRenderingUtils
 import ru.turbovadim.v2.event.OriginChangeReason
 import ru.turbovadim.v2.origin.Origin
+import ru.turbovadim.v2.util.PlayerResetter
+import java.util.Collections
+import java.util.UUID
 import kotlin.math.max
 import kotlin.math.min
 
@@ -33,6 +37,30 @@ import kotlin.math.min
  * Uses custom font rendering for texture pack compatibility.
  */
 object OriginSelectorUI {
+
+    /**
+     * Which settings drive the "reset player on confirm" and cost behavior.
+     */
+    enum class OpenReason {
+        /** Initial / default selection (e.g. on join) - no charge, no reset. */
+        INITIAL,
+        /** Orb of Origin - respects `orbOfOrigin.resetPlayer` and charges vault. */
+        ORB,
+        /** `/origin swap` - respects `swapCommand.resetPlayer` and charges vault. */
+        SWAP
+    }
+
+    /** Players currently viewing the selector UI. Used for invulnerable-mode-ON. */
+    private val openSelectors: MutableSet<UUID> = Collections.synchronizedSet(mutableSetOf())
+
+    /**
+     * Check whether a player currently has the origin selector open.
+     */
+    fun isSelectorOpen(playerId: UUID): Boolean = openSelectors.contains(playerId)
+
+    internal fun markClosed(playerId: UUID) {
+        openSelectors.remove(playerId)
+    }
 
     /**
      * Open the origin selection UI for a player.
@@ -44,6 +72,7 @@ object OriginSelectorUI {
      * @param initialPage Starting page index
      * @param initialScroll Starting scroll position
      * @param displayOnly If true, shows info only without selection
+     * @param reason What initiated the open; drives reset/charge behavior.
      */
     suspend fun open(
         player: Player,
@@ -52,7 +81,8 @@ object OriginSelectorUI {
         orbSlot: Int = -1,
         initialPage: Int = 0,
         initialScroll: Int = 0,
-        displayOnly: Boolean = false
+        displayOnly: Boolean = false,
+        reason: OpenReason = OpenReason.ORB
     ) {
         val container = v2Container ?: return
         val config = mainConfig
@@ -162,7 +192,7 @@ object OriginSelectorUI {
                     if (displayOnly) {
                         view.close()
                     } else {
-                        handleConfirmation(player, name, origins, layer, consumeOrb, orbSlot, originCost, config)
+                        handleConfirmation(player, name, origins, layer, consumeOrb, orbSlot, originCost, config, reason)
                         view.close()
                     }
                 }
@@ -196,6 +226,9 @@ object OriginSelectorUI {
             }
         }
 
+        if (!displayOnly) {
+            openSelectors.add(player.uniqueId)
+        }
         ui.open(player)
     }
 
@@ -353,21 +386,12 @@ object OriginSelectorUI {
         consumeOrb: Boolean,
         orbSlot: Int,
         costAmount: Int,
-        config: MainConfig
+        config: MainConfig,
+        reason: OpenReason
     ) {
         val container = v2Container ?: return
 
-        // Handle cost if vault is enabled and applicable
-        if (ru.turbovadim.OriginsReforged.instance.isVaultEnabled && costAmount != 0 &&
-            !player.hasPermission(config.swapCommand.vault.bypassPermission)) {
-            val economy = ru.turbovadim.OriginsReforged.instance.economy
-            if (economy == null || !economy.has(player, costAmount.toDouble())) {
-                player.sendMessage(Component.text("You don't have enough money.", NamedTextColor.RED))
-                return
-            }
-            economy.withdrawPlayer(player, costAmount.toDouble())
-        }
-
+        // Resolve the target origin up-front so we can check it for permanent purchases.
         val origin = if (originName.equals("random", ignoreCase = true)) {
             val excludedOrigins = config.originSelection.randomOption.exclude.map { it.lowercase() }
             val availableOrigins = origins.filter { o ->
@@ -387,8 +411,55 @@ object OriginSelectorUI {
             return
         }
 
+        // Cost: only applied on ORB / SWAP opens (initial selection is always free).
+        val shouldCharge = reason != OpenReason.INITIAL
+        if (shouldCharge &&
+            ru.turbovadim.OriginsReforged.instance.isVaultEnabled &&
+            costAmount != 0 &&
+            !player.hasPermission(config.swapCommand.vault.bypassPermission)
+        ) {
+            // `permanentPurchases`: if the player has ever held this origin, it's free now.
+            val previouslyOwned = config.swapCommand.vault.permanentPurchases &&
+                DatabaseManager.getUsedOriginsSync(player.uniqueId.toString())
+                    .any { it.equals(origin.name, ignoreCase = true) }
+
+            if (!previouslyOwned) {
+                val economy = ru.turbovadim.OriginsReforged.instance.economy
+                if (economy == null || !economy.has(player, costAmount.toDouble())) {
+                    val symbol = config.swapCommand.vault.currencySymbol
+                    player.sendMessage(
+                        Component.text(
+                            "You don't have enough money (need $symbol$costAmount).",
+                            NamedTextColor.RED
+                        )
+                    )
+                    return
+                }
+                economy.withdrawPlayer(player, costAmount.toDouble())
+                val symbol = config.swapCommand.vault.currencySymbol
+                player.sendMessage(
+                    Component.text("Charged $symbol$costAmount to switch origin.", NamedTextColor.YELLOW)
+                )
+            }
+        }
+
+        // Decide whether to reset the player based on the open reason.
+        val shouldReset = when (reason) {
+            OpenReason.ORB -> mainConfig.orbOfOrigin.resetPlayer
+            OpenReason.SWAP -> mainConfig.swapCommand.resetPlayer
+            OpenReason.INITIAL -> false
+        }
+        if (shouldReset) {
+            PlayerResetter.reset(player)
+        }
+
         // Set the origin
-        container.playerStateManager.setOrigin(player, layer, origin, OriginChangeReason.UI)
+        val changeReason = when (reason) {
+            OpenReason.ORB -> OriginChangeReason.ORB
+            OpenReason.SWAP -> OriginChangeReason.COMMAND
+            OpenReason.INITIAL -> OriginChangeReason.UI
+        }
+        container.playerStateManager.setOrigin(player, layer, origin, changeReason)
 
         player.sendMessage(
             Component.text("You are now a ")
