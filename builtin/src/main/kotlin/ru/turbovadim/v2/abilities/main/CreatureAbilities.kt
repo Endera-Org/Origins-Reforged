@@ -1,7 +1,6 @@
 package ru.turbovadim.v2.abilities.main
 
 import net.kyori.adventure.key.Key
-import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
@@ -12,6 +11,7 @@ import org.bukkit.entity.Projectile
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.persistence.PersistentDataType
+import org.endera.enderalib.utils.async.runTaskLater
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.ability.FallDamageMode
@@ -100,13 +100,13 @@ val masterOfWebs = ability("master_of_webs") {
         targetBlock.type = Material.COBWEB
         temporaryCobwebs.add(location)
 
-        // Schedule removal after duration
-        Bukkit.getScheduler().runTaskLater(OriginsReforged.instance, Runnable {
+        // Schedule removal after duration (region-tied: the cobweb belongs to its location's region)
+        location.runTaskLater(OriginsReforged.instance, durationTicks.toLong()) {
             if (targetBlock.type == Material.COBWEB) {
                 targetBlock.type = Material.AIR
             }
             temporaryCobwebs.remove(location)
-        }, durationTicks.toLong())
+        }
     }
 
     // Prevent drops from temporary cobwebs

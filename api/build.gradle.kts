@@ -20,7 +20,7 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
     compileOnly(project(":version"))
     compileOnly("com.github.retrooper:packetevents-spigot:2.12.0-SNAPSHOT")
-    compileOnly("com.github.Endera-Org:EnderaLib:1.4.7")
+    compileOnly("com.github.Endera-Org:EnderaLib:1.5.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     implementation(kotlin("stdlib-jdk8"))
 }

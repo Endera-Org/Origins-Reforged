@@ -14,6 +14,7 @@ import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.ItemStack
+import org.endera.enderalib.utils.async.runTask
 import ru.turbovadim.OriginsReforged.Companion.instance
 
 @Suppress("unused")
@@ -50,15 +51,16 @@ class PlayerLeftClickEvent(private val playerInteractEvent: PlayerInteractEvent)
             if (!event.getAction().isLeftClick) {
                 return
             }
-            Bukkit.getScheduler().scheduleSyncDelayedTask(instance, Runnable {
+            // Entity-tied: the rescheduled work dispatches an event about this player.
+            event.player.runTask(instance) {
                 if (lastInteractionTickMap.getOrDefault(
                         event.getPlayer(),
                         -1
                     )!! >= Bukkit.getCurrentTick()
-                ) return@Runnable
+                ) return@runTask
                 lastInteractionTickMap.put(event.getPlayer(), Bukkit.getCurrentTick())
                 PlayerLeftClickEvent(event).callEvent()
-            })
+            }
         }
 
         @EventHandler

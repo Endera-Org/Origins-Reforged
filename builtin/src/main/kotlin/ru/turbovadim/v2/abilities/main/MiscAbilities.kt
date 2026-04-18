@@ -2,7 +2,6 @@ package ru.turbovadim.v2.abilities.main
 
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes
 import net.kyori.adventure.key.Key
-import org.bukkit.Bukkit
 import org.bukkit.GameMode
 import org.bukkit.Material
 import org.bukkit.block.BlockFace
@@ -12,6 +11,7 @@ import org.bukkit.event.entity.EntityExhaustionEvent
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import org.endera.enderalib.utils.async.runTask
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.v2.ability.StateKey
@@ -192,10 +192,8 @@ val phasing = ability("phasing") {
                 // Enable phasing - send spectator gamemode packet
                 val currentVelocity = player.velocity
                 NMSInvoker.sendPhasingGamemodeUpdate(player, GameMode.SPECTATOR)
-                // Restore velocity after gamemode packet
-                Bukkit.getScheduler().scheduleSyncDelayedTask(
-                    OriginsReforged.instance
-                ) { player.velocity = currentVelocity }
+                // Restore velocity after gamemode packet (entity-tied: follows player across regions)
+                player.runTask(OriginsReforged.instance) { player.velocity = currentVelocity }
                 // Enable flight for phasing
                 player.allowFlight = true
                 player.flySpeed = config.getFloat("flight_speed", 0.1f)

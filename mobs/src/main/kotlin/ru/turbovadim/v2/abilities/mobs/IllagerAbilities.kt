@@ -1,6 +1,5 @@
 package ru.turbovadim.v2.abilities.mobs
 
-import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.block.BlockFace
@@ -12,6 +11,7 @@ import org.bukkit.event.entity.EntityResurrectEvent
 import org.bukkit.event.player.PlayerInteractEntityEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
+import org.endera.enderalib.utils.async.runTaskLater
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.api.OriginsApi
 import ru.turbovadim.v2.dsl.ability
@@ -144,13 +144,14 @@ val lowerTotemChance = ability("lower_totem_chance", "moborigins") {
         val newTotem = ItemStack(Material.TOTEM_OF_UNDYING)
         val equipment = player.equipment
 
-        Bukkit.getScheduler().runTaskLater(OriginsReforged.instance, Runnable {
+        // Entity-tied: replacing totem is on the player's own region thread.
+        player.runTaskLater(OriginsReforged.instance, 1L) {
             if (equipment.itemInMainHand.type == Material.TOTEM_OF_UNDYING) {
                 equipment.setItemInMainHand(newTotem)
             } else {
                 equipment.setItemInOffHand(newTotem)
             }
-        }, 1L)
+        }
     }
 }
 

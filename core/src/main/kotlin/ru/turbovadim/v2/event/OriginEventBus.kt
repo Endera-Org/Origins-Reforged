@@ -12,6 +12,7 @@ import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerChangedWorldEvent
 import org.bukkit.event.player.PlayerRespawnEvent
+import org.endera.enderalib.utils.async.runTaskLater
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.origin.Origin
@@ -253,14 +254,14 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
     fun onPlayerRespawn(event: PlayerRespawnEvent) {
         val player = event.player
 
-        // Delay slightly to ensure player is fully respawned
-        Bukkit.getScheduler().runTaskLater(container.plugin, Runnable {
+        // Delay slightly to ensure player is fully respawned (entity-tied)
+        player.runTaskLater(container.plugin, 1L) {
             val state = container.playerStateManager.getState(player)
 
             scope.launch(container.dispatchers.main) {
                 container.passiveEffectProcessor.applyPassiveEffects(player, state)
             }
-        }, 1L)
+        }
     }
 
     /**

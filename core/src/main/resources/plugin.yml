@@ -3,6 +3,7 @@ version: ${version}
 main: ru.turbovadim.OriginsReforged
 description: Paper plugin inspired by the Origins mod by Apace
 api-version: '1.20'
+folia-supported: true
 author: cometcake575
 depend:
   - EnderaLib

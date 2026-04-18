@@ -23,7 +23,7 @@ repositories {
 }
 
 dependencies {
-    val exposedVersion = "1.0.0-rc-4"
+    val exposedVersion = "1.2.0"
 
     api(project(":api"))
     implementation("org.jetbrains:annotations:23.0.0")
@@ -54,7 +54,7 @@ dependencies {
     compileOnly(files("libs/worldguard.jar"))
     compileOnly(files("libs/worldedit.jar"))
     implementation(kotlin("stdlib-jdk8"))
-    implementation("com.github.Endera-Org:EnderaLib:1.4.7") {
+    implementation("com.github.Endera-Org:EnderaLib:1.5.0") {
         isTransitive = false
     }
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")

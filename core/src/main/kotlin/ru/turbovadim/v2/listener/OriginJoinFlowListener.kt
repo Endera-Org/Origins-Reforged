@@ -4,12 +4,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
-import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
+import org.endera.enderalib.utils.async.runTask
+import org.endera.enderalib.utils.async.runTaskLater
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.OriginsReforged.Companion.bukkitDispatcher
 import ru.turbovadim.OriginsReforged.Companion.mainConfig
@@ -58,8 +59,9 @@ class OriginJoinFlowListener(
      * once per tick until it does (up to ~5 seconds).
      */
     private fun scheduleFlow(player: Player, initialDelay: Long, remainingPolls: Int) {
-        Bukkit.getScheduler().runTaskLater(plugin, Runnable {
-            if (!player.isOnline) return@Runnable
+        // Entity-tied: polls follow the player across regions on Folia.
+        player.runTaskLater(plugin, initialDelay) {
+            if (!player.isOnline) return@runTaskLater
 
             val state = container.playerStateManager.getStateOrNull(player)
             if (state == null || !state.dbLoadComplete) {
@@ -71,10 +73,10 @@ class OriginJoinFlowListener(
                     )
                     runJoinFlow(player)
                 }
-                return@Runnable
+                return@runTaskLater
             }
             runJoinFlow(player)
-        }, initialDelay)
+        }
     }
 
     private fun runJoinFlow(player: Player) {
@@ -133,10 +135,17 @@ class OriginJoinFlowListener(
         }
 
         // autoSpawnTeleport: only on the player's first-ever origin assignment.
+        // Folia-safe: teleportAsync works on both Paper and Folia; the confirmation message
+        // is hopped back onto the player's region thread once the teleport completes.
         if (!hadAnyOriginBefore && assignedFreshly && mainConfig.originSelection.autoSpawnTeleport) {
             val spawn = player.world.spawnLocation
-            player.teleport(spawn)
-            player.sendMessage(Component.text("Teleported to spawn.", NamedTextColor.GREEN))
+            player.teleportAsync(spawn).thenAccept { success ->
+                if (success == true) {
+                    player.runTask(plugin) {
+                        player.sendMessage(Component.text("Teleported to spawn.", NamedTextColor.GREEN))
+                    }
+                }
+            }
         }
     }
 }

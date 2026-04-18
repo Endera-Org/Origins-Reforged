@@ -2,11 +2,11 @@ package ru.turbovadim.v2.listener
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerRespawnEvent
+import org.endera.enderalib.utils.async.runTaskLater
 import ru.turbovadim.OriginsReforged.Companion.bukkitDispatcher
 import ru.turbovadim.OriginsReforged.Companion.mainConfig
 import ru.turbovadim.v2.di.OriginsContainer
@@ -33,12 +33,12 @@ class OriginDeathListener(
 
         val player = event.player
 
-        // Delay a couple of ticks so the respawn is fully complete.
-        Bukkit.getScheduler().runTaskLater(plugin, Runnable {
-            if (!player.isOnline) return@Runnable
+        // Delay a couple of ticks so the respawn is fully complete (entity-tied).
+        player.runTaskLater(plugin, 5L) {
+            if (!player.isOnline) return@runTaskLater
 
             val layers = container.originLoader.layers
-            if (layers.isEmpty()) return@Runnable
+            if (layers.isEmpty()) return@runTaskLater
 
             var openedGui = false
             for (layer in layers) {
@@ -62,6 +62,6 @@ class OriginDeathListener(
                     break
                 }
             }
-        }, 5L)
+        }
     }
 }

@@ -1,6 +1,7 @@
 package ru.turbovadim.v2.listener
 
 import org.bukkit.Bukkit
+import org.endera.enderalib.utils.async.runGlobal
 import ru.turbovadim.OriginsReforged.Companion.mainConfig
 import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.event.OriginChangeReason
@@ -41,11 +42,10 @@ class OriginCommandDispatcher(
         if (commands.isEmpty()) return
 
         val console = Bukkit.getConsoleSender()
-        val scheduler = Bukkit.getScheduler()
         val plugin = container.plugin
 
-        // Dispatch on the main thread (scheduler will coalesce if we're already there).
-        scheduler.runTask(plugin, Runnable {
+        // Dispatch on the global tick thread (Folia: global region; Paper: main thread).
+        plugin.runGlobal {
             for (cmd in commands) {
                 val resolved = cmd
                     .replace("%player%", player.name)
@@ -58,6 +58,6 @@ class OriginCommandDispatcher(
                     )
                 }
             }
-        })
+        }
     }
 }

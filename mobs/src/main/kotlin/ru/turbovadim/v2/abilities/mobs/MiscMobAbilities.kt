@@ -1,7 +1,6 @@
 package ru.turbovadim.v2.abilities.mobs
 
 import com.destroystokyo.paper.MaterialTags
-import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.Tag
@@ -21,6 +20,7 @@ import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import org.endera.enderalib.utils.async.runTask
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.ability.DamageResult
@@ -219,10 +219,11 @@ val betterBerries = ability("better_berries", "moborigins") {
         if (event.item.type != Material.SWEET_BERRIES) return@listener
         val extraFood = config.getInt("extra_food", 2)
         val extraSaturation = config.getFloat("extra_saturation", 1.0f)
-        Bukkit.getScheduler().runTask(OriginsReforged.instance, Runnable {
+        // Entity-tied: food/saturation update must run on the player's region thread.
+        player.runTask(OriginsReforged.instance) {
             player.foodLevel = min(player.foodLevel + extraFood, 20)
             player.saturation = min(player.saturation + extraSaturation, player.foodLevel.toFloat())
-        })
+        }
     }
 }
 
