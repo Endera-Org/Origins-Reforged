@@ -1,0 +1,24 @@
+# Telekinetic Origin
+# Mind-powered reach
+
+display_name: Telekinetic
+
+description: |
+  Mages who use their minds to extend their reach
+  and pick up items from a distance.
+
+icon: CHORUS_FRUIT
+
+layer: origin
+impact: 1
+order: 5001
+choosable: true
+
+abilities:
+  - magicorigins:increased_reach
+  - magicorigins:extra_reach_blocks
+  - magicorigins:extra_reach_entities
+  - magicorigins:extra_reach_items
+  - magicorigins:telekinesis
+  - magicorigins:unskilled_warrior
+  - magicorigins:weak_in_water

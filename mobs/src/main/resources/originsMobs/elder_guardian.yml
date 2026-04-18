@@ -1,0 +1,31 @@
+# Elder Guardian Origin
+# Ancient leader of ocean monuments
+
+display_name: Elder Guardian
+
+description: |
+  Elder Guardians are the leaders of monuments,
+  and wield more power than normal guardians.
+
+icon: PRISMARINE_CRYSTALS
+
+layer: origin
+impact: 3
+order: 6
+choosable: false
+
+abilities:
+  - moborigins:elder_spikes
+  - moborigins:elder_magic
+  - moborigins:mining_fatigue_immune
+  - moborigins:guardian_ally
+  - moborigins:prismarine_skin
+  - moborigins:surface_weakness
+  - origins:water_breathing
+  - origins:water_vision
+  - origins:aqua_affinity
+  - origins:swim_speed
+  - origins:like_water
+  - origins:aquatic
+  - origins:conduit_power_on_land
+  - origins:air_from_potions

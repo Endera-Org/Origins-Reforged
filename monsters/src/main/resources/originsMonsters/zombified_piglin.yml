@@ -1,0 +1,27 @@
+# Zombified Piglin Origin
+# Undead gold-wielding piglin
+
+display_name: Zombified Piglin
+
+description: |
+  Piglins are strange creatures of unknown origin, who formed
+  their own society and culture worshipping their love of gold
+  in the harsh wastelands of the Nether.
+
+icon: GOLDEN_SWORD
+
+layer: origin
+impact: 1
+order: 1
+choosable: false
+
+abilities:
+  - monsterorigins:better_gold_weapons
+  - monsterorigins:zombified_piglin_allies
+  - monsterorigins:undead_ally
+  - monsterorigins:undead
+  - monsterorigins:slowness
+  - monsterorigins:zombie_hunger
+  - monsterorigins:transform_into_piglin
+  - origins:nether_spawn
+  - origins:fire_immunity

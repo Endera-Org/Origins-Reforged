@@ -1,0 +1,24 @@
+# Piglin Origin
+# Gold-worshipping nether dweller
+
+display_name: Piglin
+
+description: |
+  Piglins are strange creatures of unknown origin, who formed
+  their own society and culture worshipping their love of gold
+  in the harsh wastelands of the Nether.
+
+icon: PIGLIN_HEAD
+
+layer: origin
+impact: 1
+order: 1
+choosable: true
+
+abilities:
+  - monsterorigins:better_gold_armour
+  - monsterorigins:super_bartering
+  - monsterorigins:piglin_ally
+  - monsterorigins:better_aim
+  - monsterorigins:transform_into_zombified_piglin
+  - origins:nether_spawn

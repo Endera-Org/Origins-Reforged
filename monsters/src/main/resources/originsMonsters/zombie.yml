@@ -1,0 +1,28 @@
+# Zombie Origin
+# Shambling undead corpse
+
+display_name: Zombie
+
+description: |
+  Zombies are the corpses of fallen builders that have reawakened
+  in the world for unknown reasons.
+
+icon: ROTTEN_FLESH
+
+layer: origin
+impact: 1
+order: 1
+choosable: true
+
+abilities:
+  - monsterorigins:land_night_vision
+  - monsterorigins:undead_ally
+  - monsterorigins:undead
+  - monsterorigins:burn_in_day
+  - monsterorigins:slowness
+  - monsterorigins:zombie_hunger
+  - monsterorigins:zombie_touch
+  - monsterorigins:scare_villagers
+  - monsterorigins:transform_into_husk_and_drowned
+  - monsterorigins:metamorphosis_temperature
+  - origins:carnivore

@@ -1,0 +1,26 @@
+# Wolf Origin
+# Pack hunter of the forest
+
+display_name: Wolf
+
+description: |
+  Strong and Fast, Wolves are creatures that have
+  strength in numbers.
+
+icon: BONE
+
+layer: origin
+impact: 1
+order: 2
+choosable: true
+
+abilities:
+  - moborigins:wolf_body
+  - moborigins:full_moon
+  - moborigins:full_moon_health
+  - moborigins:full_moon_attack
+  - moborigins:alpha_wolf
+  - moborigins:wolf_howl
+  - moborigins:wolf_pack
+  - moborigins:wolf_pack_attack
+  - origins:carnivore

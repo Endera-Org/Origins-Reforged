@@ -1,0 +1,21 @@
+# Creeper Origin
+# Explosive ambush monster
+
+display_name: Creeper
+
+description: |
+  A remnant of an unexpected mistake, the Creeper blasts
+  its way through its enemies.
+
+icon: GUNPOWDER
+
+layer: origin
+impact: 1
+order: 1
+choosable: true
+
+abilities:
+  - monsterorigins:creeper_ally
+  - monsterorigins:explosive
+  - monsterorigins:fear_cats
+  - origins:no_shield

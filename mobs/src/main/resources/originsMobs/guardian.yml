@@ -1,0 +1,31 @@
+# Guardian Origin
+# Protector of ocean monuments
+
+display_name: Guardian
+
+description: |
+  Guardians are known for protecting their Monuments and
+  the treasured sponges within. Some are known for evolving
+  into Elder Guardians.
+
+icon: PRISMARINE_SHARD
+
+layer: origin
+impact: 3
+order: 6
+choosable: true
+
+abilities:
+  - moborigins:guardian_spikes
+  - moborigins:guardian_ally
+  - moborigins:prismarine_skin
+  - moborigins:surface_weakness
+  - moborigins:becomes_elder_guardian
+  - origins:water_breathing
+  - origins:water_vision
+  - origins:aqua_affinity
+  - origins:swim_speed
+  - origins:like_water
+  - origins:aquatic
+  - origins:conduit_power_on_land
+  - origins:air_from_potions

@@ -1,0 +1,20 @@
+# Evoker Origin
+# Illager master of magic
+
+display_name: Evoker
+
+description: |
+  Master of Magic, and a collector of Totems.
+
+icon: TOTEM_OF_UNDYING
+
+layer: origin
+impact: 2
+order: 4
+choosable: true
+
+abilities:
+  - moborigins:summon_fangs
+  - moborigins:lower_totem_chance
+  - moborigins:pillager_aligned
+  - moborigins:illager

@@ -1,0 +1,23 @@
+# Shadowmancer Origin
+# Creature of darkness
+
+display_name: Shadowmancer
+
+description: |
+  Shadowmancers push themselves to their very limits,
+  giving them fearsome and dark power.
+
+icon: OBSIDIAN
+
+layer: origin
+impact: 3
+order: 5001
+choosable: true
+
+abilities:
+  - magicorigins:invisible_in_darkness
+  - magicorigins:dark_strength
+  - magicorigins:double_fire_damage
+  - magicorigins:burn_in_light
+  - magicorigins:no_fire_resistance
+  - magicorigins:weak_in_water

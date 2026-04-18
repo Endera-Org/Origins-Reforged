@@ -1,0 +1,21 @@
+# Alchemist Origin
+# Brewing and metal mastery
+
+display_name: Alchemist
+
+description: |
+  Masters of metals and brewery, Alchemists can turn
+  copper to gold and have much stronger potions.
+
+icon: GOLD_INGOT
+
+layer: origin
+impact: 1
+order: 5000
+choosable: true
+
+abilities:
+  - magicorigins:potion_master
+  - magicorigins:gold_converter
+  - magicorigins:unskilled_warrior
+  - magicorigins:weak_in_water

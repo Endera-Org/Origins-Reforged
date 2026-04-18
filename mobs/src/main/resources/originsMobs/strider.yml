@@ -1,0 +1,24 @@
+# Strider Origin
+# Lava walker of the Nether
+
+display_name: Strider
+
+description: |
+  Travel the vast oceans of lava with the speed of a strider.
+
+icon: WARPED_FUNGUS_ON_A_STICK
+
+layer: origin
+impact: 3
+order: 4
+choosable: true
+
+abilities:
+  - origins:fire_immunity
+  - origins:nether_spawn
+  - origins:water_vulnerability
+  - moborigins:lava_walk
+  - moborigins:surface_slowness
+  - moborigins:rideable_creature
+  - moborigins:strider_shake
+  - moborigins:warped_fungus_eater

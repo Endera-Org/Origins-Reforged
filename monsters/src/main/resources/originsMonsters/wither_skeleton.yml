@@ -1,0 +1,25 @@
+# Wither Skeleton Origin
+# Fire-hardened nether skeleton
+
+display_name: Wither Skeleton
+
+description: |
+  Locked away in the nether, over time Wither Skeletons
+  have become resistant to fire.
+
+icon: COAL
+
+layer: origin
+impact: 1
+order: 1
+choosable: true
+
+abilities:
+  - monsterorigins:apply_wither_effect
+  - monsterorigins:undead_ally
+  - monsterorigins:wither_immunity
+  - monsterorigins:undead
+  - monsterorigins:skeleton_body
+  - monsterorigins:half_max_saturation
+  - origins:fire_immunity
+  - origins:nether_spawn

@@ -1,0 +1,16 @@
+# Human Origin
+# Unremarkable baseline
+
+display_name: Human
+
+description: |
+  A regular human, born without any special abilities.
+
+icon: PLAYER_HEAD
+
+layer: origin
+impact: 0
+order: 0
+choosable: true
+
+abilities: []

@@ -1,0 +1,21 @@
+# Hypnotist Origin
+# Mind-controlling mage
+
+display_name: Hypnotist
+
+description: |
+  Hypnotists have a knack for confusing and
+  controlling their enemies to get their way.
+
+icon: TINTED_GLASS
+
+layer: origin
+impact: 2
+order: 5001
+choosable: true
+
+abilities:
+  - magicorigins:control_monsters
+  - magicorigins:interactions_give_nausea
+  - magicorigins:unskilled_warrior
+  - magicorigins:weak_in_water

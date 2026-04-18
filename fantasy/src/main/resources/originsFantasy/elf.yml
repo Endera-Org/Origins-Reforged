@@ -1,0 +1,22 @@
+# Elf Origin
+# Master archer
+
+display_name: Elf
+
+description: |
+  Skilled masters of the bow, Elves shoot arrows that are
+  much stronger and faster than any other creatures.
+
+icon: BOW
+
+layer: origin
+impact: 1
+order: 0
+choosable: true
+
+abilities:
+  - fantasyorigins:perfect_shot
+  - fantasyorigins:increased_arrow_damage
+  - fantasyorigins:increased_arrow_speed
+  - fantasyorigins:arrow_effect_booster
+  - fantasyorigins:bow_burst

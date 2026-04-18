@@ -1,0 +1,24 @@
+# Warden Origin
+# Blind sonic-attack guardian
+
+display_name: Warden
+
+description: |
+  Guardian of the Ancient Cities, the Warden relies on its
+  senses of smell and hearing to find its target.
+
+icon: SCULK
+
+layer: origin
+impact: 3
+order: 1
+choosable: true
+
+abilities:
+  - monsterorigins:sense_movement
+  - monsterorigins:blindness
+  - monsterorigins:double_damage
+  - monsterorigins:sonic_boom
+  - monsterorigins:double_health
+  - origins:natural_armor
+  - origins:no_shield

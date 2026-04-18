@@ -1,0 +1,22 @@
+# Bard Origin
+# Master of music and song
+
+display_name: Bard
+
+description: |
+  Bards are masters of music and song,
+  and emit a musical aura.
+
+icon: NOTE_BLOCK
+
+layer: origin
+impact: 3
+order: 1
+choosable: true
+
+abilities:
+  - fantasyorigins:elegy
+  - fantasyorigins:note_block_power
+  - fantasyorigins:allay_master
+  - fantasyorigins:chime
+  - fantasyorigins:bardic_intuition

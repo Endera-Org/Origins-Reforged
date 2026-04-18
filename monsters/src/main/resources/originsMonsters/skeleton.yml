@@ -1,0 +1,27 @@
+# Skeleton Origin
+# Reanimated archer
+
+display_name: Skeleton
+
+description: |
+  Reanimated bones of fallen archers, Skeletons have
+  unlimited arrows and a perfect aim.
+
+icon: BONE
+
+layer: origin
+impact: 1
+order: 1
+choosable: true
+
+abilities:
+  - monsterorigins:land_night_vision
+  - monsterorigins:infinite_arrows
+  - monsterorigins:undead_ally
+  - monsterorigins:better_aim
+  - monsterorigins:undead
+  - monsterorigins:burn_in_day
+  - monsterorigins:skeleton_body
+  - monsterorigins:half_max_saturation
+  - monsterorigins:metamorphosis_temperature
+  - monsterorigins:transform_into_stray

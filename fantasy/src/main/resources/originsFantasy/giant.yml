@@ -1,0 +1,23 @@
+# Giant Origin
+# Heavy-hitting, poor-aiming bruiser
+
+display_name: Giant
+
+description: |
+  Although clumsy and weak with a bow and arrow,
+  Giants can deal powerful creatures that can destroy
+  any foe with their fists.
+
+icon: IRON_CHESTPLATE
+
+layer: origin
+impact: 2
+order: 0
+choosable: true
+
+abilities:
+  - fantasyorigins:double_health
+  - fantasyorigins:heavy_blow
+  - fantasyorigins:poor_shot
+  - origins:natural_armor
+  - fantasyorigins:large_body
