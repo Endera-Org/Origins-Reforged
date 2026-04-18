@@ -16,6 +16,7 @@ import org.bukkit.GameMode
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.endera.enderalib.utils.async.runTask
 import ru.turbovadim.v2.ability.AbilityEffect
 import ru.turbovadim.v2.di.OriginsContainer
 import java.util.*
@@ -192,6 +193,9 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
 
     /**
      * Process potion effects - grouped by player for single iteration.
+     *
+     * Folia: each player's mutation hops onto the player's entity scheduler so
+     * it runs on the region that owns them, not the global region we tick from.
      */
     private fun processPotionEffects(tasks: List<PeriodicTask>) {
         val byPlayer = tasks.groupBy { it.playerId }
@@ -199,14 +203,15 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
         for ((playerId, playerTasks) in byPlayer) {
             val player = Bukkit.getPlayer(playerId) ?: continue
 
-            val effects = playerTasks.mapNotNull { task ->
-                val effect = task.effect as AbilityEffect.Periodic.ApplyPotion
-                // Check if ability is still active (dependency check)
-                if (!isAbilityActive(player, task.abilityKey)) null else effect.effect
-            }
+            player.runTask(container.plugin) {
+                val effects = playerTasks.mapNotNull { task ->
+                    val effect = task.effect as AbilityEffect.Periodic.ApplyPotion
+                    if (!isAbilityActive(player, task.abilityKey)) null else effect.effect
+                }
 
-            if (effects.isNotEmpty()) {
-                player.addPotionEffects(effects)
+                if (effects.isNotEmpty()) {
+                    player.addPotionEffects(effects)
+                }
             }
         }
     }
@@ -230,7 +235,6 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
 
                 if (!isAbilityActive(player, task.abilityKey)) continue
 
-                // Create particle packet (spawn at chest level, y + 1.0)
                 val packet = WrapperPlayServerParticle(
                     Particle(effect.particleType),
                     false,
@@ -270,6 +274,9 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
 
     /**
      * Process custom particle effects with spawner logic.
+     *
+     * Folia: spawner.spawn may touch the player / read nearby blocks, so hop
+     * to the player's entity scheduler.
      */
     private fun processCustomParticles(tasks: List<PeriodicTask>) {
         val byPlayer = tasks.groupBy { it.playerId }
@@ -277,21 +284,26 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
         for ((playerId, playerTasks) in byPlayer) {
             val player = Bukkit.getPlayer(playerId) ?: continue
 
-            for (task in playerTasks) {
-                val effect = task.effect as AbilityEffect.Periodic.CustomParticles
+            player.runTask(container.plugin) {
+                for (task in playerTasks) {
+                    val effect = task.effect as AbilityEffect.Periodic.CustomParticles
 
-                if (!isAbilityActive(player, task.abilityKey)) continue
+                    if (!isAbilityActive(player, task.abilityKey)) continue
 
-                val ability = container.abilityRegistry.get(task.abilityKey) ?: continue
-                val accessor = container.configLoader.getAccessor(task.abilityKey, ability.defaultOptions)
+                    val ability = container.abilityRegistry.get(task.abilityKey) ?: continue
+                    val accessor = container.configLoader.getAccessor(task.abilityKey, ability.defaultOptions)
 
-                effect.spawner.spawn(player, accessor)
+                    effect.spawner.spawn(player, accessor)
+                }
             }
         }
     }
 
     /**
-     * Process environment checks - runs async for expensive block operations.
+     * Process environment checks - runs per-player on the owning region thread.
+     *
+     * Folia: env checks read blocks around the player and may toggle flight /
+     * velocity / potion effects, so they must run on the player's region.
      */
     private fun processEnvironmentChecks(tasks: List<PeriodicTask>) {
         val byPlayer = tasks.groupBy { it.playerId }
@@ -299,16 +311,18 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
         for ((playerId, playerTasks) in byPlayer) {
             val player = Bukkit.getPlayer(playerId) ?: continue
 
-            for (task in playerTasks) {
-                val effect = task.effect as AbilityEffect.Periodic.EnvironmentCheck
+            player.runTask(container.plugin) {
+                for (task in playerTasks) {
+                    val effect = task.effect as AbilityEffect.Periodic.EnvironmentCheck
 
-                if (!isAbilityActive(player, task.abilityKey)) continue
+                    if (!isAbilityActive(player, task.abilityKey)) continue
 
-                val ability = container.abilityRegistry.get(task.abilityKey) ?: continue
-                val accessor = container.configLoader.getAccessor(task.abilityKey, ability.defaultOptions)
+                    val ability = container.abilityRegistry.get(task.abilityKey) ?: continue
+                    val accessor = container.configLoader.getAccessor(task.abilityKey, ability.defaultOptions)
 
-                // Run the check
-                effect.check.check(player, accessor)
+                    // Run the check
+                    effect.check.check(player, accessor)
+                }
             }
         }
     }
@@ -357,6 +371,9 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
 
     /**
      * Process tick-end tasks (run at end of each server tick).
+     *
+     * Folia: ServerTickEndEvent fires on the global region; hop per-player
+     * work onto each player's own region scheduler before touching them.
      */
     private fun processTickEndTasks(tasks: Set<PeriodicTask>) {
         val byPlayer = tasks.groupBy { it.playerId }
@@ -364,16 +381,18 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
         for ((playerId, playerTasks) in byPlayer) {
             val player = Bukkit.getPlayer(playerId) ?: continue
 
-            for (task in playerTasks) {
-                val effect = task.effect as AbilityEffect.Periodic.TickEnd
+            player.runTask(container.plugin) {
+                for (task in playerTasks) {
+                    val effect = task.effect as AbilityEffect.Periodic.TickEnd
 
-                if (!isAbilityActive(player, task.abilityKey)) continue
+                    if (!isAbilityActive(player, task.abilityKey)) continue
 
-                val ability = container.abilityRegistry.get(task.abilityKey) ?: continue
-                val accessor = container.configLoader.getAccessor(task.abilityKey, ability.defaultOptions)
+                    val ability = container.abilityRegistry.get(task.abilityKey) ?: continue
+                    val accessor = container.configLoader.getAccessor(task.abilityKey, ability.defaultOptions)
 
-                // Run the handler
-                effect.handler.check(player, accessor)
+                    // Run the handler
+                    effect.handler.check(player, accessor)
+                }
             }
         }
     }

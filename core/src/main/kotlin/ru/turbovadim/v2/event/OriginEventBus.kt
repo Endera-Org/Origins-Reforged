@@ -1,8 +1,5 @@
 package ru.turbovadim.v2.event
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.bukkit.Bukkit
 import org.bukkit.World
@@ -12,6 +9,7 @@ import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerChangedWorldEvent
 import org.bukkit.event.player.PlayerRespawnEvent
+import org.endera.enderalib.utils.async.runTask
 import org.endera.enderalib.utils.async.runTaskLater
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.di.OriginsContainer
@@ -29,7 +27,6 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 class OriginEventBus(private val container: OriginsContainer) : Listener {
 
-    private val scope = CoroutineScope(container.dispatchers.io + SupervisorJob())
     private val interceptors = CopyOnWriteArrayList<OriginChangeInterceptor>()
     private val changedListeners = CopyOnWriteArrayList<OriginChangedListener>()
 
@@ -148,6 +145,12 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
     /**
      * Called after a player's origin has been applied to state.
      * Triggers passive effect reapplication, periodic task scheduling, and post hooks.
+     *
+     * Folia: everything that mutates the player (lifecycle callbacks, passive
+     * effects, conditional attribute updates, user-supplied change listeners)
+     * runs on the player's own entity scheduler so it lands on the region that
+     * owns them. Pure bookkeeping on ConcurrentHashMaps (periodic tasks) can
+     * stay on the caller's thread.
      */
     private fun notifyOriginChanged(
         player: Player,
@@ -158,32 +161,33 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
     ) {
         val state = container.playerStateManager.getState(player)
 
-        // Trigger lifecycle callbacks for abilities being removed
-        triggerRemovedAbilityLifecycles(player, oldOrigin, newOrigin)
-
-        // Apply passive effects on main thread
-        scope.launch(container.dispatchers.main) {
-            container.passiveEffectProcessor.applyPassiveEffects(player, state)
-        }
-
-        // Update periodic tasks
+        // Update periodic tasks — only touches ConcurrentHashMaps, thread-agnostic.
         container.periodicAbilityProcessor.updatePlayer(player.uniqueId, state.getAbilityKeys())
 
-        // Update conditional attribute tasks
-        container.attributeAbilityProcessor.updatePlayer(player.uniqueId, state.getAbilityKeys())
+        // Everything below mutates the player; hop to the player's region thread.
+        player.runTask(container.plugin) {
+            // Trigger lifecycle callbacks for abilities being removed
+            triggerRemovedAbilityLifecycles(player, oldOrigin, newOrigin)
 
-        // Fire internal post-change listeners
-        if (changedListeners.isEmpty()) return
+            // Apply passive effects (attributes, flight, visibility)
+            container.passiveEffectProcessor.applyPassiveEffects(player, state)
 
-        val event = OriginChangedEvent(player, layer, oldOrigin, newOrigin, reason)
-        for (listener in changedListeners) {
-            try {
-                listener.onChanged(event)
-            } catch (t: Throwable) {
-                container.plugin.logger.severe(
-                    "OriginChangedListener failed for ${player.name} (layer: $layer): ${t.message}"
-                )
-                t.printStackTrace()
+            // Update conditional attribute tasks — clearModifiersByNamespace mutates attributes
+            container.attributeAbilityProcessor.updatePlayer(player.uniqueId, state.getAbilityKeys())
+
+            // Fire internal post-change listeners (handlers may touch the player)
+            if (changedListeners.isEmpty()) return@runTask
+
+            val event = OriginChangedEvent(player, layer, oldOrigin, newOrigin, reason)
+            for (listener in changedListeners) {
+                try {
+                    listener.onChanged(event)
+                } catch (t: Throwable) {
+                    container.plugin.logger.severe(
+                        "OriginChangedListener failed for ${player.name} (layer: $layer): ${t.message}"
+                    )
+                    t.printStackTrace()
+                }
             }
         }
     }
@@ -240,7 +244,8 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
             val state = container.playerStateManager.getState(player)
             state.invalidateCache()
 
-            scope.launch(container.dispatchers.main) {
+            // Folia: reapply passives on the player's new region thread.
+            player.runTask(container.plugin) {
                 container.passiveEffectProcessor.applyPassiveEffects(player, state)
             }
         }
@@ -254,13 +259,12 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
     fun onPlayerRespawn(event: PlayerRespawnEvent) {
         val player = event.player
 
-        // Delay slightly to ensure player is fully respawned (entity-tied)
+        // Delay slightly to ensure player is fully respawned (entity-tied).
+        // We're already on the player's region thread inside runTaskLater,
+        // so apply passives directly — no need to hop through dispatchers.main.
         player.runTaskLater(container.plugin, 1L) {
             val state = container.playerStateManager.getState(player)
-
-            scope.launch(container.dispatchers.main) {
-                container.passiveEffectProcessor.applyPassiveEffects(player, state)
-            }
+            container.passiveEffectProcessor.applyPassiveEffects(player, state)
         }
     }
 

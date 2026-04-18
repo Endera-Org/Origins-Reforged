@@ -7,6 +7,7 @@ import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.Player
+import org.endera.enderalib.utils.async.runTask
 import ru.turbovadim.v2.ability.AbilityConfigAccessor
 import ru.turbovadim.v2.ability.AttributeEffect
 import ru.turbovadim.v2.ability.AttributeType
@@ -193,6 +194,9 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
 
     /**
      * Process a batch of conditional attribute tasks.
+     *
+     * Folia: the tick driver runs on the global region, but attribute modifier
+     * mutations touch each player, so hop to the player's entity scheduler.
      */
     private fun processBatch(tasks: Set<ConditionalTask>) {
         val byPlayer = tasks.groupBy { it.playerId }
@@ -201,18 +205,20 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
             val player = Bukkit.getPlayer(playerId) ?: continue
             val playerState = conditionalState[playerId] ?: continue
 
-            for (task in playerTasks) {
-                if (!isAbilityActive(player, task.abilityKey)) {
-                    // Ability is disabled - remove any active conditional modifiers for it
-                    removeConditionalModifiersForAbility(player, task.abilityKey, task.effect, playerState)
-                    continue
-                }
+            player.runTask(container.plugin) {
+                for (task in playerTasks) {
+                    if (!isAbilityActive(player, task.abilityKey)) {
+                        // Ability is disabled - remove any active conditional modifiers for it
+                        removeConditionalModifiersForAbility(player, task.abilityKey, task.effect, playerState)
+                        continue
+                    }
 
-                val ability = container.abilityRegistry.get(task.abilityKey) ?: continue
-                val accessor = container.configLoader.getAccessor(task.abilityKey, ability.defaultOptions)
+                    val ability = container.abilityRegistry.get(task.abilityKey) ?: continue
+                    val accessor = container.configLoader.getAccessor(task.abilityKey, ability.defaultOptions)
 
-                for (modifierDef in task.effect.modifiers) {
-                    processConditionalModifier(player, task.abilityKey, modifierDef, accessor, playerState)
+                    for (modifierDef in task.effect.modifiers) {
+                        processConditionalModifier(player, task.abilityKey, modifierDef, accessor, playerState)
+                    }
                 }
             }
         }

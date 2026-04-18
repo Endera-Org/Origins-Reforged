@@ -2,6 +2,7 @@ package ru.turbovadim.v2.api
 
 import net.kyori.adventure.key.Key
 import org.bukkit.entity.Player
+import org.endera.enderalib.utils.async.runTask
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.PackApplier
 import ru.turbovadim.packetsenders.OriginsReforgedResourcePackInfo
@@ -155,28 +156,45 @@ class OriginsApiImpl(private val container: OriginsContainer) : OriginsApi {
 
     // ========== Passive effects / dependency lifecycle ==========
 
+    /**
+     * Reapply all passive effects for a player.
+     *
+     * Folia-safe: hops work onto the player's own entity scheduler. API callers
+     * can invoke this from any thread (event handler, async task, command). Note
+     * that effects are applied on the player's next region tick, not inline.
+     */
     override fun reapplyPassiveEffects(player: Player) {
         val state = container.playerStateManager.getStateOrNull(player) ?: return
-        container.passiveEffectProcessor.applyPassiveEffects(player, state)
+        player.runTask(container.plugin) {
+            container.passiveEffectProcessor.applyPassiveEffects(player, state)
+        }
     }
 
+    /**
+     * Trigger dependency-lifecycle callbacks for a player.
+     *
+     * Folia-safe: user-supplied handlers run on the player's own region thread.
+     * Callable from any thread; handlers fire on the player's next region tick.
+     */
     override fun triggerDependencyLifecycle(player: Player, dependencyKey: Key, enabled: Boolean) {
         val state = container.playerStateManager.getStateOrNull(player) ?: return
         val playerAbilities = state.getAbilityKeys()
 
-        for (abilityKey in playerAbilities) {
-            val ability = container.abilityRegistry.get(abilityKey) ?: continue
-            if (ability.dependencyKey != dependencyKey) continue
+        player.runTask(container.plugin) {
+            for (abilityKey in playerAbilities) {
+                val ability = container.abilityRegistry.get(abilityKey) ?: continue
+                if (ability.dependencyKey != dependencyKey) continue
 
-            val config = container.configLoader.getAccessor(abilityKey, ability.defaultOptions)
+                val config = container.configLoader.getAccessor(abilityKey, ability.defaultOptions)
 
-            for (effect in ability.effects) {
-                when {
-                    enabled && effect is AbilityEffect.Lifecycle.OnDependencyEnabled -> {
-                        effect.handler.onStateChange(player, config)
-                    }
-                    !enabled && effect is AbilityEffect.Lifecycle.OnDependencyDisabled -> {
-                        effect.handler.onStateChange(player, config)
+                for (effect in ability.effects) {
+                    when {
+                        enabled && effect is AbilityEffect.Lifecycle.OnDependencyEnabled -> {
+                            effect.handler.onStateChange(player, config)
+                        }
+                        !enabled && effect is AbilityEffect.Lifecycle.OnDependencyDisabled -> {
+                            effect.handler.onStateChange(player, config)
+                        }
                     }
                 }
             }
