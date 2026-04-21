@@ -9,6 +9,7 @@ import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import org.endera.enderalib.utils.async.runTask
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.dsl.ability
@@ -104,10 +105,15 @@ val noteBlockPower = ability("note_block_power", "fantasyorigins") {
         val duration = config.getInt("effect_duration", 600)
         val amplifier = config.getInt("effect_amplifier", 1)
 
+        // NotePlayEvent fires on the note block's region in Folia; distance and
+        // location reads are snapshot-safe, but potion effect mutations must
+        // happen on the player's own region.
         if (player.location.distance(block.location) > radius) return@onNoteBlockPlay
 
-        player.addPotionEffect(PotionEffect(PotionEffectType.SPEED, duration, amplifier))
-        player.addPotionEffect(PotionEffect(PotionEffectType.STRENGTH, duration, amplifier))
+        player.runTask(OriginsReforged.instance) {
+            player.addPotionEffect(PotionEffect(PotionEffectType.SPEED, duration, amplifier))
+            player.addPotionEffect(PotionEffect(PotionEffectType.STRENGTH, duration, amplifier))
+        }
     }
 }
 

@@ -7,6 +7,8 @@ import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause
 import org.bukkit.potion.PotionEffectType
+import org.endera.enderalib.utils.async.runTask
+import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.ability.DamageResult
 import ru.turbovadim.v2.ability.PotionReactionResult
@@ -51,10 +53,16 @@ val leeching = ability("leeching", "fantasyorigins") {
 
     onKill { player, victim, config ->
         val fraction = config.getDouble("health_fraction", 0.2)
-        val playerMaxHealth = player.maxHealth
+        // EntityDeathEvent fires on the victim's region in Folia; read the victim's
+        // max health here (we are on the victim's region) and hop to the killer's
+        // region before mutating their health.
         val victimMaxHealth = victim.maxHealth
         val healAmount = victimMaxHealth * fraction
-        player.health = min(playerMaxHealth, player.health + healAmount)
+
+        player.runTask(OriginsReforged.instance) {
+            val playerMaxHealth = player.maxHealth
+            player.health = min(playerMaxHealth, player.health + healAmount)
+        }
     }
 }
 

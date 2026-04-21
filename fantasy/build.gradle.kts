@@ -14,6 +14,7 @@ dependencies {
     compileOnly(project(":core"))
     compileOnly(project(":version"))
     compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
+    compileOnly("com.github.Endera-Org:EnderaLib:1.5.0") { isTransitive = false }
     implementation(kotlin("stdlib-jdk8"))
 }
 

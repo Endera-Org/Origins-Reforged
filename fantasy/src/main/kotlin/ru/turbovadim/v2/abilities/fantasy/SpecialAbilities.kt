@@ -1,11 +1,10 @@
 package ru.turbovadim.v2.abilities.fantasy
 
 import com.destroystokyo.paper.MaterialTags
-import io.papermc.paper.threadedregions.scheduler.ScheduledTask
-import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.DragonFireball
 import org.bukkit.inventory.ItemStack
+import org.endera.enderalib.utils.async.runTaskLater
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.text
@@ -38,14 +37,15 @@ val dragonFireball = ability("dragon_fireball", "fantasyorigins") {
         }
 
         val fireball = player.launchProjectile(DragonFireball::class.java)
+        // Capture the desired velocity on the player's region (current thread) so
+        // the scheduled task does not have to read player state cross-region.
+        val desiredVelocity = player.location.direction.multiply(velocityMultiplier)
 
         // Re-apply velocity next tick so the vanilla spawn direction does not overwrite ours.
-        Bukkit.getRegionScheduler().run(
-            OriginsReforged.instance,
-            fireball.location
-        ) { _: ScheduledTask ->
+        // Hops to the fireball's own region in Folia (the location-scoped scheduler).
+        fireball.location.runTaskLater(OriginsReforged.instance, 1L) {
             if (!fireball.isDead) {
-                fireball.velocity = player.location.direction.multiply(velocityMultiplier)
+                fireball.velocity = desiredVelocity
             }
         }
 
