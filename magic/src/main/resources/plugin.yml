@@ -3,6 +3,7 @@ version: ${version}
 main: ru.turbovadim.addon.magic.MagicAddon
 description: Magic origins addon for Origins-Reforged (ported from Origins-Magic by StarshooterCity)
 api-version: '1.20'
+folia-supported: true
 author: turbovadim
 depend:
   - Origins-Reforged

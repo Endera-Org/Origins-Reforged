@@ -1,7 +1,6 @@
 package ru.turbovadim.v2.abilities.magic
 
 import net.kyori.adventure.key.Key
-import org.bukkit.Bukkit
 import org.bukkit.NamespacedKey
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.enchantments.Enchantment
@@ -21,6 +20,8 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import org.endera.enderalib.utils.async.runTask
+import org.endera.enderalib.utils.async.runTaskLater
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.api.OriginsApi
@@ -97,24 +98,23 @@ val killBoost = ability("kill_boost", "magicorigins") {
 }
 
 private fun adjustBoost(player: Player, cap: Double, transform: (Double) -> Double) {
-    val current = player.persistentDataContainer.getOrDefault(killBoostKey, PersistentDataType.DOUBLE, 0.0)
-    val updated = min(cap, max(0.0, transform(current)))
-    if (updated == current) return
-    player.persistentDataContainer.set(killBoostKey, PersistentDataType.DOUBLE, updated)
+    player.runTask(OriginsReforged.instance) {
+        val current = player.persistentDataContainer.getOrDefault(killBoostKey, PersistentDataType.DOUBLE, 0.0)
+        val updated = min(cap, max(0.0, transform(current)))
+        if (updated == current) return@runTask
+        player.persistentDataContainer.set(killBoostKey, PersistentDataType.DOUBLE, updated)
 
-    val api = OriginsApi.getOrNull()
-    api?.reapplyPassiveEffects(player)
+        val api = OriginsApi.getOrNull()
+        api?.reapplyPassiveEffects(player)
 
-    Bukkit.getRegionScheduler().runDelayed(
-        OriginsReforged.instance, player.location, { _ ->
-            if (player.isDead) return@runDelayed
+        player.runTaskLater(OriginsReforged.instance, 2L) {
+            if (player.isDead) return@runTaskLater
             val attr = player.getAttribute(OriginsReforged.NMSInvoker.maxHealthAttribute)
             if (attr != null) {
                 player.health = min(attr.value, max(player.health, attr.value))
             }
-        },
-        2L
-    )
+        }
+    }
 }
 
 /**
@@ -204,10 +204,9 @@ val noEnchantments = ability("no_enchantments", "magicorigins") {
 }
 
 private fun scheduleEnchantmentStrip(player: HumanEntity) {
-    Bukkit.getRegionScheduler().runDelayed(
-        OriginsReforged.instance, player.location, { _ -> stripNonCurseEnchantments(player) },
-        1L
-    )
+    player.runTaskLater(OriginsReforged.instance, 1L) {
+        stripNonCurseEnchantments(player)
+    }
 }
 
 private fun stripNonCurseEnchantments(player: HumanEntity) {

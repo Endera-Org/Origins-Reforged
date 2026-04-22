@@ -8,8 +8,10 @@ import org.bukkit.entity.PigZombie
 import org.bukkit.entity.Player
 import org.bukkit.entity.Projectile
 import org.bukkit.event.entity.EntityDamageByEntityEvent
+import org.endera.enderalib.utils.async.runTask
+import ru.turbovadim.OriginsReforged
 import java.util.UUID
-import java.util.WeakHashMap
+import java.util.concurrent.ConcurrentHashMap
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
@@ -18,8 +20,8 @@ import ru.turbovadim.v2.dsl.text
  * Ally abilities for monster origins.
  */
 
-private val undeadAttackedBy: MutableMap<UUID, MutableSet<UUID>> = WeakHashMap()
-private val piglinAttackedBy: MutableMap<UUID, MutableSet<UUID>> = WeakHashMap()
+private val undeadAttackedBy: MutableMap<UUID, MutableSet<UUID>> = ConcurrentHashMap()
+private val piglinAttackedBy: MutableMap<UUID, MutableSet<UUID>> = ConcurrentHashMap()
 
 val creeperAlly = ability("creeper_ally", "monsterorigins") {
     title = text("Creeper Ally")
@@ -50,7 +52,7 @@ val undeadAllyMonsters = ability("undead_ally", "monsterorigins") {
             }
         }
     ) { player, event, _ ->
-        undeadAttackedBy.getOrPut(player.uniqueId) { HashSet() }.add(event.entity.uniqueId)
+        undeadAttackedBy.computeIfAbsent(player.uniqueId) { ConcurrentHashMap.newKeySet() }.add(event.entity.uniqueId)
     }
 }
 
@@ -85,7 +87,7 @@ val piglinAlly = ability("piglin_ally", "monsterorigins") {
             }
         }
     ) { player, event, _ ->
-        piglinAttackedBy.getOrPut(player.uniqueId) { HashSet() }.add(event.entity.uniqueId)
+        piglinAttackedBy.computeIfAbsent(player.uniqueId) { ConcurrentHashMap.newKeySet() }.add(event.entity.uniqueId)
     }
 }
 
@@ -120,9 +122,11 @@ private fun angerNearbyPigZombies(origin: Entity, targetEntity: LivingEntity, ra
     origin.getNearbyEntities(radius, radius, radius)
         .filter { it.type == EntityType.ZOMBIFIED_PIGLIN }
         .forEach { entity ->
-            (entity as PigZombie).apply {
-                isAngry = true
-                target = targetEntity
+            val pigZombie = entity as PigZombie
+            pigZombie.runTask(OriginsReforged.instance) {
+                if (!pigZombie.isValid) return@runTask
+                pigZombie.isAngry = true
+                pigZombie.target = targetEntity
             }
         }
 }

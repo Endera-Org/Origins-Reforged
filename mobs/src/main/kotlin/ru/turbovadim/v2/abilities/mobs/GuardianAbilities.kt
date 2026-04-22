@@ -14,6 +14,7 @@ import org.bukkit.event.entity.EntityDeathEvent
 import org.bukkit.event.entity.EntityPotionEffectEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import org.endera.enderalib.utils.async.runTask
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.api.OriginsApi
@@ -154,9 +155,11 @@ val elderMagic = ability("elder_magic", "moborigins") {
             .filterIsInstance<Player>()
             .filter { it !== player && api?.hasAbility(it, abilityKey) != true }
             .forEach { target ->
-                target.addPotionEffect(PotionEffect(miningFatigue, duration, amplifier, false, true))
-                target.playSound(target, Sound.ENTITY_ELDER_GUARDIAN_CURSE, SoundCategory.HOSTILE, 1f, 1f)
-                target.world.spawnParticle(elderParticle, target.location, 1)
+                target.runTask(OriginsReforged.instance) {
+                    target.addPotionEffect(PotionEffect(miningFatigue, duration, amplifier, false, true))
+                    target.playSound(target, Sound.ENTITY_ELDER_GUARDIAN_CURSE, SoundCategory.HOSTILE, 1f, 1f)
+                    target.world.spawnParticle(elderParticle, target.location, 1)
+                }
             }
 
         api?.setCooldown(player, abilityKey, config.getInt("cooldown_ticks", 600), "prismarine_shard")

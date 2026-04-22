@@ -2,7 +2,6 @@ package ru.turbovadim.v2.abilities.magic
 
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes
 import io.papermc.paper.tag.EntityTags
-import io.papermc.paper.threadedregions.scheduler.ScheduledTask
 import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
 import org.bukkit.Location
@@ -17,6 +16,8 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.player.PlayerInteractEntityEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import org.endera.enderalib.utils.async.runTask
+import org.endera.enderalib.utils.async.runTaskLater
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.api.OriginsApi
@@ -24,6 +25,7 @@ import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
 import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -67,21 +69,23 @@ val undeadCommander = ability("undead_commander", "magicorigins") {
         if (api.hasCooldown(player, abilityKey)) return@listener
 
         val radius = config.getDouble("radius", 16.0)
-        var commanded = false
+        val cooldown = config.getInt("cooldown_ticks", 600)
+        val commanded = AtomicBoolean(false)
         event.damager.world.getNearbyEntitiesByType(Monster::class.java, event.entity.location, radius)
             .forEach { monster ->
                 if (!EntityTags.UNDEADS.isTagged(monster.type)) return@forEach
-                if (target.uniqueId == monster.uniqueId) return@forEach
-                val currentTarget = monster.target
-                if (currentTarget != null && currentTarget.uniqueId != player.uniqueId) return@forEach
-                monster.target = target
-                commanded = true
+                monster.runTask(OriginsReforged.instance) {
+                    if (!monster.isValid || target.uniqueId == monster.uniqueId) return@runTask
+                    val currentTarget = monster.target
+                    if (currentTarget != null && currentTarget.uniqueId != player.uniqueId) return@runTask
+                    monster.target = target
+                    if (commanded.compareAndSet(false, true)) {
+                        player.runTask(OriginsReforged.instance) {
+                            api.setCooldown(player, abilityKey, cooldown, "undead_commander")
+                        }
+                    }
+                }
             }
-
-        if (commanded) {
-            val cooldown = config.getInt("cooldown_ticks", 600)
-            api.setCooldown(player, abilityKey, cooldown, "undead_commander")
-        }
     }
 }
 
@@ -120,38 +124,32 @@ val bringBackDead = ability("bring_back_dead", "magicorigins") {
             if (revive.world != player.world) return@forEach
             if (revive.distance(player.location) > radius) return@forEach
 
-            revivedAny = true
             val originalBed: Location? = other.respawnLocation?.clone()
-            other.respawnLocation = revive
+            if (!other.runTask(OriginsReforged.instance) {
+                    other.respawnLocation = revive
+                }
+            ) return@forEach
+            revivedAny = true
 
             // Respawn next tick so Bukkit has fully processed the death
-            Bukkit.getRegionScheduler().runDelayed(
-                OriginsReforged.instance, revive, { _: ScheduledTask ->
-                    if (!other.isDead) return@runDelayed
-                    other.spigot().respawn()
-                    other.health = 2.0
-                    if (useTotem) {
-                        other.addPotionEffect(PotionEffect(PotionEffectType.REGENERATION, 900, 1, false, true, true))
-                        other.addPotionEffect(PotionEffect(PotionEffectType.FIRE_RESISTANCE, 800, 0, false, true, true))
-                        other.addPotionEffect(PotionEffect(PotionEffectType.ABSORPTION, 100, 1, false, true, true))
-                        other.respawnLocation = originalBed
-                    }
-                },
-                1L
-            )
-            Bukkit.getRegionScheduler().runDelayed(
-                OriginsReforged.instance, revive, { _: ScheduledTask ->
-                    if (!other.isDead) other.teleport(revive)
-                },
-                5L
-            )
+            other.runTaskLater(OriginsReforged.instance, 1L) {
+                if (!other.isDead) return@runTaskLater
+                other.spigot().respawn()
+                other.health = 2.0
+                if (useTotem) {
+                    other.addPotionEffect(PotionEffect(PotionEffectType.REGENERATION, 900, 1, false, true, true))
+                    other.addPotionEffect(PotionEffect(PotionEffectType.FIRE_RESISTANCE, 800, 0, false, true, true))
+                    other.addPotionEffect(PotionEffect(PotionEffectType.ABSORPTION, 100, 1, false, true, true))
+                    other.respawnLocation = originalBed
+                }
+            }
+            other.runTaskLater(OriginsReforged.instance, 5L) {
+                if (!other.isDead) other.teleport(revive)
+            }
             if (useTotem) {
-                Bukkit.getRegionScheduler().runDelayed(
-                    OriginsReforged.instance, revive, { _: ScheduledTask ->
-                        MagicEffects.playTotemEffect(other)
-                    },
-                    3L
-                )
+                other.runTaskLater(OriginsReforged.instance, 3L) {
+                    MagicEffects.playTotemEffect(other)
+                }
             }
         }
 

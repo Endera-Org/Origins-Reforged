@@ -17,6 +17,7 @@ import org.bukkit.event.entity.EntityShootBowEvent
 import org.bukkit.event.player.PlayerInteractEntityEvent
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.potion.PotionEffect
+import org.endera.enderalib.utils.async.runTask
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.ability.DamageResult
 import ru.turbovadim.v2.api.OriginsApi
@@ -24,14 +25,14 @@ import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
 import java.util.UUID
-import java.util.WeakHashMap
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Combat-related abilities for monster origins.
  */
 
-private val lastSneakTick: MutableMap<UUID, Int> = HashMap()
-private val treatedVillagers: MutableSet<UUID> = WeakHashMap<UUID, Boolean>().keys
+private val lastSneakTick: MutableMap<UUID, Int> = ConcurrentHashMap()
+private val treatedVillagers: MutableSet<UUID> = ConcurrentHashMap.newKeySet()
 
 private val explosiveKey = Key.key("monsterorigins", "explosive")
 private val sonicBoomKey = Key.key("monsterorigins", "sonic_boom")
@@ -243,7 +244,8 @@ val scareVillagers = ability("scare_villagers", "monsterorigins") {
 
         player.getNearbyEntities(radius, radius, radius).forEach { entity ->
             val villager = entity as? Villager ?: return@forEach
-            if (treatedVillagers.add(villager.uniqueId)) {
+            villager.runTask(OriginsReforged.instance) {
+                if (!villager.isValid || !treatedVillagers.add(villager.uniqueId)) return@runTask
                 Bukkit.getMobGoals().addGoal(
                     villager,
                     0,

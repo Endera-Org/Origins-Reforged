@@ -20,6 +20,7 @@ import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.max
 import kotlin.math.min
 
@@ -46,9 +47,9 @@ fun setMetamorphosisTemperature(player: Player, amount: Int) {
     )
 }
 
-private val lastUnderwaterTick: MutableMap<UUID, Int> = HashMap()
-private val lastLowFreezeTick: MutableMap<UUID, Int> = HashMap()
-private val overworldTicks: MutableMap<UUID, Int> = HashMap()
+private val lastUnderwaterTick: MutableMap<UUID, Int> = ConcurrentHashMap()
+private val lastLowFreezeTick: MutableMap<UUID, Int> = ConcurrentHashMap()
+private val overworldTicks: MutableMap<UUID, Int> = ConcurrentHashMap()
 
 private fun switchTo(player: Player, originName: String, sound: Sound, message: String) {
     val api = OriginsApi.getOrNull() ?: return

@@ -1,10 +1,10 @@
 package ru.turbovadim.v2.abilities.fantasy
 
-import io.papermc.paper.threadedregions.scheduler.ScheduledTask
 import io.papermc.paper.world.MoonPhase
 import org.bukkit.World
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.EnderCrystal
+import org.endera.enderalib.utils.async.runTask
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.dsl.ability
@@ -58,10 +58,6 @@ val endCrystalHealing = ability("end_crystal_healing", "fantasyorigins") {
         val maxDistanceSq = maxDistance * maxDistance
         val healAmount = config.getDouble("heal_amount", 1.0)
 
-        // onTick already hops to the player's region, so player state is safe
-        // to read/mutate here. Entity.getLocation() is snapshot-safe across regions
-        // but writing crystal.beamTarget is not — so we hop to each crystal's
-        // own region via its EntityScheduler before mutating it.
         val playerLoc = player.location
         val beamTargetLoc = playerLoc.clone().apply { y -= 1.0 }
 
@@ -70,31 +66,20 @@ val endCrystalHealing = ability("end_crystal_healing", "fantasyorigins") {
             .forEach { crystal ->
                 val distSq = crystal.location.distanceSquared(playerLoc)
                 if (distSq <= maxDistanceSq) {
-                    // Heal on the player's region (where we already are).
                     val maxHealth = player.maxHealth
                     player.health = min(maxHealth, player.health + healAmount)
 
-                    // Hop to the crystal's region to update its beam target.
-                    crystal.scheduler.run(
-                        OriginsReforged.instance,
-                        { _: ScheduledTask ->
-                            if (crystal.isValid) {
-                                crystal.beamTarget = beamTargetLoc
-                            }
-                        },
-                        null
-                    )
+                    crystal.runTask(OriginsReforged.instance) {
+                        if (crystal.isValid) {
+                            crystal.beamTarget = beamTargetLoc
+                        }
+                    }
                 } else {
-                    // Hop to the crystal's region to clear its beam target (if any).
-                    crystal.scheduler.run(
-                        OriginsReforged.instance,
-                        { _: ScheduledTask ->
-                            if (crystal.isValid && crystal.beamTarget != null) {
-                                crystal.beamTarget = null
-                            }
-                        },
-                        null
-                    )
+                    crystal.runTask(OriginsReforged.instance) {
+                        if (crystal.isValid && crystal.beamTarget != null) {
+                            crystal.beamTarget = null
+                        }
+                    }
                 }
             }
 

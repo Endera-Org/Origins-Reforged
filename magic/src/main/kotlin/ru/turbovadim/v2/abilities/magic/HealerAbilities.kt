@@ -1,6 +1,5 @@
 package ru.turbovadim.v2.abilities.magic
 
-import io.papermc.paper.threadedregions.scheduler.ScheduledTask
 import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -12,6 +11,7 @@ import org.bukkit.event.player.PlayerItemConsumeEvent
 import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import org.endera.enderalib.utils.async.runTask
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.SavedPotionEffect
 import ru.turbovadim.ShortcutUtils
@@ -218,7 +218,7 @@ internal object MagicEffects {
     fun playTotemEffect(player: Player) {
         // Broadcast the totem animation (entity status 35) to all nearby players.
         // We fall back to a particle burst if the NMS-level call isn't available.
-        Bukkit.getRegionScheduler().run(OriginsReforged.instance, player.location) { _: ScheduledTask ->
+        player.runTask(OriginsReforged.instance) {
             player.playEffect(org.bukkit.EntityEffect.TOTEM_RESURRECT)
         }
     }

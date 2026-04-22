@@ -12,6 +12,7 @@ import org.bukkit.event.entity.EntityBreedEvent
 import org.bukkit.event.entity.EntityTameEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import org.endera.enderalib.utils.async.runTask
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.dsl.ability
@@ -150,8 +151,10 @@ val wolfHowl = ability("wolf_howl", "moborigins") {
             .filter { it.type == EntityType.WOLF }
             .filterIsInstance<LivingEntity>()
             .forEach { entity ->
-                entity.addPotionEffect(PotionEffect(PotionEffectType.SPEED, duration, 0, false, true))
-                entity.addPotionEffect(PotionEffect(strength, duration, 0, false, true))
+                entity.runTask(OriginsReforged.instance) {
+                    entity.addPotionEffect(PotionEffect(PotionEffectType.SPEED, duration, 0, false, true))
+                    entity.addPotionEffect(PotionEffect(strength, duration, 0, false, true))
+                }
             }
 
         api?.setCooldown(player, abilityKey, config.getInt("cooldown_ticks", 900), "bone")
