@@ -5,7 +5,7 @@ import ru.turbovadim.v2.abilities.fantasy.FantasyAbilities
 import ru.turbovadim.v2.api.OriginsApi
 import java.io.File
 
-class waFantasyAddon : JavaPlugin() {
+class FantasyAddon : JavaPlugin() {
 
     public override fun getFile(): File = super.getFile()
 
