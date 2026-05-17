@@ -3,15 +3,12 @@ package ru.turbovadim.v2.config
 import kotlinx.serialization.Serializable
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
-import org.bukkit.attribute.Attribute
-import org.bukkit.attribute.AttributeModifier
 import org.bukkit.plugin.java.JavaPlugin
 import org.endera.enderalib.utils.configuration.Comment
 import org.endera.enderalib.utils.configuration.ConfigurationManager
 import org.endera.enderalib.utils.configuration.Spacer
 import ru.turbovadim.v2.ability.Ability
 import ru.turbovadim.v2.ability.AbilityConfigAccessor
-import ru.turbovadim.v2.ability.AttributeEffect
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
@@ -137,18 +134,6 @@ class AbilityConfigLoader(private val plugin: JavaPlugin) {
         val namespaceFolder = getNamespaceFolder(ability.key.namespace())
         val file = File(namespaceFolder, "${ability.key.value()}.yml")
 
-        // Extract attribute config from ability effects
-        val attributeConfigs = ability.effects
-            .filterIsInstance<AttributeEffect.Static>()
-            .flatMap { it.modifiers }
-            .map { mod ->
-                AttributeConfigEntry(
-                    attribute = mod.attributeType.name.lowercase().replace("_", "-"),
-                    value = mod.defaultValue,
-                    operation = mod.operation.name.lowercase().replace("_", "-")
-                )
-            }
-
         // Build default config from ability
         val defaultData = AbilityConfigData(
             visible = ability.isVisibleDefault,
@@ -156,7 +141,6 @@ class AbilityConfigLoader(private val plugin: JavaPlugin) {
             description = ability.description.map {
                 PlainTextComponentSerializer.plainText().serialize(it)
             }.takeIf { it.isNotEmpty() },
-            attributes = attributeConfigs.takeIf { it.isNotEmpty() } ?: emptyList(),
             options = ability.defaultOptions.mapValues { it.value.toString() }
         )
 
@@ -216,27 +200,6 @@ class AbilityConfigLoader(private val plugin: JavaPlugin) {
     }
 
     /**
-     * Get attribute entries for an ability.
-     */
-    fun getAttributes(key: Key): List<AttributeEntry> {
-        val data = configs[key] ?: return emptyList()
-        return data.attributes.mapNotNull { attr ->
-            try {
-                AttributeEntry(
-                    attribute = Attribute.valueOf(attr.attribute.uppercase().replace("-", "_")),
-                    value = attr.value,
-                    operation = AttributeModifier.Operation.valueOf(
-                        attr.operation.uppercase().replace("-", "_")
-                    )
-                )
-            } catch (e: IllegalArgumentException) {
-                plugin.logger.warning("Invalid attribute config for $key: ${attr.attribute}")
-                null
-            }
-        }
-    }
-
-    /**
      * Register default options for an ability.
      * Merges with existing config (config file values take priority).
      */
@@ -246,7 +209,6 @@ class AbilityConfigLoader(private val plugin: JavaPlugin) {
             configs[key] = AbilityConfigData(
                 title = null,
                 description = null,
-                attributes = emptyList(),
                 options = defaults.mapValues { it.value.toString() }
             )
         } else {
@@ -278,48 +240,8 @@ data class AbilityConfigData(
     val description: List<String>? = null,
 
     @Spacer(1)
-    @Comment("""
-        Attribute modifiers applied by this ability
-        Example:
-          - attribute: max-health
-            value: 4.0
-            operation: add-number
-
-        Available operations: add-number, add-scalar, multiply-scalar-1
-    """)
-    val attributes: List<AttributeConfigEntry> = emptyList(),
-
-    @Spacer(1)
     @Comment("Ability-specific options (varies per ability)")
     val options: Map<String, String> = emptyMap()
-)
-
-/**
- * Attribute modifier entry in config.
- */
-@Serializable
-data class AttributeConfigEntry(
-    @Comment("Attribute name (e.g., max-health, movement-speed, attack-damage)")
-    val attribute: String,
-
-    @Comment("Modifier value")
-    val value: Double,
-
-    @Comment("Operation: add-number, add-scalar, multiply-scalar-1")
-    val operation: String = "add-number"
-)
-
-// ============================================
-// RUNTIME TYPES
-// ============================================
-
-/**
- * Parsed attribute modifier entry.
- */
-data class AttributeEntry(
-    val attribute: Attribute,
-    val value: Double,
-    val operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER
 )
 
 /**

@@ -2,9 +2,6 @@ package ru.turbovadim.v2.processor
 
 import net.kyori.adventure.key.Key
 import org.bukkit.GameMode
-import org.bukkit.NamespacedKey
-import org.bukkit.attribute.Attribute
-import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.Player
 import ru.turbovadim.v2.ability.FallDamageMode
 import ru.turbovadim.v2.ability.InvisibilityCondition
@@ -16,7 +13,7 @@ import ru.turbovadim.v2.state.PlayerOriginState
  *
  * Passive effects are applied ONCE when origins change, not periodically.
  * This includes:
- * - Attribute modifiers (from config)
+ * - Attribute modifiers
  * - Flight capability
  * - Visibility
  *
@@ -25,8 +22,7 @@ import ru.turbovadim.v2.state.PlayerOriginState
 class PassiveEffectProcessor(private val container: OriginsContainer) {
 
     companion object {
-        // Namespace for origin-related attribute modifiers
-        private const val MODIFIER_NAMESPACE = "origins"
+        private const val REMOVED_CONFIG_ATTRIBUTE_NAMESPACE = "origins"
     }
 
     /**
@@ -50,64 +46,15 @@ class PassiveEffectProcessor(private val container: OriginsContainer) {
     }
 
     /**
-     * Apply attribute modifiers from config and DSL.
+     * Apply static attribute modifiers declared by abilities.
      */
     private fun applyAttributes(player: Player, state: PlayerOriginState) {
-        // Clear existing origin attributes first
+        // Clear the removed config-based attribute namespace so stale modifiers
+        // from older builds are removed the next time passives are reapplied.
         clearOriginAttributes(player)
 
-        // Also clear DSL-defined static attributes
         container.attributeAbilityProcessor.clearStaticAttributes(player)
-
-        // Get all abilities for the player
-        val abilityKeys = state.getAbilityKeys()
-
-        // Apply attributes from config for each ability
-        for (abilityKey in abilityKeys) {
-            val attributes = container.configLoader.getAttributes(abilityKey)
-
-            for (attr in attributes) {
-                applyAttributeModifier(player, abilityKey, attr.attribute, attr.value, attr.operation)
-            }
-        }
-
-        // Apply DSL-defined static attributes
         container.attributeAbilityProcessor.applyStaticAttributes(player, state)
-    }
-
-    /**
-     * Apply a single attribute modifier using NMSInvoker for cross-version compatibility.
-     */
-    private fun applyAttributeModifier(
-        player: Player,
-        abilityKey: Key,
-        attribute: Attribute,
-        value: Double,
-        operation: AttributeModifier.Operation
-    ) {
-        val playerAttribute = player.getAttribute(attribute) ?: return
-
-        val modifierKey = NamespacedKey(
-            container.plugin,
-            "${MODIFIER_NAMESPACE}_${abilityKey.value()}_${attribute.name.lowercase()}"
-        )
-
-        val modifierName = "${abilityKey.value()}_${attribute.name.lowercase()}"
-
-        // Remove existing modifier with same key (if any)
-        val existing = container.nmsInvoker.getAttributeModifier(playerAttribute, modifierKey)
-        if (existing != null) {
-            playerAttribute.removeModifier(existing)
-        }
-
-        // Add new modifier using NMSInvoker
-        container.nmsInvoker.addAttributeModifier(
-            playerAttribute,
-            modifierKey,
-            modifierName,
-            value,
-            operation
-        )
     }
 
     /**
@@ -156,7 +103,7 @@ class PassiveEffectProcessor(private val container: OriginsContainer) {
             // Remove all modifiers that match our naming pattern
             // We iterate through a copy to avoid concurrent modification
             val toRemove = playerAttr.modifiers.filter { modifier ->
-                modifier.name.startsWith(MODIFIER_NAMESPACE)
+                modifier.name.startsWith(REMOVED_CONFIG_ATTRIBUTE_NAMESPACE)
             }
 
             for (modifier in toRemove) {
