@@ -6,14 +6,15 @@ import net.kyori.adventure.text.Component
 import org.bukkit.*
 import org.bukkit.block.BlockFace
 import org.bukkit.enchantments.Enchantment
+import org.bukkit.entity.LivingEntity
+import org.bukkit.entity.Trident
+import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.player.PlayerItemConsumeEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.v2.ability.Ability
-import ru.turbovadim.v2.ability.DamageResult
-import ru.turbovadim.v2.ability.PotionReactionResult
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
@@ -118,15 +119,14 @@ val freshAir: Ability = ability("fresh_air") {
  * Nether Spawn - spawns in the Nether by default.
  * Legacy: NetherSpawn.kt
  *
- * Note: Spawn handling is done via DefaultSpawnAbility interface.
- * The executor should handle first-spawn logic to place player in Nether.
  */
 val netherSpawn = ability("nether_spawn") {
     title = text("Nether Inhabitant")
     description("Your natural spawn will be in the Nether.")
 
-    // Spawn handling is done via DefaultSpawnAbility interface
-    // The executor teleports the player to nether on first spawn
+    defaultSpawn { _, _ ->
+        Bukkit.getWorld(OriginsReforged.mainConfig.worlds.worldNether)?.spawnLocation
+    }
 }
 
 /**
@@ -135,57 +135,25 @@ val netherSpawn = ability("nether_spawn") {
  *
  * Implementation:
  * - Checks if block 2 above player is solid
- * - Builds up "stacks" over time (max 3600, starts at -200)
- * - Applies weakness and slowness with duration = stacks
- * - Stacks decrease when not under low ceiling
- * - Milk resets stacks to 0 (not below)
+ * - Applies weakness and slowness while the ceiling remains low
  */
 val claustrophobia = ability("claustrophobia") {
     title = text("Claustrophobia")
-    description("Being somewhere with a low ceiling for too long will weaken you and make you slower.")
+    description("A low ceiling will weaken you and make you slower.")
 
     option("check_interval", 5)
-    option("max_stacks", 3600)
-    option("min_stacks", -200)
-    option("buildup_rate", 1)
-    option("recovery_rate", 1)
 
-    val stacks = intState("stacks", default = -200)
-
-    onTick(interval = 5) { player, config ->
+    onTick(interval = 5) { player, _ ->
         val blockAbove = player.location.block.getRelative(BlockFace.UP, 2)
-        val maxStacks = config.getInt("max_stacks", 3600)
-        val minStacks = config.getInt("min_stacks", -200)
-        val buildupRate = config.getInt("buildup_rate", 1)
-        val recoveryRate = config.getInt("recovery_rate", 1)
-
-        val currentStacks = stacks[player]
-
-        val newStacks = if (blockAbove.isSolid) {
-            (currentStacks + buildupRate).coerceAtMost(maxStacks)
-        } else {
-            (currentStacks - recoveryRate).coerceAtLeast(minStacks)
-        }
-        stacks[player] = newStacks
-
-        if (newStacks > 0) {
+        if (blockAbove.isSolid) {
             player.addPotionEffects(
                 listOf(
-                    PotionEffect(PotionEffectType.WEAKNESS, newStacks, 0, true, true, true),
-                    PotionEffect(NMSInvoker.slownessEffect, newStacks, 0, true, true, true)
+                    PotionEffect(PotionEffectType.WEAKNESS, 10, 0, true, true, true),
+                    PotionEffect(NMSInvoker.slownessEffect, 10, 0, true, true, true)
                 )
             )
         }
         true
-    }
-
-    listener<PlayerItemConsumeEvent>(
-        playerFrom = { it.player }
-    ) { player, event, _ ->
-        if (event.item.type == Material.MILK_BUCKET) {
-            val currentStacks = stacks[player]
-            stacks[player] = minOf(currentStacks, 0)
-        }
     }
 }
 
@@ -220,23 +188,21 @@ val aquatic = ability("aquatic") {
 
     option("impaling_bonus_per_level", 2.5)
 
-    // Extra damage from Impaling enchantment
-    modifyDamage(
-        incomingFromEntity = { _, attacker, damage, _, config ->
-            val enchantment = impalingEnchantment ?: return@modifyDamage DamageResult.Allow
-            val equipment = attacker.equipment ?: return@modifyDamage DamageResult.Allow
-            val mainHand = equipment.itemInMainHand
+    listener<EntityDamageByEntityEvent>(
+        playerFrom = { it.entity as? org.bukkit.entity.Player }
+    ) { _, event, config ->
+        val weapon = when (val damager = event.damager) {
+            is Trident -> damager.itemStack
+            is LivingEntity -> damager.equipment?.itemInMainHand
+            else -> null
+        } ?: return@listener
 
-            if (!mainHand.containsEnchantment(enchantment)) {
-                return@modifyDamage DamageResult.Allow
-            }
+        val enchantment = impalingEnchantment ?: return@listener
+        val level = weapon.getEnchantmentLevel(enchantment)
+        if (level <= 0) return@listener
 
-            val level = mainHand.getEnchantmentLevel(enchantment)
-            val bonusPerLevel = config.getDouble("impaling_bonus_per_level", 2.5)
-
-            DamageResult.Modify(damage + (bonusPerLevel * level))
-        }
-    )
+        event.damage += config.getDouble("impaling_bonus_per_level", 2.5) * level
+    }
 }
 
 /**
@@ -244,7 +210,7 @@ val aquatic = ability("aquatic") {
  * Legacy: WaterBreathing.kt
  *
  * The legacy implementation:
- * - Recovers air when underwater, in rain, or with water breathing potion
+ * - Recovers air while underwater
  * - Loses air when on land
  * - Uses persistent data keys for state tracking
  * - Handles turtle helmet special case
@@ -260,12 +226,9 @@ val waterBreathing = ability("water_breathing") {
 
     onTick(interval = 1) { player, config ->
         val underwater = player.isUnderWater
-        val inRain = player.isInRain
-        val hasWaterBreathing = player.hasPotionEffect(PotionEffectType.WATER_BREATHING) ||
-            player.hasPotionEffect(PotionEffectType.CONDUIT_POWER)
         val recoveryRate = config.getInt("air_recovery_rate", 4)
 
-        if (underwater || inRain || hasWaterBreathing) {
+        if (underwater) {
             val newAir = (player.remainingAir + recoveryRate).coerceAtMost(player.maximumAir)
             player.remainingAir = newAir
         } else {
@@ -288,8 +251,8 @@ val waterBreathing = ability("water_breathing") {
 
             // Deal drowning damage when air runs out
             if (player.remainingAir < -20) {
-                val landDamage = config.getDouble("land_damage", 2.0)
-                player.damage(landDamage)
+                val landDamage = config.getInt("land_damage", 2)
+                NMSInvoker.dealDrowningDamage(player, landDamage)
                 player.remainingAir = 0
             }
         }
@@ -310,11 +273,13 @@ val airFromPotions = ability("air_from_potions") {
 
     option("air_restored", 60)
 
-    // Handled via potion consume event
-    onPotionConsume { player, _, config ->
+    listener<PlayerItemConsumeEvent>(
+        playerFrom = { it.player }
+    ) { player, event, config ->
+        if (event.item.type != Material.POTION) return@listener
+
         val airRestored = config.getInt("air_restored", 60)
         player.remainingAir = (player.remainingAir + airRestored).coerceAtMost(player.maximumAir)
-        PotionReactionResult.Allow
     }
 }
 

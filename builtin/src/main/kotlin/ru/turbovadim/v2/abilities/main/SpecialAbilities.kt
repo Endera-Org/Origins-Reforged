@@ -3,6 +3,7 @@ package ru.turbovadim.v2.abilities.main
 import net.kyori.adventure.key.Key
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
+import org.bukkit.Sound
 import org.bukkit.entity.EnderPearl
 import org.bukkit.entity.Player
 import org.bukkit.event.block.Action
@@ -12,6 +13,7 @@ import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerToggleFlightEvent
+import org.bukkit.event.world.TimeSkipEvent
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.Vector
 import ru.turbovadim.OriginsReforged
@@ -21,6 +23,7 @@ import ru.turbovadim.v2.ability.InvisibilityCondition
 import ru.turbovadim.v2.api.OriginsApi
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.listener
+import ru.turbovadim.v2.dsl.listenerForPlayers
 import ru.turbovadim.v2.dsl.text
 import ru.turbovadim.v2.dsl.toggleAbility
 import ru.turbovadim.v2.event.OriginChangedEvent
@@ -36,8 +39,6 @@ import ru.turbovadim.v2.ui.ShulkerInventoryUI
  *
  * Implementation:
  * - Toggles phantom state on left-click with empty hand
- * - Requires food level > 6 to enable
- * - Auto-disables when food level drops to 6 or below
  * - As a DependencyAbility, other abilities can use `dependsOn` to depend on this
  */
 val phantomize: DependencyAbility = toggleAbility("phantomize") {
@@ -45,33 +46,20 @@ val phantomize: DependencyAbility = toggleAbility("phantomize") {
     description("Toggle phantom form by pressing the primary action key while holding nothing.")
     visible = false
 
-    option("min_food_level", 6)
-
     // Toggle phantomize state on left-click with empty hand
-    onInteract(Action.LEFT_CLICK_AIR, Action.LEFT_CLICK_BLOCK) { player, _, config ->
+    onInteract(Action.LEFT_CLICK_AIR, Action.LEFT_CLICK_BLOCK) { player, _, _ ->
         // Must be holding nothing
         if (player.inventory.itemInMainHand.type != Material.AIR) {
             return@onInteract false
         }
 
-        val minFood = config.getInt("min_food_level", 6)
-
         if (isEnabled(player)) {
             disable(player)
-        } else if (player.foodLevel > minFood) {
+        } else {
             enable(player)
         }
 
         false // Don't cancel the event
-    }
-
-    // Auto-disable when food level drops too low
-    onTick(interval = 20) { player, config ->
-        val minFood = config.getInt("min_food_level", 6)
-        if (player.foodLevel <= minFood && isEnabled(player)) {
-            disable(player)
-        }
-        true
     }
 
     // Clean up state on origin change
@@ -125,40 +113,41 @@ val invisibility = ability("invisibility") {
 
 /** Key for marking no-damage ender pearls */
 private val noDamagePearlKey by lazy { NamespacedKey(OriginsReforged.instance, "no-damage-pearl") }
+private val elytraFlightOwner = Key.key("origins", "elytra")
 
 /**
  * Throw Ender Pearl - throw ender pearl by left-clicking with empty hand.
  * Legacy: ThrowEnderPearl.kt
  *
  * Implementation:
- * - Left-click with empty hand while not looking at a block
- * - Has 1.5 second cooldown (30 ticks)
+ * - Left-click the air with an empty hand
+ * - Has a 30 second cooldown (600 ticks)
  * - The pearl does no damage on hit (marked via persistent data)
  */
 val throwEnderPearl = ability("throw_ender_pearl") {
     title = text("Teleportation")
     description("Whenever you want, you may throw an ender pearl which deals no damage, allowing you to teleport.")
 
-    option("cooldown_ticks", 30)
+    option("cooldown_ticks", 600)
 
-    onPrimaryAction { player, config ->
-        // Only activate with empty hand and no block target
-        if (player.inventory.itemInMainHand.type != Material.AIR) return@onPrimaryAction
-        if (player.getTargetBlockExact(6) != null) return@onPrimaryAction
+    onInteract(Action.LEFT_CLICK_AIR) { player, _, config ->
+        if (player.inventory.itemInMainHand.type != Material.AIR) return@onInteract false
 
         val abilityKey = Key.key("origins", "throw_ender_pearl")
-        val api = OriginsApi.getOrNull() ?: return@onPrimaryAction
+        val api = OriginsApi.getOrNull() ?: return@onInteract false
 
         // Check cooldown
-        if (api.hasCooldown(player, abilityKey)) return@onPrimaryAction
+        if (api.hasCooldown(player, abilityKey)) return@onInteract false
 
         // Set cooldown with ender_pearl icon
-        val cooldownTicks = config.getInt("cooldown_ticks", 30)
+        val cooldownTicks = config.getInt("cooldown_ticks", 600)
         api.setCooldown(player, abilityKey, cooldownTicks, "ender_pearl")
 
         // Launch ender pearl and mark it as no-damage
         val pearl = player.launchProjectile(EnderPearl::class.java)
         pearl.persistentDataContainer.set(noDamagePearlKey, PersistentDataType.BYTE, 1)
+
+        false
     }
 
     // Cancel damage from our no-damage pearls
@@ -189,8 +178,18 @@ val layEggs = ability("lay_eggs") {
     title = text("Oviparous")
     description("Whenever you wake up in the morning, you will lay an egg.")
 
-    // Note: This is handled via TimeSkipEvent in the executor
-    // The ability is triggered when player is deeply sleeping during night skip
+    listenerForPlayers<TimeSkipEvent>(
+        playersFrom = { event ->
+            if (event.skipReason != TimeSkipEvent.SkipReason.NIGHT_SKIP) {
+                emptyList()
+            } else {
+                event.world.players.filter { it.isDeeplySleeping }
+            }
+        }
+    ) { player, _, _ ->
+        player.world.dropItemNaturally(player.location, org.bukkit.inventory.ItemStack(Material.EGG))
+        player.world.playSound(player.location, Sound.ENTITY_CHICKEN_EGG, 1.0f, 1.0f)
+    }
 }
 
 /**
@@ -198,7 +197,7 @@ val layEggs = ability("lay_eggs") {
  * Legacy: ShulkerInventory.kt
  *
  * Opens via:
- *  - Java: right-click the helmet armor slot.
+ *  - Java: right-click the chestplate armor slot.
  *  - Bedrock: primary action with empty hand and no block target.
  */
 val shulkerInventory = ability("shulker_inventory") {
@@ -236,16 +235,27 @@ val elytra = ability("elytra") {
     title = text("Winged")
     description("You have Elytra wings without needing to equip any.")
 
-    // Enable allowFlight when player joins (so double-jump works)
+    fun enableOwnedFlight(player: Player) {
+        OriginsReforged.v2Container
+            ?.conditionalFlightController
+            ?.acquire(player, elytraFlightOwner)
+    }
+
+    fun disableOwnedFlight(player: Player) {
+        OriginsReforged.v2Container
+            ?.conditionalFlightController
+            ?.release(player, elytraFlightOwner)
+        player.isGliding = false
+    }
+
     listener<PlayerJoinEvent>(
         playerFrom = { it.player }
     ) { player, _, _ ->
-        player.allowFlight = true
+        enableOwnedFlight(player)
     }
 
-    // Update allowFlight when origin changes
     onOriginChanged { player, _: OriginChangedEvent, _ ->
-        player.allowFlight = true
+        enableOwnedFlight(player)
     }
 
     // Convert flight toggle to glide toggle
@@ -267,6 +277,10 @@ val elytra = ability("elytra") {
         if (!onGround && !event.isGliding) {
             event.isCancelled = true
         }
+    }
+
+    onDependencyDisabled { player, _ ->
+        disableOwnedFlight(player)
     }
 }
 

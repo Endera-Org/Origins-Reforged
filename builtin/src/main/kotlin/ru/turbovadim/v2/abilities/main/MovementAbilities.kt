@@ -1,6 +1,7 @@
 package ru.turbovadim.v2.abilities.main
 
 import com.destroystokyo.paper.event.player.PlayerJumpEvent
+import net.kyori.adventure.key.Key
 import org.bukkit.GameMode
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.block.BlockFace
@@ -11,6 +12,7 @@ import org.bukkit.event.player.PlayerToggleSneakEvent
 import org.bukkit.event.player.PlayerToggleSprintEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.listener
@@ -25,6 +27,8 @@ import java.time.Instant
  * Cardinal directions for checking adjacent blocks.
  */
 private val cardinalFaces = listOf(BlockFace.WEST, BlockFace.EAST, BlockFace.NORTH, BlockFace.SOUTH)
+private val climbingFlightOwner = Key.key("origins", "climbing")
+private val likeWaterFlightOwner = Key.key("origins", "like_water")
 
 /**
  * Climbing - can climb walls by flying only while next to a solid block.
@@ -40,8 +44,8 @@ private val cardinalFaces = listOf(BlockFace.WEST, BlockFace.EAST, BlockFace.NOR
  *
  * NOTE: flight is intentionally NOT declared via the `flight { }` DSL block,
  * because that would make PassiveEffectProcessor grant unconditional flight.
- * Climbing needs conditional flight, so allowFlight/isFlying/flySpeed are
- * managed manually below.
+ * Climbing needs conditional flight, so it acquires a shared flight lease only
+ * while the player is beside a wall.
  */
 val climbing = ability("climbing") {
     title = text("Climbing")
@@ -55,6 +59,7 @@ val climbing = ability("climbing") {
 
     onTick(interval = 1) { player, config ->
         if (player.gameMode == GameMode.CREATIVE || player.gameMode == GameMode.SPECTATOR) {
+            OriginsReforged.v2Container?.conditionalFlightController?.release(player, climbingFlightOwner)
             return@onTick false
         }
 
@@ -79,14 +84,13 @@ val climbing = ability("climbing") {
         val speed = config.getFloat("flight_speed", 0.05f).coerceIn(0.0001f, 1.0f)
 
         if (hasSolidAdjacent) {
-            if (!player.allowFlight) player.allowFlight = true
+            OriginsReforged.v2Container?.conditionalFlightController?.acquire(player, climbingFlightOwner)
             player.flySpeed = speed
             if (hasSolidAbove && !player.isOnGround && !stoppedClimbing[player]) {
                 if (!player.isFlying) player.isFlying = true
             }
         } else {
-            if (player.isFlying) player.isFlying = false
-            if (player.allowFlight) player.allowFlight = false
+            OriginsReforged.v2Container?.conditionalFlightController?.release(player, climbingFlightOwner)
         }
         hasSolidAdjacent
     }
@@ -113,6 +117,12 @@ val climbing = ability("climbing") {
         playerFrom = { it.player }
     ) { player, _, _ ->
         lastJumpEpochSeconds[player] = Instant.now().epochSecond
+    }
+
+    onDependencyDisabled { player, _ ->
+        OriginsReforged.v2Container?.conditionalFlightController?.release(player, climbingFlightOwner)
+        stoppedClimbing.reset(player)
+        lastJumpEpochSeconds.reset(player)
     }
 }
 
@@ -186,7 +196,7 @@ val swimSpeed = ability("swim_speed") {
  *
  * NOTE: flight is intentionally NOT declared via the `flight { }` DSL block,
  * because passive flight is unconditional and would allow aquatic origins to
- * fly outside water. This ability owns its conditional flight state manually.
+ * fly outside water. This ability holds a shared flight lease only in water.
  */
 val likeWater = ability("like_water") {
     title = text("Like Water")
@@ -194,58 +204,25 @@ val likeWater = ability("like_water") {
 
     option("flight_speed", 0.06f)
 
-    val grantingFlight = boolState("granting_flight", false)
-    val previousAllowFlight = boolState("previous_allow_flight", false)
-    val previousFlying = boolState("previous_flying", false)
-    val previousFlySpeed = floatState("previous_fly_speed", 0.1f)
-
     fun enableOwnedFlight(player: Player) {
-        if (!grantingFlight[player]) {
-            previousAllowFlight[player] = player.allowFlight
-            previousFlying[player] = player.isFlying
-            previousFlySpeed[player] = player.flySpeed
-            grantingFlight[player] = true
-        }
-        player.allowFlight = true
+        OriginsReforged.v2Container?.conditionalFlightController?.acquire(player, likeWaterFlightOwner)
     }
 
     fun disableOwnedFlight(player: Player) {
-        val restoreAllowFlight = previousAllowFlight[player]
-        val restoreFlying = previousFlying[player]
-        val restoreFlySpeed = previousFlySpeed[player].coerceIn(-1.0f, 1.0f)
-
-        grantingFlight[player] = false
-        previousAllowFlight.reset(player)
-        previousFlying.reset(player)
-        previousFlySpeed.reset(player)
-
-        if (player.gameMode == GameMode.CREATIVE || player.gameMode == GameMode.SPECTATOR) {
-            return
-        }
-
-        player.allowFlight = restoreAllowFlight
-        player.isFlying = restoreAllowFlight && restoreFlying
-        player.flySpeed = restoreFlySpeed
+        OriginsReforged.v2Container?.conditionalFlightController?.release(player, likeWaterFlightOwner)
     }
 
     // Flight is granted when in water and not in bubble column
     onTick(interval = 1) { player, config ->
         if (player.gameMode == GameMode.CREATIVE || player.gameMode == GameMode.SPECTATOR) {
-            if (grantingFlight[player]) {
-                grantingFlight[player] = false
-                previousAllowFlight.reset(player)
-                previousFlying.reset(player)
-                previousFlySpeed.reset(player)
-            }
+            disableOwnedFlight(player)
             return@onTick false
         }
 
         val inWater = player.isInWater && !player.isInBubbleColumn
 
         if (!inWater) {
-            if (grantingFlight[player]) {
-                disableOwnedFlight(player)
-            }
+            disableOwnedFlight(player)
             return@onTick false
         }
 
@@ -268,14 +245,14 @@ val likeWater = ability("like_water") {
             return@listener
         }
 
-        val to = event.to ?: return@listener
+        val to = event.to
         val inWater = player.isInWater && !player.isInBubbleColumn
         if (!inWater || player.isSwimming) {
             return@listener
         }
 
         val rising = to.y > event.from.y
-        val shouldFly = (player.isFlying || rising) && inWater
+        val shouldFly = player.isFlying || rising
         if (shouldFly == player.isFlying) {
             return@listener
         }
@@ -310,9 +287,7 @@ val likeWater = ability("like_water") {
     }
 
     onDependencyDisabled { player, _ ->
-        if (grantingFlight[player]) {
-            disableOwnedFlight(player)
-        }
+        disableOwnedFlight(player)
     }
 }
 

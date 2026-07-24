@@ -1,6 +1,8 @@
 package ru.turbovadim.v2.builtin
 
 import org.bukkit.plugin.java.JavaPlugin
+import ru.turbovadim.v2.abilities.main.MasterOfWebsBehavior
+import ru.turbovadim.v2.abilities.main.ScareCreepersBehavior
 import ru.turbovadim.v2.abilities.main.WebbingRecipe
 import ru.turbovadim.v2.abilities.main.allAbilities
 import ru.turbovadim.v2.api.BuiltinRegistrationModule
@@ -15,6 +17,8 @@ class CoreBuiltinRegistrationModule : BuiltinRegistrationModule {
     override fun register(api: OriginsApi, plugin: JavaPlugin) {
         allAbilities.forEach(api::registerAbility)
         WebbingRecipe.register(plugin)
+        MasterOfWebsBehavior.register(plugin)
+        ScareCreepersBehavior.register(plugin)
         api.loadBundledOrigins(addonId = id, folderName = "originsMain")
 
         plugin.logger.info("[v2] [$id] Registered ${allAbilities.size} bundled abilities")

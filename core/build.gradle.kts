@@ -33,7 +33,6 @@ dependencies {
     compileOnly("com.viaversion:viaversion-api:5.0.0")
     compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT") // Paper
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
-    compileOnly("com.github.aromaa:WorldGuardExtraFlags:v4.2.4")
     compileOnly("org.geysermc.geyser:api:2.9.0-SNAPSHOT")
     compileOnly("org.geysermc.floodgate:api:2.2.2-SNAPSHOT")
     compileOnly("com.github.authme:authmereloaded:5.6.0-beta2")

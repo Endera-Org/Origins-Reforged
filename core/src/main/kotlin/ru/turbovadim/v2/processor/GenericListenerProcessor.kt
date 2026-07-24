@@ -4,6 +4,7 @@ import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.Event
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import ru.turbovadim.v2.ability.Ability
 import ru.turbovadim.v2.ability.AbilityEffect
@@ -17,6 +18,12 @@ import kotlin.reflect.KClass
  */
 class GenericListenerProcessor(private val container: OriginsContainer) {
 
+    private data class RegistrationKey(
+        val eventClass: KClass<*>,
+        val priority: EventPriority,
+        val ignoreCancelled: Boolean
+    )
+
     private data class HandlerEntry<E : Event>(
         val abilityKey: Key,
         val effect: AbilityEffect.Listener.Generic<E>
@@ -27,9 +34,8 @@ class GenericListenerProcessor(private val container: OriginsContainer) {
         val effect: AbilityEffect.Listener.OriginChanged
     )
 
-    // eventClass -> list of handler entries
-    private val handlers = mutableMapOf<KClass<*>, MutableList<HandlerEntry<*>>>()
-    private val registeredEvents = mutableSetOf<KClass<*>>()
+    private val handlers = mutableMapOf<RegistrationKey, MutableList<HandlerEntry<*>>>()
+    private val registeredEvents = mutableSetOf<RegistrationKey>()
     private val originChangedHandlers = mutableListOf<OriginChangedHandlerEntry>()
     private var originChangedRegistered = false
 
@@ -65,22 +71,23 @@ class GenericListenerProcessor(private val container: OriginsContainer) {
 
     @Suppress("UNCHECKED_CAST")
     private fun <E : Event> addHandler(abilityKey: Key, effect: AbilityEffect.Listener.Generic<E>) {
-        val entries = handlers.getOrPut(effect.eventClass) { mutableListOf() }
+        val key = RegistrationKey(effect.eventClass, effect.priority, effect.ignoreCancelled)
+        val entries = handlers.getOrPut(key) { mutableListOf() }
         entries.add(HandlerEntry(abilityKey, effect))
     }
 
     private fun ensureEventRegistered(effect: AbilityEffect.Listener.Generic<*>) {
-        if (effect.eventClass in registeredEvents) return
-        registeredEvents += effect.eventClass
+        val key = RegistrationKey(effect.eventClass, effect.priority, effect.ignoreCancelled)
+        if (key in registeredEvents) return
+        registeredEvents += key
 
-        @Suppress("UNCHECKED_CAST")
-        val eventClass = effect.eventClass.java as Class<out Event>
+        val eventClass = effect.eventClass.java
 
         Bukkit.getPluginManager().registerEvent(
             eventClass,
             object : Listener {},
             effect.priority,
-            { _, event -> dispatchEvent(event) },
+            { _, event -> dispatchEvent(key, event) },
             container.plugin,
             effect.ignoreCancelled
         )
@@ -100,26 +107,21 @@ class GenericListenerProcessor(private val container: OriginsContainer) {
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun dispatchEvent(event: Event) {
-        val entries = handlers[event::class] ?: return
+    private fun dispatchEvent(key: RegistrationKey, event: Event) {
+        val entries = handlers[key] ?: return
 
         for (entry in entries) {
             val typedEntry = entry as HandlerEntry<Event>
-            val player = typedEntry.effect.playerExtractor(event) ?: continue
-
-            // Check if player has this ability
-            val state = container.playerStateManager.getState(player)
-            if (!state.hasAbility(entry.abilityKey)) continue
-
-            // Check if ability is active (dependency check)
-            if (!isAbilityActive(player, entry.abilityKey)) continue
-
-            // Get config accessor
             val ability = container.abilityRegistry.get(entry.abilityKey) ?: continue
             val accessor = container.configLoader.getAccessor(entry.abilityKey, ability.defaultOptions)
 
-            // Call the handler
-            typedEntry.effect.handler(player, event, accessor)
+            for (player in typedEntry.effect.playersExtractor(event).distinctBy { it.uniqueId }) {
+                val state = container.playerStateManager.getState(player)
+                if (!state.hasAbility(entry.abilityKey)) continue
+                if (!isAbilityActive(player, entry.abilityKey)) continue
+
+                typedEntry.effect.handler(player, event, accessor)
+            }
         }
     }
 

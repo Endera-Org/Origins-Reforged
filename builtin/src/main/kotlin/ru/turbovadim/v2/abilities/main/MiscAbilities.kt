@@ -3,12 +3,9 @@ package ru.turbovadim.v2.abilities.main
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes
 import net.kyori.adventure.key.Key
 import org.bukkit.GameMode
-import org.bukkit.Material
-import org.bukkit.block.BlockFace
 import org.bukkit.entity.Player
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause
 import org.bukkit.event.entity.EntityExhaustionEvent
-import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import org.endera.enderalib.utils.async.runTask
@@ -110,9 +107,6 @@ val enderParticles = ability("ender_particles") {
     )
 }
 
-/** Blocks that cannot be phased through */
-private val unphasableBlocks = listOf(Material.OBSIDIAN, Material.BEDROCK, Material.CRYING_OBSIDIAN)
-
 /** State key for tracking phasing status - defined at file level for access from lifecycle callbacks */
 private val isPhasingState = StateKey(
     Key.key("origins", "phasing"),
@@ -120,11 +114,12 @@ private val isPhasingState = StateKey(
     false,
     Boolean::class
 )
+private val phasingFlightOwner = Key.key("origins", "phasing")
 
 fun isPhantomized(player: Player): Boolean = phantomize.isEnabled(player)
 
 /**
- * Check if entity is inside a solid block (excluding unphasable blocks).
+ * Check if entity is inside a solid block.
  * Uses multiple offset checks like the legacy implementation.
  */
 private fun isInSolidBlock(player: Player): Boolean {
@@ -139,7 +134,7 @@ private fun isInSolidBlock(player: Player): Boolean {
         offsets.any { dx ->
             offsets.any { dz ->
                 val block = base.clone().add(dx, 0.0, dz).block
-                block.type.isSolid && block.type !in unphasableBlocks
+                block.type.isSolid
             }
         }
     }
@@ -156,11 +151,10 @@ private fun isInSolidBlock(player: Player): Boolean {
  * - Enables flight while phasing (speed 0.1f, no fall damage)
  * - Cancels suffocation damage
  * - Applies blindness when inside solid blocks
- * - Cannot phase through obsidian or bedrock
  */
 val phasing = ability("phasing") {
     title = text("Phasing")
-    description("While phantomized, you can walk through solid material, except Obsidian.")
+    description("While phantomized, you can walk through solid material.")
 
     dependsOn = Key.key("origins", "phantomize")
 
@@ -176,11 +170,9 @@ val phasing = ability("phasing") {
     // Handle phasing state and blindness (runs at end of each tick, after movement processing)
     onTickEnd { player, config ->
         val inBlock = isInSolidBlock(player)
-        val blockBelow = player.location.block.getRelative(BlockFace.DOWN).type
-
-        // Phasing activates when: (on ground AND sneaking AND block below is phasable) OR already in a solid block
+        // Sneaking starts phasing; once inside a block it remains active until clear.
         @Suppress("DEPRECATION")
-        val shouldPhase = (player.isOnGround && player.isSneaking && blockBelow !in unphasableBlocks) || inBlock
+        val shouldPhase = (player.isOnGround && player.isSneaking) || inBlock
 
         val currentlyPhasing = isPhasingState[player]
 
@@ -194,17 +186,16 @@ val phasing = ability("phasing") {
                 NMSInvoker.sendPhasingGamemodeUpdate(player, GameMode.SPECTATOR)
                 // Restore velocity after gamemode packet (entity-tied: follows player across regions)
                 player.runTask(OriginsReforged.instance) { player.velocity = currentVelocity }
-                // Enable flight for phasing
-                player.allowFlight = true
+                OriginsReforged.v2Container
+                    ?.conditionalFlightController
+                    ?.acquire(player, phasingFlightOwner)
                 player.flySpeed = config.getFloat("flight_speed", 0.1f)
             } else {
                 // Disable phasing - restore normal gamemode
                 NMSInvoker.sendPhasingGamemodeUpdate(player, player.gameMode)
-                // Disable flight when not phasing (unless in creative/spectator)
-                if (player.gameMode != GameMode.CREATIVE && player.gameMode != GameMode.SPECTATOR) {
-                    player.allowFlight = false
-                    player.isFlying = false
-                }
+                OriginsReforged.v2Container
+                    ?.conditionalFlightController
+                    ?.release(player, phasingFlightOwner)
             }
         }
 
@@ -214,6 +205,9 @@ val phasing = ability("phasing") {
 
         // Handle flight and fall damage when phasing
         if (phasingActive) {
+            OriginsReforged.v2Container
+                ?.conditionalFlightController
+                ?.acquire(player, phasingFlightOwner)
             player.fallDistance = 0f
             player.isFlying = true
             // Enforce flight speed every tick to prevent scroll wheel changes
@@ -233,29 +227,6 @@ val phasing = ability("phasing") {
         true
     }
 
-    // Block movement into unphasable blocks
-    listener<PlayerMoveEvent>(
-        playerFrom = { it.player }
-    ) { player, event, _ ->
-        if (isPhasingState[player]) {
-            val to = event.to ?: return@listener
-            val offsets = listOf(0.4, -0.4)
-            val checkLocations = listOf(to.clone().add(0.0, 1.0, 0.0), to.clone())
-
-            val movingIntoUnphasable = checkLocations.any { base ->
-                offsets.any { dx ->
-                    offsets.any { dz ->
-                        base.clone().add(dx, 0.0, dz).block.type in unphasableBlocks
-                    }
-                }
-            }
-
-            if (movingIntoUnphasable) {
-                event.isCancelled = true
-            }
-        }
-    }
-
     // Clean up phasing state when phantomize is disabled
     onDependencyDisabled { player, _ ->
         if (isPhasingState[player]) {
@@ -263,11 +234,9 @@ val phasing = ability("phasing") {
             NMSInvoker.setNoPhysics(player, false)
             NMSInvoker.sendPhasingGamemodeUpdate(player, player.gameMode)
         }
-        // Disable flight (unless in creative/spectator)
-        if (player.gameMode != GameMode.CREATIVE && player.gameMode != GameMode.SPECTATOR) {
-            player.allowFlight = false
-            player.isFlying = false
-        }
+        OriginsReforged.v2Container
+            ?.conditionalFlightController
+            ?.release(player, phasingFlightOwner)
         player.removePotionEffect(PotionEffectType.BLINDNESS)
     }
 }

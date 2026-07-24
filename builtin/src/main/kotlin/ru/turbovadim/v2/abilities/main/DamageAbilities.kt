@@ -1,13 +1,14 @@
 package ru.turbovadim.v2.abilities.main
 
+import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.entity.Snowball
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause
 import org.bukkit.event.entity.ProjectileHitEvent
+import org.bukkit.event.player.PlayerItemConsumeEvent
 import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.ability.DamageResult
-import ru.turbovadim.v2.ability.PotionReactionResult
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.immuneTo
 import ru.turbovadim.v2.dsl.listener
@@ -30,7 +31,8 @@ val fireImmunity = ability("fire_immunity") {
             DamageCause.FIRE,
             DamageCause.FIRE_TICK,
             DamageCause.LAVA,
-            DamageCause.HOT_FLOOR
+            DamageCause.HOT_FLOOR,
+            DamageCause.CAMPFIRE
         )
     )
 }
@@ -53,16 +55,16 @@ val fallImmunity = ability("fall_immunity") {
 // ============================================
 
 /**
- * Fragile - has 3 less hearts of health (attribute modifier).
+ * Fragile - has 7 hearts of health (attribute modifier).
  * Legacy: Fragile.kt - uses attribute modifier for max health
  * Note: Attribute modifiers are applied by the AbilityAttributeService
  * based on the config value.
  */
 val fragile = ability("fragile") {
     title = text("Fragile")
-    description("You have 3 less hearts of health than humans.")
+    description("You have 7 hearts of health.")
 
-    attribute(AttributeType.MAX_HEALTH, -3.0, configKey = "health_reduction")
+    attribute(AttributeType.MAX_HEALTH, -6.0, configKey = "health_reduction")
 }
 
 /**
@@ -99,7 +101,7 @@ val waterVulnerability = ability("water_vulnerability") {
 
     onTick(interval = 20) { player, config ->
         val damage = config.getInt("damage_amount", 1)
-        if (player.isInWaterOrRainOrBubbleColumn || NMSInvoker.wasTouchingWater(player)) {
+        if (player.isInWater || player.isInBubbleColumn || NMSInvoker.wasTouchingWater(player)) {
             NMSInvoker.dealFreezeDamage(player, damage)
         }
         true
@@ -117,10 +119,13 @@ val damageFromPotions = ability("damage_from_potions") {
 
     option("damage_amount", 2)
 
-    onPotionConsume { player, _, config ->
+    listener<PlayerItemConsumeEvent>(
+        playerFrom = { it.player }
+    ) { player, event, config ->
+        if (event.item.type != Material.POTION) return@listener
+
         val damage = config.getInt("damage_amount", 2)
         NMSInvoker.dealFreezeDamage(player, damage)
-        PotionReactionResult.Allow
     }
 }
 

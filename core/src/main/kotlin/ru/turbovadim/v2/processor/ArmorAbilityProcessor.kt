@@ -23,6 +23,9 @@ class ArmorAbilityProcessor(private val container: OriginsContainer) : Listener 
 
     fun registerEvents() {
         Bukkit.getPluginManager().registerEvents(this, container.plugin)
+        container.eventBus.registerChangedListener { event ->
+            removeDisallowedArmor(event.player)
+        }
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
@@ -99,6 +102,21 @@ class ArmorAbilityProcessor(private val container: OriginsContainer) : Listener 
     }
 
     private fun checkArmorEquip(event: Cancellable, player: Player, armor: ItemStack, slot: EquipmentSlot) {
+        if (canEquip(player, armor, slot)) return
+
+        if (event is PlayerInteractEvent) {
+            event.setUseItemInHand(Event.Result.DENY)
+            event.isCancelled = true
+            if (event.action == Action.RIGHT_CLICK_BLOCK) {
+                event.setUseInteractedBlock(Event.Result.DEFAULT)
+            }
+            return
+        }
+
+        event.isCancelled = true
+    }
+
+    private fun canEquip(player: Player, armor: ItemStack, slot: EquipmentSlot): Boolean {
         val playerState = container.playerStateManager.getState(player)
         val abilityKeys = playerState.getAbilityKeys()
 
@@ -113,18 +131,38 @@ class ArmorAbilityProcessor(private val container: OriginsContainer) : Listener 
                 val accessor = container.configLoader.getAccessor(abilityKey, ability.defaultOptions)
 
                 if (!effect.canEquip.canEquip(player, armor, slot, accessor)) {
-                    if (event is PlayerInteractEvent) {
-                        event.setUseItemInHand(Event.Result.DENY)
-                        event.isCancelled = true
-                        if (event.action == Action.RIGHT_CLICK_BLOCK) {
-                            event.setUseInteractedBlock(Event.Result.DEFAULT)
-                        }
-                        return
-                    }
-
-                    event.isCancelled = true
-                    return
+                    return false
                 }
+            }
+        }
+
+        return true
+    }
+
+    private fun removeDisallowedArmor(player: Player) {
+        val equipment = player.equipment
+        val equippedArmor = listOf(
+            EquipmentSlot.HEAD to equipment.helmet,
+            EquipmentSlot.CHEST to equipment.chestplate,
+            EquipmentSlot.LEGS to equipment.leggings,
+            EquipmentSlot.FEET to equipment.boots
+        )
+
+        for ((slot, item) in equippedArmor) {
+            val armor = item?.takeUnless { it.type == Material.AIR } ?: continue
+            if (!isArmor(armor.type)) continue
+            if (canEquip(player, armor, slot)) continue
+
+            when (slot) {
+                EquipmentSlot.HEAD -> equipment.helmet = null
+                EquipmentSlot.CHEST -> equipment.chestplate = null
+                EquipmentSlot.LEGS -> equipment.leggings = null
+                EquipmentSlot.FEET -> equipment.boots = null
+                else -> Unit
+            }
+
+            player.inventory.addItem(armor).values.forEach { leftover ->
+                player.world.dropItemNaturally(player.location, leftover)
             }
         }
     }

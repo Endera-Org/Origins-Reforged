@@ -2,15 +2,21 @@ package ru.turbovadim.v2.processor
 
 import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
+import org.bukkit.NamespacedKey
+import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.entity.Projectile
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
+import org.bukkit.event.block.BlockBreakEvent
+import org.bukkit.event.block.BlockDamageAbortEvent
 import org.bukkit.event.block.BlockDamageEvent
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityDamageEvent
+import org.bukkit.event.player.PlayerChangedWorldEvent
+import org.bukkit.event.player.PlayerQuitEvent
 import ru.turbovadim.v2.ability.AbilityEffect
 import ru.turbovadim.v2.ability.BreakSpeedContext
 import ru.turbovadim.v2.ability.DamageResult
@@ -22,11 +28,22 @@ import ru.turbovadim.v2.di.OriginsContainer
  */
 class ReactiveAbilityProcessor(private val container: OriginsContainer) : Listener {
 
+    private val breakSpeedModifierKey by lazy {
+        NamespacedKey(container.plugin, "reactive-break-speed")
+    }
+
     /**
      * Register this processor as a Bukkit listener.
      */
     fun registerEvents() {
         Bukkit.getPluginManager().registerEvents(this, container.plugin)
+        container.eventBus.registerChangedListener { event ->
+            clearBreakSpeedModifier(event.player)
+        }
+    }
+
+    fun shutdown() {
+        Bukkit.getOnlinePlayers().forEach(::clearBreakSpeedModifier)
     }
 
     // ============================================
@@ -163,9 +180,11 @@ class ReactiveAbilityProcessor(private val container: OriginsContainer) : Listen
      * but for actual break speed modification we need to use BlockDamageEvent
      * and potentially NMS for precise control.
      */
-    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun onBlockDamage(event: BlockDamageEvent) {
         val player = event.player
+        clearBreakSpeedModifier(player)
+
         val state = container.playerStateManager.getState(player)
         val abilityKeys = state.getAbilityKeys()
 
@@ -176,6 +195,7 @@ class ReactiveAbilityProcessor(private val container: OriginsContainer) : Listen
             isOnGround = player.isOnGround
         )
 
+        var speedMultiplier = 1.0f
         for (abilityKey in abilityKeys) {
             if (!isAbilityActive(player, abilityKey)) continue
 
@@ -186,18 +206,59 @@ class ReactiveAbilityProcessor(private val container: OriginsContainer) : Listen
                 val ability = container.abilityRegistry.get(abilityKey) ?: continue
                 val accessor = container.configLoader.getAccessor(abilityKey, ability.defaultOptions)
 
-                // Get the modified break speed
-                // Note: For actual break speed modification, we'd need to use
-                // PlayerBlockBreakSpeedModificationEvent from Paper or NMS
-                val modifiedSpeed = effect.modifier.modify(player, 1.0f, context, accessor)
+                val modifiedSpeed = effect.modifier.modify(player, speedMultiplier, context, accessor)
 
-                // If speed is 0 or negative, effectively prevent breaking
-                if (modifiedSpeed <= 0) {
+                if (!modifiedSpeed.isFinite() || modifiedSpeed <= 0.0f) {
                     event.isCancelled = true
                     return
                 }
+
+                speedMultiplier = modifiedSpeed
             }
         }
+
+        applyBreakSpeedModifier(player, speedMultiplier)
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    fun onBlockDamageAbort(event: BlockDamageAbortEvent) {
+        clearBreakSpeedModifier(event.player)
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    fun onBlockBreak(event: BlockBreakEvent) {
+        clearBreakSpeedModifier(event.player)
+    }
+
+    @EventHandler
+    fun onPlayerChangedWorld(event: PlayerChangedWorldEvent) {
+        clearBreakSpeedModifier(event.player)
+    }
+
+    @EventHandler
+    fun onPlayerQuit(event: PlayerQuitEvent) {
+        clearBreakSpeedModifier(event.player)
+    }
+
+    private fun applyBreakSpeedModifier(player: Player, multiplier: Float) {
+        if (multiplier == 1.0f) return
+
+        val attribute = container.nmsInvoker.blockBreakSpeedAttribute ?: return
+        val instance = player.getAttribute(attribute) ?: return
+        container.nmsInvoker.addAttributeModifier(
+            instance,
+            breakSpeedModifierKey,
+            "reactive_break_speed",
+            multiplier.toDouble() - 1.0,
+            AttributeModifier.Operation.MULTIPLY_SCALAR_1
+        )
+    }
+
+    private fun clearBreakSpeedModifier(player: Player) {
+        val attribute = container.nmsInvoker.blockBreakSpeedAttribute ?: return
+        val instance = player.getAttribute(attribute) ?: return
+        val modifier = container.nmsInvoker.getAttributeModifier(instance, breakSpeedModifierKey) ?: return
+        instance.removeModifier(modifier)
     }
 
     // ============================================

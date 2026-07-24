@@ -1,8 +1,11 @@
 package ru.turbovadim.v2.abilities.main
 
+import org.bukkit.entity.Player
+import org.bukkit.event.entity.EntityPotionEffectEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.v2.dsl.ability
+import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
 
 // ============================================
@@ -88,25 +91,18 @@ val waterVision = ability("water_vision") {
  *
  * The legacy implementation cancels EntityPotionEffectEvent when
  * the new effect type is POISON or HUNGER.
- * Note: This needs event-based handling in the executor.
  */
 val hotblooded = ability("hotblooded") {
     title = text("Hotblooded")
     description("Due to your hot body, venoms burn up, making you immune to poison and hunger status effects.")
 
-    // Periodic check to remove poison and hunger effects
-    // Note: Full implementation requires EntityPotionEffectEvent cancellation
-    // This tick handler provides a fallback removal mechanism
-    onTick(interval = 5) { player, _ ->
-        // Remove poison effect if present
-        if (player.hasPotionEffect(PotionEffectType.POISON)) {
-            player.removePotionEffect(PotionEffectType.POISON)
+    listener<EntityPotionEffectEvent>(
+        ignoreCancelled = false,
+        playerFrom = { it.entity as? Player }
+    ) { _, event, _ ->
+        if (event.newEffect?.type in setOf(PotionEffectType.POISON, PotionEffectType.HUNGER)) {
+            event.isCancelled = true
         }
-        // Remove hunger effect if present
-        if (player.hasPotionEffect(PotionEffectType.HUNGER)) {
-            player.removePotionEffect(PotionEffectType.HUNGER)
-        }
-        true
     }
 }
 

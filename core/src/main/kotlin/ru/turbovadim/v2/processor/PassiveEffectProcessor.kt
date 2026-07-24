@@ -32,6 +32,7 @@ class PassiveEffectProcessor(private val container: OriginsContainer) {
     fun applyPassiveEffects(player: Player, state: PlayerOriginState) {
         applyAttributes(player, state)
         applyFlight(player, state)
+        container.conditionalFlightController.reassert(player)
         applyVisibility(player, state)
     }
 

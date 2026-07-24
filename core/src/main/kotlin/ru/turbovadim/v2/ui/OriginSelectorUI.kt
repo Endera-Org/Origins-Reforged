@@ -461,6 +461,11 @@ object OriginSelectorUI {
         }
         container.playerStateManager.setOrigin(player, layer, origin, changeReason)
 
+        if (reason == OpenReason.INITIAL && mainConfig.originSelection.autoSpawnTeleport) {
+            val fallback = player.world.spawnLocation
+            player.teleportAsync(container.defaultSpawnAbilityProcessor.resolve(player, fallback))
+        }
+
         player.sendMessage(
             Component.text("You are now a ")
                 .color(NamedTextColor.GREEN)

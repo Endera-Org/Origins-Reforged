@@ -240,6 +240,9 @@ class AbilityRegistry(private val container: OriginsContainer) {
                 is AbilityEffect.Lifecycle -> {
                     // Handled separately
                 }
+                is AbilityEffect.DefaultSpawn -> {
+                    // Resolved directly by DefaultSpawnAbilityProcessor
+                }
                 is AttributeEffect.Static -> {
                     staticAttributeAbilities[ability.key] = effect
                 }

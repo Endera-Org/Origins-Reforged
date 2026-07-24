@@ -138,7 +138,7 @@ class OriginJoinFlowListener(
         // Folia-safe: teleportAsync works on both Paper and Folia; the confirmation message
         // is hopped back onto the player's region thread once the teleport completes.
         if (!hadAnyOriginBefore && assignedFreshly && mainConfig.originSelection.autoSpawnTeleport) {
-            val spawn = player.world.spawnLocation
+            val spawn = container.defaultSpawnAbilityProcessor.resolve(player, player.world.spawnLocation)
             player.teleportAsync(spawn).thenAccept { success ->
                 if (success == true) {
                     player.runTask(plugin) {

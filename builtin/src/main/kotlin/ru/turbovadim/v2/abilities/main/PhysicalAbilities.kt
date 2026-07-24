@@ -1,12 +1,21 @@
 package ru.turbovadim.v2.abilities.main
 
+import com.destroystokyo.paper.MaterialTags
 import org.bukkit.Material
 import org.bukkit.block.BlockFace
+import org.bukkit.event.EventPriority
 import org.bukkit.event.block.Action
-import org.bukkit.potion.PotionEffectType
+import org.bukkit.event.block.BlockBreakEvent
+import org.bukkit.event.block.BlockDropItemEvent
+import org.bukkit.inventory.ItemStack
+import org.endera.enderalib.utils.async.runTaskLater
+import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.dsl.ability
+import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 // ============================================
 // PHYSICAL ABILITIES (Mining, Reach, etc.)
@@ -36,25 +45,17 @@ private val naturalStones = setOf(
  *
  * The legacy implementation:
  * - Checks if player is targeting natural stone with more than 2 adjacent natural stones
- * - Applies mining fatigue (or uses attribute modifier on 1.21+) if conditions met
- * - Does NOT apply if player has strength effect
- * - Stores and restores existing mining fatigue effects
- * - Uses infinite duration for the ability-applied effect
+ * - Prevents the block-damage action if conditions are not met
  */
 val weakArms = ability("weak_arms") {
     title = text("Weak Arms")
-    description("When not under the effect of a strength potion, you can only mine natural stone if there are at most 2 other natural stone blocks adjacent to it.")
+    description("You can only mine natural stone if there are at most 2 other natural stone blocks adjacent to it.")
 
     option("adjacent_stone_threshold", 2)
 
     // Break speed modifier - returns 0 if too many adjacent stones
-    modifyBreakSpeed { player, baseSpeed, context, config ->
+    modifyBreakSpeed { _, baseSpeed, context, config ->
         val threshold = config.getInt("adjacent_stone_threshold", 2)
-
-        val hasStrength = player.hasPotionEffect(PotionEffectType.STRENGTH)
-        if (hasStrength) {
-            return@modifyBreakSpeed baseSpeed
-        }
 
         // Check if target block is natural stone
         val targetBlock = context.block
@@ -84,6 +85,32 @@ val weakArms = ability("weak_arms") {
     }
 }
 
+private data class StrongArmsDropKey(
+    val playerId: UUID,
+    val worldId: UUID,
+    val x: Int,
+    val y: Int,
+    val z: Int
+)
+
+private val pendingStrongArmsDrops = ConcurrentHashMap<StrongArmsDropKey, Collection<ItemStack>>()
+
+private fun strongArmsDropKey(event: BlockBreakEvent) = StrongArmsDropKey(
+    event.player.uniqueId,
+    event.block.world.uid,
+    event.block.x,
+    event.block.y,
+    event.block.z
+)
+
+private fun strongArmsDropKey(event: BlockDropItemEvent) = StrongArmsDropKey(
+    event.player.uniqueId,
+    event.block.world.uid,
+    event.block.x,
+    event.block.y,
+    event.block.z
+)
+
 /**
  * Strong Arms - can mine natural stone without a pickaxe at normal speed.
  * Legacy: StrongArms.kt
@@ -98,12 +125,12 @@ val strongArms = ability("strong_arms") {
     description("You are strong enough to break natural stones without using a pickaxe.")
 
     // Break speed modifier: treats hand as iron pickaxe for natural stone
-    modifyBreakSpeed { player, baseSpeed, context, _ ->
+    modifyBreakSpeed { _, baseSpeed, context, _ ->
         val targetBlock = context.block
-        val heldItem = context.tool
+        val heldItem = context.tool ?: ItemStack(Material.AIR)
 
         // Only modify if not holding a pickaxe
-        if (heldItem != null && heldItem.type.name.contains("PICKAXE")) {
+        if (MaterialTags.PICKAXES.isTagged(heldItem.type)) {
             return@modifyBreakSpeed baseSpeed
         }
 
@@ -112,10 +139,46 @@ val strongArms = ability("strong_arms") {
             return@modifyBreakSpeed baseSpeed
         }
 
-        // Return speed as if using iron pickaxe
-        // Iron pickaxe on stone gives approximately 6x speed multiplier
-        // The exact calculation depends on block hardness, but this is a good approximation
-        baseSpeed * 6f
+        val ironPickaxe = ItemStack(Material.IRON_PICKAXE)
+        val ironSpeed = OriginsReforged.NMSInvoker.getDestroySpeed(ironPickaxe, targetBlock.type)
+        val heldSpeed = OriginsReforged.NMSInvoker
+            .getDestroySpeed(heldItem, targetBlock.type)
+            .coerceAtLeast(0.0001f)
+
+        // A preferred tool divides block hardness by 30; an unsuitable tool
+        // divides it by 100. Include both the tool-speed and suitability ratio.
+        baseSpeed * (ironSpeed / heldSpeed) * (100f / 30f)
+    }
+
+    listener<BlockBreakEvent>(
+        priority = EventPriority.HIGHEST,
+        playerFrom = { it.player }
+    ) { player, event, _ ->
+        val heldItem = player.inventory.itemInMainHand
+        if (!event.isDropItems ||
+            event.block.type !in naturalStones ||
+            MaterialTags.PICKAXES.isTagged(heldItem.type)
+        ) {
+            return@listener
+        }
+
+        val key = strongArmsDropKey(event)
+        pendingStrongArmsDrops[key] = event.block.getDrops(ItemStack(Material.IRON_PICKAXE), player)
+        event.block.location.runTaskLater(OriginsReforged.instance, 1L) {
+            pendingStrongArmsDrops.remove(key)
+        }
+    }
+
+    listener<BlockDropItemEvent>(
+        priority = EventPriority.HIGHEST,
+        playerFrom = { it.player }
+    ) { player, event, _ ->
+        val drops = pendingStrongArmsDrops.remove(strongArmsDropKey(event)) ?: return@listener
+
+        event.isCancelled = true
+        drops.forEach { drop ->
+            player.world.dropItemNaturally(event.block.location.add(0.5, 0.5, 0.5), drop)
+        }
     }
 }
 

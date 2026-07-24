@@ -4,6 +4,7 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.text
 
@@ -31,7 +32,8 @@ private val meatItems = setOf(
     Material.TROPICAL_FISH,
     Material.SALMON,
     Material.COOKED_SALMON,
-    Material.PUFFERFISH
+    Material.PUFFERFISH,
+    Material.ROTTEN_FLESH
 )
 
 /**
@@ -51,17 +53,12 @@ val vegetarian = ability("vegetarian") {
     option("poison_amplifier", 1)
 
     restrictFood { player, item, config ->
-        // Potions are always allowed
-        if (item.type == Material.POTION) return@restrictFood true
-
         // If it's meat, deny and apply poison
         if (item.type in meatItems) {
             // Apply poison effect
             val duration = config.getInt("poison_duration", 300)
             val amplifier = config.getInt("poison_amplifier", 1)
             player.addPotionEffect(PotionEffect(PotionEffectType.POISON, duration, amplifier, false, true))
-            // Return false to cancel the food consumption
-            // Note: The executor should handle item.amount -= 1
             false
         } else {
             true
@@ -87,18 +84,12 @@ val carnivore = ability("carnivore") {
     option("poison_amplifier", 1)
 
     restrictFood { player, item, config ->
-        // Potions are always allowed
-        if (item.type == Material.POTION) return@restrictFood true
-
         // Meat items are allowed
         if (item.type in meatItems) return@restrictFood true
 
-        // Try to allow ominous bottle if it exists (1.21+)
-        try {
-            if (item.type.name == "OMINOUS_BOTTLE") return@restrictFood true
-        } catch (_: Exception) {
-            // Ignore if material doesn't exist
-        }
+        // Diet restrictions apply to food, not to other consumables such as
+        // potions, milk, honey, or ominous bottles.
+        if (!item.type.isEdible) return@restrictFood true
 
         // Non-meat food - deny and apply poison
         val duration = config.getInt("poison_duration", 300)
@@ -114,15 +105,13 @@ val carnivore = ability("carnivore") {
  *
  * The legacy implementation:
  * - Hides players wearing carved pumpkins from this player
- * - Eating pumpkin pie causes hunger, nausea, and poison effects
+ * - Eating pumpkin pie causes nausea and poison effects
  */
 val pumpkinHate = ability("pumpkin_hate") {
     title = text("Scared of Gourds")
     description("You are afraid of pumpkins. For a good reason.")
 
     option("pumpkin_check_interval", 10)
-    option("hunger_duration", 300)
-    option("hunger_amplifier", 2)
     option("nausea_duration", 300)
     option("nausea_amplifier", 1)
     option("poison_duration", 1200)
@@ -131,10 +120,6 @@ val pumpkinHate = ability("pumpkin_hate") {
     // Cannot eat pumpkin pie - causes severe negative effects
     restrictFood { player, item, config ->
         if (item.type == Material.PUMPKIN_PIE) {
-            val hungerDuration = config.getInt("hunger_duration", 300)
-            val hungerAmplifier = config.getInt("hunger_amplifier", 2)
-            player.addPotionEffect(PotionEffect(PotionEffectType.HUNGER, hungerDuration, hungerAmplifier, false, true))
-
             val nauseaDuration = config.getInt("nausea_duration", 300)
             val nauseaAmplifier = config.getInt("nausea_amplifier", 1)
             val nauseaType = PotionEffectType.NAUSEA
@@ -158,24 +143,20 @@ val pumpkinHate = ability("pumpkin_hate") {
 
         // Hide players wearing carved pumpkins from this player
         pumpkinWearers.filter { it != player }.forEach { pumpkinWearer ->
-            try {
-                // Note: hidePlayer requires plugin instance in legacy
-                // In v2 executor, this should be handled properly
-                player.hidePlayer(Bukkit.getPluginManager().plugins.firstOrNull() ?: return@forEach, pumpkinWearer)
-            } catch (_: Exception) {
-                // Ignore if plugin reference fails
-            }
+            player.hidePlayer(OriginsReforged.instance, pumpkinWearer)
         }
 
         // Show players not wearing pumpkins
         nonPumpkinWearers.filter { it != player }.forEach { other ->
-            try {
-                player.showPlayer(Bukkit.getPluginManager().plugins.firstOrNull() ?: return@forEach, other)
-            } catch (_: Exception) {
-                // Ignore
-            }
+            player.showPlayer(OriginsReforged.instance, other)
         }
         true
+    }
+
+    onDependencyDisabled { player, _ ->
+        Bukkit.getOnlinePlayers()
+            .filter { it != player }
+            .forEach { player.showPlayer(OriginsReforged.instance, it) }
     }
 }
 

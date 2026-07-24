@@ -2,6 +2,7 @@ package ru.turbovadim.v2.ability
 
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleType
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes
+import org.bukkit.Location
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.block.Block
@@ -33,6 +34,14 @@ import kotlin.reflect.KClass
  * - Triggered: Respond to player actions (jump, sneak, attack)
  */
 sealed interface AbilityEffect {
+
+    /**
+     * Resolves the player's natural spawn when no bed or respawn anchor applies.
+     */
+    data class DefaultSpawn(
+        val priority: Int,
+        val resolver: DefaultSpawnHandler
+    ) : AbilityEffect
 
     // ============================================
     // PASSIVE EFFECTS - Applied once on origin change
@@ -286,7 +295,7 @@ sealed interface AbilityEffect {
             val eventClass: KClass<E>,
             val priority: EventPriority,
             val ignoreCancelled: Boolean,
-            val playerExtractor: (E) -> Player?,
+            val playersExtractor: (E) -> Iterable<Player>,
             val handler: (Player, E, AbilityConfigAccessor) -> Unit
         ) : Listener
 
@@ -357,6 +366,10 @@ enum class KeyBindType {
  */
 fun interface EnvironmentCheckHandler {
     fun check(player: Player, config: AbilityConfigAccessor): Boolean
+}
+
+fun interface DefaultSpawnHandler {
+    fun resolve(player: Player, config: AbilityConfigAccessor): Location?
 }
 
 /**

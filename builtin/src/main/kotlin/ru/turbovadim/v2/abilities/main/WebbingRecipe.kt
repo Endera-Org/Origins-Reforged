@@ -2,6 +2,7 @@ package ru.turbovadim.v2.abilities.main
 
 import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
+import org.bukkit.Keyed
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.entity.Player
@@ -23,6 +24,7 @@ object WebbingRecipe : Listener {
     private var registered = false
     private val webbingKey = Key.key("origins", "webbing")
     private val masterOfWebsKey = Key.key("origins", "master_of_webs")
+    private var recipeKey: NamespacedKey? = null
 
     /**
      * Register the cobweb crafting recipe and event listener.
@@ -32,6 +34,7 @@ object WebbingRecipe : Listener {
         if (registered) return
 
         val key = NamespacedKey(plugin, "web-recipe")
+        recipeKey = key
 
         // Check if recipe already exists (e.g., from previous plugin load)
         if (Bukkit.getRecipe(key) == null) {
@@ -54,7 +57,7 @@ object WebbingRecipe : Listener {
     @EventHandler
     fun onPrepareItemCraft(event: PrepareItemCraftEvent) {
         val recipe = event.recipe ?: return
-        if (recipe.result.type != Material.COBWEB) return
+        if ((recipe as? Keyed)?.key != recipeKey) return
 
         val api = OriginsApi.getOrNull() ?: return
 

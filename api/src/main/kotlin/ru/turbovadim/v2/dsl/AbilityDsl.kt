@@ -506,6 +506,10 @@ class AbilityBuilder(@PublishedApi internal val key: Key) {
         effects += AbilityEffect.Passive.Invisibility(InvisibilityCondition.Custom(check))
     }
 
+    fun defaultSpawn(priority: Int = 0, handler: DefaultSpawnHandler) {
+        effects += AbilityEffect.DefaultSpawn(priority, handler)
+    }
+
     // Periodic effects
 
     fun onTick(interval: Int = 20, handler: EnvironmentCheckHandler) {
@@ -827,7 +831,28 @@ inline fun <reified E : Event> AbilityBuilder.listener(
         eventClass = E::class,
         priority = priority,
         ignoreCancelled = ignoreCancelled,
-        playerExtractor = playerFrom,
+        playersExtractor = { event -> listOfNotNull(playerFrom(event)) },
+        handler = handler
+    )
+}
+
+/**
+ * Register a generic event listener for events that can concern several players.
+ *
+ * Each extracted player is checked independently for ownership and activation of
+ * the ability before the handler is invoked.
+ */
+inline fun <reified E : Event> AbilityBuilder.listenerForPlayers(
+    priority: EventPriority = EventPriority.NORMAL,
+    ignoreCancelled: Boolean = true,
+    noinline playersFrom: (E) -> Iterable<Player>,
+    noinline handler: (Player, E, AbilityConfigAccessor) -> Unit
+) {
+    effects += AbilityEffect.Listener.Generic(
+        eventClass = E::class,
+        priority = priority,
+        ignoreCancelled = ignoreCancelled,
+        playersExtractor = playersFrom,
         handler = handler
     )
 }

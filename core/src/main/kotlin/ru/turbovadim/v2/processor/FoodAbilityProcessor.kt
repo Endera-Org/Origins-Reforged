@@ -8,6 +8,8 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerItemConsumeEvent
+import org.bukkit.inventory.EquipmentSlot
+import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.PotionMeta
 import org.bukkit.potion.PotionEffect
 import ru.turbovadim.v2.ability.AbilityEffect
@@ -31,7 +33,7 @@ class FoodAbilityProcessor(private val container: OriginsContainer) : Listener {
     // FOOD CONSUMPTION HANDLING
     // ============================================
 
-    @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     fun onPlayerConsume(event: PlayerItemConsumeEvent) {
         val player = event.player
         val item = event.item
@@ -51,6 +53,7 @@ class FoodAbilityProcessor(private val container: OriginsContainer) : Listener {
 
                 if (!effect.canEat.canEat(player, item, accessor)) {
                     event.isCancelled = true
+                    consumeOneItem(player, event.hand)
                     return
                 }
             }
@@ -59,6 +62,25 @@ class FoodAbilityProcessor(private val container: OriginsContainer) : Listener {
         // Handle potion reactions
         if (item.type == Material.POTION || item.type == Material.SPLASH_POTION || item.type == Material.LINGERING_POTION) {
             handlePotionConsumption(player, item, abilityKeys)
+        }
+    }
+
+    private fun consumeOneItem(player: Player, hand: EquipmentSlot) {
+        val item = when (hand) {
+            EquipmentSlot.HAND -> player.inventory.itemInMainHand
+            EquipmentSlot.OFF_HAND -> player.inventory.itemInOffHand
+            else -> return
+        }
+
+        val replacement = if (item.amount <= 1) {
+            ItemStack(Material.AIR)
+        } else {
+            item.clone().also { it.amount = item.amount - 1 }
+        }
+
+        when (hand) {
+            EquipmentSlot.HAND -> player.inventory.setItemInMainHand(replacement)
+            EquipmentSlot.OFF_HAND -> player.inventory.setItemInOffHand(replacement)
         }
     }
 
