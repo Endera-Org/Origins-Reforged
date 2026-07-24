@@ -4,11 +4,14 @@ import com.destroystokyo.paper.event.player.PlayerJumpEvent
 import org.bukkit.GameMode
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.block.BlockFace
+import org.bukkit.entity.Player
+import org.bukkit.event.player.PlayerMoveEvent
 import org.bukkit.event.player.PlayerToggleFlightEvent
+import org.bukkit.event.player.PlayerToggleSneakEvent
+import org.bukkit.event.player.PlayerToggleSprintEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.v2.ability.AttributeType
-import ru.turbovadim.v2.ability.FallDamageMode
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
@@ -180,6 +183,10 @@ val swimSpeed = ability("swim_speed") {
  * - Uses packet events to detect rising movement
  * - Disables flight when sneaking or sprinting in water
  * - Flight speed is 0.06f with no fall damage
+ *
+ * NOTE: flight is intentionally NOT declared via the `flight { }` DSL block,
+ * because passive flight is unconditional and would allow aquatic origins to
+ * fly outside water. This ability owns its conditional flight state manually.
  */
 val likeWater = ability("like_water") {
     title = text("Like Water")
@@ -187,23 +194,125 @@ val likeWater = ability("like_water") {
 
     option("flight_speed", 0.06f)
 
-    flight {
-        speed = 0.06f
-        fallDamage = FallDamageMode.NONE
+    val grantingFlight = boolState("granting_flight", false)
+    val previousAllowFlight = boolState("previous_allow_flight", false)
+    val previousFlying = boolState("previous_flying", false)
+    val previousFlySpeed = floatState("previous_fly_speed", 0.1f)
+
+    fun enableOwnedFlight(player: Player) {
+        if (!grantingFlight[player]) {
+            previousAllowFlight[player] = player.allowFlight
+            previousFlying[player] = player.isFlying
+            previousFlySpeed[player] = player.flySpeed
+            grantingFlight[player] = true
+        }
+        player.allowFlight = true
+    }
+
+    fun disableOwnedFlight(player: Player) {
+        val restoreAllowFlight = previousAllowFlight[player]
+        val restoreFlying = previousFlying[player]
+        val restoreFlySpeed = previousFlySpeed[player].coerceIn(-1.0f, 1.0f)
+
+        grantingFlight[player] = false
+        previousAllowFlight.reset(player)
+        previousFlying.reset(player)
+        previousFlySpeed.reset(player)
+
+        if (player.gameMode == GameMode.CREATIVE || player.gameMode == GameMode.SPECTATOR) {
+            return
+        }
+
+        player.allowFlight = restoreAllowFlight
+        player.isFlying = restoreAllowFlight && restoreFlying
+        player.flySpeed = restoreFlySpeed
     }
 
     // Flight is granted when in water and not in bubble column
-    onTick(interval = 1) { player, _ ->
+    onTick(interval = 1) { player, config ->
+        if (player.gameMode == GameMode.CREATIVE || player.gameMode == GameMode.SPECTATOR) {
+            if (grantingFlight[player]) {
+                grantingFlight[player] = false
+                previousAllowFlight.reset(player)
+                previousFlying.reset(player)
+                previousFlySpeed.reset(player)
+            }
+            return@onTick false
+        }
+
         val inWater = player.isInWater && !player.isInBubbleColumn
 
-        if (inWater) {
-            player.allowFlight = true
-            // Disable flying when sneaking in water (to sink)
-            if (player.isSneaking) {
-                player.isFlying = false
+        if (!inWater) {
+            if (grantingFlight[player]) {
+                disableOwnedFlight(player)
             }
+            return@onTick false
         }
-        inWater
+
+        enableOwnedFlight(player)
+        player.flySpeed = config.getFloat("flight_speed", 0.06f).coerceIn(0.0001f, 1.0f)
+        player.fallDistance = 0f
+
+        // Disable flying when sneaking or sprinting in water (to sink/swim normally).
+        if (player.isSneaking || player.isSprinting) {
+            player.isFlying = false
+        }
+
+        true
+    }
+
+    listener<PlayerMoveEvent>(
+        playerFrom = { it.player }
+    ) { player, event, config ->
+        if (player.gameMode == GameMode.CREATIVE || player.gameMode == GameMode.SPECTATOR) {
+            return@listener
+        }
+
+        val to = event.to ?: return@listener
+        val inWater = player.isInWater && !player.isInBubbleColumn
+        if (!inWater || player.isSwimming) {
+            return@listener
+        }
+
+        val rising = to.y > event.from.y
+        val shouldFly = (player.isFlying || rising) && inWater
+        if (shouldFly == player.isFlying) {
+            return@listener
+        }
+
+        enableOwnedFlight(player)
+        player.flySpeed = config.getFloat("flight_speed", 0.06f).coerceIn(0.0001f, 1.0f)
+        player.isFlying = shouldFly
+    }
+
+    listener<PlayerToggleSneakEvent>(
+        playerFrom = { it.player }
+    ) { player, _, _ ->
+        if (player.isInWater) {
+            player.isFlying = false
+        }
+    }
+
+    listener<PlayerToggleSprintEvent>(
+        playerFrom = { it.player }
+    ) { player, _, _ ->
+        if (player.isInWater && player.isFlying) {
+            player.isFlying = false
+        }
+    }
+
+    listener<PlayerToggleFlightEvent>(
+        playerFrom = { it.player }
+    ) { player, event, _ ->
+        if (player.isInWater) {
+            event.isCancelled = true
+        }
+    }
+
+    onDependencyDisabled { player, _ ->
+        if (grantingFlight[player]) {
+            disableOwnedFlight(player)
+        }
     }
 }
 
