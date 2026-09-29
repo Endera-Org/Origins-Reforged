@@ -7,8 +7,11 @@ import org.bukkit.*
 import org.bukkit.block.BlockFace
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.entity.LivingEntity
+import org.bukkit.entity.Player
 import org.bukkit.entity.Trident
+import org.bukkit.event.entity.EntityAirChangeEvent
 import org.bukkit.event.entity.EntityDamageByEntityEvent
+import org.bukkit.event.entity.EntityPotionEffectEvent
 import org.bukkit.event.player.PlayerItemConsumeEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
@@ -18,6 +21,8 @@ import ru.turbovadim.v2.ability.Ability
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 // ============================================
 // ENVIRONMENTAL ABILITIES
@@ -205,17 +210,32 @@ val aquatic = ability("aquatic") {
     }
 }
 
+/** Players whose air is currently being written by gills logic; every other air change is vetoed. */
+private val gillsWritingAir = ConcurrentHashMap.newKeySet<UUID>()
+
+/** Sets air without being vetoed by [waterBreathing]'s [EntityAirChangeEvent] listener. */
+private fun Player.setAirFromGills(air: Int) {
+    gillsWritingAir += uniqueId
+    try {
+        remainingAir = air
+    } finally {
+        gillsWritingAir -= uniqueId
+    }
+}
+
+private fun Player.canBreatheWithGills() =
+    isUnderWater || isInRain ||
+        hasPotionEffect(PotionEffectType.WATER_BREATHING) ||
+        hasPotionEffect(PotionEffectType.CONDUIT_POWER)
+
 /**
  * Water Breathing - breathes underwater, drowns on land.
  * Legacy: WaterBreathing.kt
  *
- * The legacy implementation:
- * - Recovers air while underwater
- * - Loses air when on land
- * - Uses persistent data keys for state tracking
- * - Handles turtle helmet special case
- * - Respiration enchantment reduces air loss rate
- * - Deals drowning damage when air runs out
+ * Vanilla air changes are vetoed so air is driven only by this ability:
+ * - Recovers air underwater, in rain, or with water breathing / conduit power
+ * - Loses air otherwise (respiration slows the loss) and takes drowning damage once it runs out
+ * - Turtle helmets grant no water breathing, since that would let you breathe on land
  */
 val waterBreathing = ability("water_breathing") {
     title = text("Gills")
@@ -224,13 +244,23 @@ val waterBreathing = ability("water_breathing") {
     option("air_recovery_rate", 4)
     option("land_damage", 2)
 
+    listener<EntityAirChangeEvent>(
+        playerFrom = { it.entity as? Player }
+    ) { player, event, _ ->
+        if (player.uniqueId !in gillsWritingAir) event.isCancelled = true
+    }
+
+    listener<EntityPotionEffectEvent>(
+        playerFrom = { it.entity as? Player }
+    ) { _, event, _ ->
+        if (event.cause == EntityPotionEffectEvent.Cause.TURTLE_HELMET) event.isCancelled = true
+    }
+
     onTick(interval = 1) { player, config ->
-        val underwater = player.isUnderWater
         val recoveryRate = config.getInt("air_recovery_rate", 4)
 
-        if (underwater) {
-            val newAir = (player.remainingAir + recoveryRate).coerceAtMost(player.maximumAir)
-            player.remainingAir = newAir
+        if (player.canBreatheWithGills()) {
+            player.setAirFromGills((player.remainingAir + recoveryRate).coerceIn(0, player.maximumAir))
         } else {
             // Lose air on land
             // Check for respiration enchantment
@@ -246,14 +276,14 @@ val waterBreathing = ability("water_breathing") {
             }
 
             if (shouldLoseAir) {
-                player.remainingAir -= 1
+                player.setAirFromGills(player.remainingAir - 1)
             }
 
             // Deal drowning damage when air runs out
             if (player.remainingAir < -20) {
                 val landDamage = config.getInt("land_damage", 2)
                 NMSInvoker.dealDrowningDamage(player, landDamage)
-                player.remainingAir = 0
+                player.setAirFromGills(0)
             }
         }
         true
@@ -279,7 +309,7 @@ val airFromPotions = ability("air_from_potions") {
         if (event.item.type != Material.POTION) return@listener
 
         val airRestored = config.getInt("air_restored", 60)
-        player.remainingAir = (player.remainingAir + airRestored).coerceAtMost(player.maximumAir)
+        player.setAirFromGills((player.remainingAir + airRestored).coerceAtMost(player.maximumAir))
     }
 }
 

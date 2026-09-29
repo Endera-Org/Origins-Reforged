@@ -37,7 +37,8 @@ import ru.turbovadim.v2.ui.ShulkerInventoryUI
  * Legacy: Phantomize.kt
  *
  * Implementation:
- * - Toggles phantom state on left-click with empty hand
+ * - Toggles phantom state on left-clicking air with empty hand (punching blocks does not toggle)
+ * - Requires more than `min_food_level` hunger; drops out of phantom form once hunger falls to it
  * - As a DependencyAbility, other abilities can use `dependsOn` to depend on this
  */
 val phantomize: DependencyAbility = toggleAbility("phantomize") {
@@ -45,20 +46,27 @@ val phantomize: DependencyAbility = toggleAbility("phantomize") {
     description("Toggle phantom form by pressing the primary action key while holding nothing.")
     visible = false
 
-    // Toggle phantomize state on left-click with empty hand
-    onInteract(Action.LEFT_CLICK_AIR, Action.LEFT_CLICK_BLOCK) { player, _, _ ->
-        // Must be holding nothing
+    option("min_food_level", 6)
+
+    onInteract(Action.LEFT_CLICK_AIR) { player, _, config ->
         if (player.inventory.itemInMainHand.type != Material.AIR) {
             return@onInteract false
         }
 
         if (isEnabled(player)) {
             disable(player)
-        } else {
+        } else if (player.foodLevel > config.getInt("min_food_level", 6)) {
             enable(player)
         }
 
         false // Don't cancel the event
+    }
+
+    onTick(interval = 20) { player, config ->
+        if (isEnabled(player) && player.foodLevel <= config.getInt("min_food_level", 6)) {
+            disable(player)
+        }
+        true
     }
 
     // Clean up state on origin change
