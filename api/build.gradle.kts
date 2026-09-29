@@ -9,7 +9,6 @@ dependencies {
     compileOnly(project(":version"))
     compileOnly(libs.packetevents)
     compileOnly(libs.enderalib)
-    implementation(libs.kotlinx.serialization.json)
 }
 
 publishing {

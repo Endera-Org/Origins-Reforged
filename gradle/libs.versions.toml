@@ -1,25 +1,19 @@
 [versions]
 kotlin = "2.4.20"
+# Kotlin stdlib that EnderaLib loads at runtime; bump together with enderalib
+kotlin-runtime = "2.4.20"
 shadow = "9.6.1"
 paperweight = "2.0.0-beta.24"
 paper-api = "1.21.1-R0.1-SNAPSHOT"
 packetevents = "2.14.0"
-enderalib = "1.5.0"
+enderalib = "1.6.0"
 interfaces = "2.2.0-folia-SNAPSHOT"
-kotlinx-serialization = "1.11.0"
-kotlinx-coroutines = "1.11.0"
-exposed = "1.5.0"
-hikaricp = "7.1.0"
-h2 = "2.5.252"
-json = "20260814"
-exp4j = "0.4.8"
-adventure-platform = "4.4.1"
 jetbrains-annotations = "26.1.0"
 viaversion = "5.12.0"
 vault = "1.7.1"
 geyser = "2.11.3-SNAPSHOT"
 floodgate = "2.2.5-SNAPSHOT"
-authme = "5.6.0-beta2"
+authme = "5.7.0"
 placeholderapi = "2.12.3"
 
 [libraries]
@@ -27,26 +21,13 @@ paper-api = { module = "io.papermc.paper:paper-api", version.ref = "paper-api" }
 packetevents = { module = "com.github.retrooper:packetevents-spigot", version.ref = "packetevents" }
 enderalib = { module = "com.github.Endera-Org:EnderaLib", version.ref = "enderalib" }
 interfaces = { module = "com.noxcrew.interfaces:interfaces", version.ref = "interfaces" }
-kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
-kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
-exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
-exposed-dao = { module = "org.jetbrains.exposed:exposed-dao", version.ref = "exposed" }
-exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }
-hikaricp = { module = "com.zaxxer:HikariCP", version.ref = "hikaricp" }
-h2 = { module = "com.h2database:h2", version.ref = "h2" }
-json = { module = "org.json:json", version.ref = "json" }
-exp4j = { module = "net.objecthunter:exp4j", version.ref = "exp4j" }
-adventure-platform-bukkit = { module = "net.kyori:adventure-platform-bukkit", version.ref = "adventure-platform" }
 jetbrains-annotations = { module = "org.jetbrains:annotations", version.ref = "jetbrains-annotations" }
 viaversion-api = { module = "com.viaversion:viaversion-api", version.ref = "viaversion" }
 vault-api = { module = "com.github.MilkBowl:VaultAPI", version.ref = "vault" }
 geyser-api = { module = "org.geysermc.geyser:api", version.ref = "geyser" }
 floodgate-api = { module = "org.geysermc.floodgate:api", version.ref = "floodgate" }
-authme = { module = "com.github.authme:authmereloaded", version.ref = "authme" }
+authme = { module = "fr.xephi:authme", version.ref = "authme" }
 placeholderapi = { module = "me.clip:placeholderapi", version.ref = "placeholderapi" }
-
-[bundles]
-exposed = ["exposed-core", "exposed-dao", "exposed-jdbc"]
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

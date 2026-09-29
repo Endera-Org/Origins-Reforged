@@ -25,6 +25,8 @@ import ru.turbovadim.v2.restriction.OriginRestrictionInterceptor
 import ru.turbovadim.v2.ui.ShulkerInventoryUI
 import java.io.File
 
+private val MIN_ENDERALIB_VERSION = listOf(1, 6, 0)
+
 class OriginsReforged : JavaPlugin() {
 
     companion object {
@@ -101,7 +103,22 @@ class OriginsReforged : JavaPlugin() {
         PacketEvents.getAPI().terminate()
     }
 
+    /**
+     * EnderaLib supplies Kotlin, coroutines, serialization, Exposed and Hikari at runtime.
+     * Older releases ship older versions than this plugin is compiled against.
+     */
+    private fun isEnderaLibOutdated(): Boolean {
+        val version = server.pluginManager.getPlugin("EnderaLib")?.pluginMeta?.version ?: return true
+        val parts = version.split('.').map { it.takeWhile(Char::isDigit).toIntOrNull() ?: 0 } + listOf(0, 0)
+        return compareValuesBy(parts, MIN_ENDERALIB_VERSION, { it[0] }, { it[1] }, { it[2] }) < 0
+    }
+
     override fun onEnable() {
+        if (isEnderaLibOutdated()) {
+            logger.severe("Origins-Reforged requires EnderaLib ${MIN_ENDERALIB_VERSION.joinToString(".")} or newer. Update EnderaLib and restart.")
+            server.pluginManager.disablePlugin(this)
+            return
+        }
 
         bukkitDispatcher = BukkitDispatcher(this)
         InterfacesListeners.install(this)

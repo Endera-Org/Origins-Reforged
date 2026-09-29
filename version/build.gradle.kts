@@ -3,6 +3,6 @@ plugins {
 }
 
 dependencies {
-    implementation(libs.jetbrains.annotations)
+    compileOnly(libs.jetbrains.annotations)
     compileOnly(libs.paper.api)
 }

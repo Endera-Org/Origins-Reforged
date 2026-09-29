@@ -4,8 +4,6 @@ plugins {
 }
 
 dependencies {
-    implementation(libs.json)
-    implementation(libs.exp4j)
     implementation(project(":api"))
     implementation(project(":core"))
     implementation(project(":builtin"))
@@ -20,15 +18,21 @@ dependencies {
     implementation(project(":26.1"))
     implementation(project(":26.2"))
     implementation(project(":26.3"))
-    implementation(libs.adventure.platform.bukkit)
 }
 
 tasks.shadowJar {
     archiveFileName.set("${rootProject.name}-${rootProject.version}.jar")
     dependencies {
-        exclude(dependency("com.github.Endera-Org:EnderaLib"))
+        // Provided at runtime by EnderaLib (Kotlin) and Paper (slf4j); the rest are compile-time annotations
         exclude {
-            it.moduleGroup == "org.jetbrains.kotlin" || it.moduleGroup == "org.jetbrains.kotlinx"
+            it.moduleGroup in setOf(
+                "org.jetbrains.kotlin",
+                "org.jetbrains.kotlinx",
+                "org.slf4j",
+                "org.jetbrains",
+                "org.checkerframework",
+                "com.google.errorprone",
+            )
         }
     }
 }

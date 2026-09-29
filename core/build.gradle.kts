@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     api(project(":api"))
-    implementation(libs.jetbrains.annotations)
+    compileOnly(libs.jetbrains.annotations)
     compileOnly(libs.viaversion.api)
     compileOnly(libs.paper.api)
     compileOnly(libs.vault.api)
@@ -13,8 +13,6 @@ dependencies {
     compileOnly(libs.floodgate.api)
     compileOnly(libs.authme)
     compileOnly(libs.placeholderapi)
-    implementation(libs.json)
-    compileOnly(libs.exp4j)
 
     implementation(libs.interfaces)
     compileOnly(libs.packetevents)
@@ -29,13 +27,6 @@ dependencies {
     compileOnly(project(":1.21.11"))
     compileOnly(files("libs/worldguard.jar"))
     compileOnly(files("libs/worldedit.jar"))
-    implementation(libs.enderalib) {
-        isTransitive = false
-    }
-    implementation(libs.kotlinx.serialization.json)
-    implementation(libs.kotlinx.coroutines.core)
-
-    implementation(libs.bundles.exposed)
-    implementation(libs.hikaricp)
-    implementation(libs.h2)
+    // EnderaLib provides Kotlin, coroutines, serialization, Exposed, Hikari and H2 at runtime
+    compileOnly(libs.enderalib)
 }
