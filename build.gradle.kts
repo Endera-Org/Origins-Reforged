@@ -34,6 +34,8 @@ dependencies {
     implementation(project(":1.21.10"))
     implementation(project(":1.21.11"))
     implementation(project(":26.1"))
+    implementation(project(":26.2"))
+    implementation(project(":26.3"))
     implementation("net.kyori:adventure-platform-bukkit:4.3.4")
 }
 

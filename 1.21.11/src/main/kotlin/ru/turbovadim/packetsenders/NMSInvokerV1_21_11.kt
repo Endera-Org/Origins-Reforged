@@ -20,6 +20,7 @@ import net.minecraft.world.phys.Vec3
 import org.bukkit.GameMode
 import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
 import org.bukkit.craftbukkit.CraftWorld
 import org.bukkit.craftbukkit.block.CraftBlockState
@@ -242,6 +243,15 @@ class NMSInvokerV1_21_11 : NMSInvoker() {
         val component = meta.customModelDataComponent
         component.strings = listOf(cmd.toString())
         meta.setCustomModelDataComponent(component)
+        return meta
+    }
+
+    override fun setResourcePackModel(
+        meta: ItemMeta,
+        model: NamespacedKey,
+        legacyCustomModelData: Int
+    ): ItemMeta {
+        meta.setItemModel(model)
         return meta
     }
 

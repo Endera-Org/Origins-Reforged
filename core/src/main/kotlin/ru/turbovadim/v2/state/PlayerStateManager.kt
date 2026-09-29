@@ -129,6 +129,7 @@ class PlayerStateManager(
      * Called when a player quits - cleans up ALL state.
      */
     internal fun onPlayerQuit(player: Player) {
+        container.passiveEffectProcessor.removePlayer(player.uniqueId)
         val state = states.remove(player.uniqueId)
         state?.clear()
 

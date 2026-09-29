@@ -221,6 +221,7 @@ class AbilityRegistry(private val container: OriginsContainer) {
             when (effect) {
                 is AbilityEffect.Passive.Flight -> {
                     flightAbilities.add(ability.key)
+                    periodic.add(effect)
                 }
                 is AbilityEffect.Passive.Invisibility -> {
                     invisibilityAbilities.add(ability.key)

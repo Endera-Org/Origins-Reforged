@@ -1,29 +1,41 @@
 package ru.turbovadim.v2.processor
 
 import net.kyori.adventure.key.Key
+import org.bukkit.Bukkit
 import org.bukkit.GameMode
 import org.bukkit.entity.Player
 import ru.turbovadim.v2.ability.FallDamageMode
 import ru.turbovadim.v2.ability.InvisibilityCondition
 import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.state.PlayerOriginState
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Processor for passive ability effects.
  *
- * Passive effects are applied ONCE when origins change, not periodically.
+ * Most passive effects are applied when origins change. Conditional flight is
+ * additionally refreshed by [PeriodicAbilityProcessor] every tick.
+ *
  * This includes:
  * - Attribute modifiers
  * - Flight capability
  * - Visibility
- *
- * This replaces the `updateAllPlayers()` polling loop with event-driven updates.
  */
 class PassiveEffectProcessor(private val container: OriginsContainer) {
 
     companion object {
         private const val REMOVED_CONFIG_ATTRIBUTE_NAMESPACE = "origins"
+        private val FLIGHT_FALL_DAMAGE_KEY = Key.key("origins", "_flight_fall_damage")
     }
+
+    private data class FlightState(
+        val previousAllowFlight: Boolean,
+        val previousFlying: Boolean,
+        val previousFlySpeed: Float
+    )
+
+    private val flightStates = ConcurrentHashMap<UUID, FlightState>()
 
     /**
      * Apply all passive effects for a player.
@@ -31,8 +43,7 @@ class PassiveEffectProcessor(private val container: OriginsContainer) {
      */
     fun applyPassiveEffects(player: Player, state: PlayerOriginState) {
         applyAttributes(player, state)
-        applyFlight(player, state)
-        container.conditionalFlightController.reassert(player)
+        refreshFlight(player, state)
         applyVisibility(player, state)
     }
 
@@ -42,8 +53,35 @@ class PassiveEffectProcessor(private val container: OriginsContainer) {
      */
     fun removePassiveEffects(player: Player) {
         clearOriginAttributes(player)
-        resetFlight(player)
+        releaseFlight(player)
         player.isInvisible = false
+    }
+
+    /**
+     * Re-evaluate all flight effects owned by the player and apply one combined
+     * result. This is called once per tick for players with a flight effect.
+     */
+    fun refreshFlight(player: Player) {
+        val state = container.playerStateManager.getStateOrNull(player)
+        if (state == null) {
+            releaseFlight(player)
+            return
+        }
+        refreshFlight(player, state)
+    }
+
+    /**
+     * Forget captured state for a disconnected player without mutating Bukkit
+     * state after the player has left.
+     */
+    fun removePlayer(playerId: UUID) {
+        flightStates.remove(playerId)
+    }
+
+    /** Restore flight state for online players before the plugin shuts down. */
+    fun shutdown() {
+        Bukkit.getOnlinePlayers().forEach(::releaseFlight)
+        flightStates.clear()
     }
 
     /**
@@ -113,64 +151,59 @@ class PassiveEffectProcessor(private val container: OriginsContainer) {
         }
     }
 
-    /**
-     * Apply flight capability.
-     */
-    private fun applyFlight(player: Player, state: PlayerOriginState) {
+    private fun refreshFlight(player: Player, state: PlayerOriginState) {
         val flightAbilityKeys = container.abilityRegistry.getFlightAbilities()
         val playerAbilities = state.getAbilityKeys()
 
-        // Filter to abilities the player has AND whose dependencies are satisfied
-        val activeFlightAbilities = flightAbilityKeys
+        val activeFlightEffects = flightAbilityKeys
             .intersect(playerAbilities)
             .filter { isDependencySatisfied(player, it) }
+            .mapNotNull { abilityKey ->
+                val ability = container.abilityRegistry.get(abilityKey) ?: return@mapNotNull null
+                val effect = container.abilityRegistry.getFlightEffect(abilityKey) ?: return@mapNotNull null
+                val config = container.configLoader.getAccessor(abilityKey, ability.defaultOptions)
+                effect.takeIf { it.condition.check(player, config) }
+            }
 
-        if (activeFlightAbilities.isEmpty()) {
-            // No flight abilities - reset to game mode defaults
-            resetFlight(player)
+        if (activeFlightEffects.isEmpty()) {
+            releaseFlight(player)
             return
         }
 
-        // Get all active flight effects
-        val flightEffects = activeFlightAbilities
-            .mapNotNull { container.abilityRegistry.getFlightEffect(it) }
+        if (player.gameMode == GameMode.CREATIVE || player.gameMode == GameMode.SPECTATOR) return
 
-        if (flightEffects.isEmpty()) {
-            resetFlight(player)
-            return
+        flightStates.computeIfAbsent(player.uniqueId) {
+            FlightState(
+                previousAllowFlight = player.allowFlight,
+                previousFlying = player.isFlying,
+                previousFlySpeed = player.flySpeed
+            )
         }
-
-        // Use minimum speed among all flight abilities
-        val minSpeed = flightEffects.minOf { it.speed }
-
-        // Check fall damage mode - if any ability prevents fall damage, prevent it
-        val preventFallDamage = flightEffects.any { it.fallDamage == FallDamageMode.NONE }
 
         player.allowFlight = true
-        player.flySpeed = minSpeed.coerceIn(0.0001f, 1.0f)
+        player.flySpeed = activeFlightEffects.minOf { it.speed }.coerceIn(0.0001f, 1.0f)
 
-        // Store fall damage mode in player state for damage handler
-        state.setAbilityState(
-            Key.key("origins", "_flight_fall_damage"),
-            if (preventFallDamage) FallDamageMode.NONE else FallDamageMode.NORMAL
-        )
+        val fallDamageMode = when {
+            activeFlightEffects.any { it.fallDamage == FallDamageMode.NONE } -> FallDamageMode.NONE
+            activeFlightEffects.any { it.fallDamage == FallDamageMode.REDUCED } -> FallDamageMode.REDUCED
+            else -> FallDamageMode.NORMAL
+        }
+
+        if (fallDamageMode == FallDamageMode.NONE) {
+            player.fallDistance = 0f
+        }
+
+        state.setAbilityState(FLIGHT_FALL_DAMAGE_KEY, fallDamageMode)
     }
 
-    /**
-     * Reset flight to game mode defaults.
-     */
-    private fun resetFlight(player: Player) {
-        when (player.gameMode) {
-            GameMode.CREATIVE, GameMode.SPECTATOR -> {
-                player.allowFlight = true
-                player.flySpeed = 0.1f
-            }
-            else -> {
-                player.allowFlight = false
-                player.isFlying = false
-                player.flySpeed = 0.1f
-            }
-        }
+    private fun releaseFlight(player: Player) {
+        container.playerStateManager.getStateOrNull(player)?.removeAbilityState(FLIGHT_FALL_DAMAGE_KEY)
+        val previous = flightStates.remove(player.uniqueId) ?: return
+        if (player.gameMode == GameMode.CREATIVE || player.gameMode == GameMode.SPECTATOR) return
+
+        player.allowFlight = previous.previousAllowFlight
+        player.isFlying = previous.previousAllowFlight && previous.previousFlying
+        player.flySpeed = previous.previousFlySpeed.coerceIn(-1.0f, 1.0f)
     }
 
     /**

@@ -103,6 +103,20 @@ abstract class NMSInvoker : Listener {
 
     abstract fun sendPhasingGamemodeUpdate(player: Player, gameMode: GameMode)
 
+    /**
+     * Applies a resource-pack item model without taking ownership of the
+     * vanilla material's global item definition.
+     *
+     * Minecraft versions before 1.21.4 do not have the item-model component,
+     * so their version adapters intentionally use the legacy custom-model-data
+     * value instead.
+     */
+    open fun setResourcePackModel(
+        meta: ItemMeta,
+        model: NamespacedKey,
+        legacyCustomModelData: Int
+    ): ItemMeta = setCustomModelData(meta, legacyCustomModelData)
+
     open fun sendResourcePacks(
         player: Player,
         pack: String,

@@ -11,6 +11,7 @@ import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Material
+import org.bukkit.NamespacedKey
 import org.bukkit.Sound
 import org.bukkit.SoundCategory
 import org.bukkit.entity.Player
@@ -20,6 +21,7 @@ import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
 import ru.turbovadim.OriginsReforged.Companion.bukkitDispatcher
 import ru.turbovadim.OriginsReforged.Companion.mainConfig
 import ru.turbovadim.OriginsReforged.Companion.v2Container
+import ru.turbovadim.ResourcePackItemModels
 import ru.turbovadim.ShortcutUtils
 import ru.turbovadim.config.MainConfig
 import ru.turbovadim.database.DatabaseManager
@@ -37,6 +39,7 @@ import kotlin.math.min
  * Uses custom font rendering for texture pack compatibility.
  */
 object OriginSelectorUI {
+    private const val DISABLED_MODEL_DATA_OFFSET = 6
 
     /**
      * Which settings drive the "reset player on confirm" and cost behavior.
@@ -144,7 +147,11 @@ object OriginSelectorUI {
                 // Navigation buttons (only if not display-only)
                 if (!displayOnly) {
                     // Previous origin button (row 5, col 2)
-                    val leftArrow = createNavigationItem("Previous origin", 1)
+                    val leftArrow = createNavigationItem(
+                        "Previous origin",
+                        ResourcePackItemModels.SELECTOR_LEFT,
+                        1
+                    )
                     pane[5, 2] = StaticElement(drawable(leftArrow)) {
                         player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
                         page = normalizePageIndex(page - 1, origins.size, enableRandom)
@@ -152,7 +159,11 @@ object OriginSelectorUI {
                     }
 
                     // Next origin button (row 5, col 6)
-                    val rightArrow = createNavigationItem("Next origin", 2)
+                    val rightArrow = createNavigationItem(
+                        "Next origin",
+                        ResourcePackItemModels.SELECTOR_RIGHT,
+                        2
+                    )
                     pane[5, 6] = StaticElement(drawable(rightArrow)) {
                         player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
                         page = normalizePageIndex(page + 1, origins.size, enableRandom)
@@ -167,7 +178,13 @@ object OriginSelectorUI {
                 val canScrollDown = remainingSize > 0
 
                 // Up button (row 5, col 7)
-                val upArrow = createScrollItem("Up", 3, !canScrollUp)
+                val upArrow = createScrollItem(
+                    name = "Up",
+                    itemModel = ResourcePackItemModels.SELECTOR_UP,
+                    disabledItemModel = ResourcePackItemModels.SELECTOR_UP_DISABLED,
+                    legacyCustomModelData = 3,
+                    disabled = !canScrollUp
+                )
                 pane[5, 7] = StaticElement(drawable(upArrow)) {
                     if (canScrollUp) {
                         player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
@@ -176,7 +193,13 @@ object OriginSelectorUI {
                 }
 
                 // Down button (row 5, col 8)
-                val downArrow = createScrollItem("Down", 4, !canScrollDown)
+                val downArrow = createScrollItem(
+                    name = "Down",
+                    itemModel = ResourcePackItemModels.SELECTOR_DOWN,
+                    disabledItemModel = ResourcePackItemModels.SELECTOR_DOWN_DISABLED,
+                    legacyCustomModelData = 4,
+                    disabled = !canScrollDown
+                )
                 pane[5, 8] = StaticElement(drawable(downArrow)) {
                     if (canScrollDown) {
                         player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
@@ -338,7 +361,11 @@ object OriginSelectorUI {
         return prefix.append(component).append(suffix)
     }
 
-    private fun createNavigationItem(name: String, customModelData: Int): ItemStack {
+    private fun createNavigationItem(
+        name: String,
+        itemModel: NamespacedKey,
+        legacyCustomModelData: Int
+    ): ItemStack {
         val item = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
         val meta = item.itemMeta
         meta.displayName(
@@ -346,11 +373,17 @@ object OriginSelectorUI {
                 .color(NamedTextColor.WHITE)
                 .decoration(TextDecoration.ITALIC, false)
         )
-        item.itemMeta = NMSInvoker.setCustomModelData(meta, customModelData)
+        item.itemMeta = NMSInvoker.setResourcePackModel(meta, itemModel, legacyCustomModelData)
         return item
     }
 
-    private fun createScrollItem(name: String, baseCustomModelData: Int, disabled: Boolean): ItemStack {
+    private fun createScrollItem(
+        name: String,
+        itemModel: NamespacedKey,
+        disabledItemModel: NamespacedKey,
+        legacyCustomModelData: Int,
+        disabled: Boolean
+    ): ItemStack {
         val item = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
         val meta = item.itemMeta
         meta.displayName(
@@ -358,8 +391,14 @@ object OriginSelectorUI {
                 .color(NamedTextColor.WHITE)
                 .decoration(TextDecoration.ITALIC, false)
         )
-        val cmd = if (disabled) baseCustomModelData + 6 else baseCustomModelData
-        item.itemMeta = NMSInvoker.setCustomModelData(meta, cmd)
+        val resolvedItemModel = if (disabled) disabledItemModel else itemModel
+        val resolvedLegacyCustomModelData =
+            if (disabled) legacyCustomModelData + DISABLED_MODEL_DATA_OFFSET else legacyCustomModelData
+        item.itemMeta = NMSInvoker.setResourcePackModel(
+            meta,
+            resolvedItemModel,
+            resolvedLegacyCustomModelData
+        )
         return item
     }
 
@@ -373,7 +412,11 @@ object OriginSelectorUI {
                 .decoration(TextDecoration.ITALIC, false)
         )
 
-        meta = NMSInvoker.setCustomModelData(meta, if (invisible) 6 else 5)
+        meta = if (invisible) {
+            NMSInvoker.setResourcePackModel(meta, ResourcePackItemModels.SELECTOR_INVISIBLE, 6)
+        } else {
+            NMSInvoker.setResourcePackModel(meta, ResourcePackItemModels.SELECTOR_CONFIRM, 5)
+        }
         item.itemMeta = meta
         return item
     }

@@ -52,6 +52,8 @@ class OriginsReforged : JavaPlugin() {
                 "1.21.9", "1.21.10" -> NMSInvokerV1_21_10()
                 "1.21.11" -> NMSInvokerV1_21_11()
                 "26.1.1", "26.1.2" -> loadNMSInvoker("ru.turbovadim.packetsenders.NMSInvokerV26_1")
+                "26.2" -> loadNMSInvoker("ru.turbovadim.packetsenders.NMSInvokerV26_2")
+                "26.3" -> loadNMSInvoker("ru.turbovadim.packetsenders.NMSInvokerV26_3")
                 else -> throw IllegalStateException("Unsupported version: " + Bukkit.getMinecraftVersion())
             }
             Bukkit.getPluginManager().registerEvents(NMSInvoker, instance)

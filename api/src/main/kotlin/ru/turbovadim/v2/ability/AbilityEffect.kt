@@ -50,12 +50,18 @@ sealed interface AbilityEffect {
     sealed interface Passive : AbilityEffect {
 
         /**
-         * Grants flight capability.
+         * Grants flight capability while [condition] is satisfied.
+         *
+         * Flight conditions are evaluated every tick and all matching flight
+         * effects are combined before the player's state is changed.
          */
         data class Flight(
             val speed: Float = 0.1f,
-            val fallDamage: FallDamageMode = FallDamageMode.NONE
-        ) : Passive
+            val fallDamage: FallDamageMode = FallDamageMode.NONE,
+            val condition: EnvironmentCheckHandler = EnvironmentCheckHandler { _, _ -> true }
+        ) : Passive, Periodic {
+            override val intervalTicks: Int = 1
+        }
 
         /**
          * Makes the player invisible.

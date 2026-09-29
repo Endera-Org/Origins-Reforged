@@ -54,7 +54,6 @@ class OriginsContainer private constructor(
     val foodAbilityProcessor: FoodAbilityProcessor by lazy { FoodAbilityProcessor(this) }
     val armorAbilityProcessor: ArmorAbilityProcessor by lazy { ArmorAbilityProcessor(this) }
     val defaultSpawnAbilityProcessor: DefaultSpawnAbilityProcessor by lazy { DefaultSpawnAbilityProcessor(this) }
-    val conditionalFlightController: ConditionalFlightController by lazy { ConditionalFlightController(this) }
     val genericListenerProcessor: GenericListenerProcessor by lazy { GenericListenerProcessor(this) }
     val attributeAbilityProcessor: AttributeAbilityProcessor by lazy { AttributeAbilityProcessor(this) }
 
@@ -76,7 +75,6 @@ class OriginsContainer private constructor(
         foodAbilityProcessor.registerEvents()
         armorAbilityProcessor.registerEvents()
         defaultSpawnAbilityProcessor.registerEvents()
-        conditionalFlightController.registerEvents()
         periodicAbilityProcessor.start()
         attributeAbilityProcessor.start()
         cooldownManager.start()
@@ -90,7 +88,7 @@ class OriginsContainer private constructor(
         periodicAbilityProcessor.stop()
         attributeAbilityProcessor.stop()
         reactiveAbilityProcessor.shutdown()
-        conditionalFlightController.shutdown()
+        passiveEffectProcessor.shutdown()
         playerStateManager.clearAll()
         OriginsApi.unregister()
         instance = null

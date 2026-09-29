@@ -114,7 +114,6 @@ private val isPhasingState = StateKey(
     false,
     Boolean::class
 )
-private val phasingFlightOwner = Key.key("origins", "phasing")
 
 fun isPhantomized(player: Player): Boolean = phantomize.isEnabled(player)
 
@@ -158,9 +157,14 @@ val phasing = ability("phasing") {
 
     dependsOn = Key.key("origins", "phantomize")
 
-    option("flight_speed", 0.1f)
-
-    // NO unconditional flight - flight is granted manually only when actively phasing
+    flight {
+        speed = 0.1f
+        condition { player, _ ->
+            @Suppress("DEPRECATION")
+            val onGround = player.isOnGround
+            (onGround && player.isSneaking) || isInSolidBlock(player)
+        }
+    }
 
     // Cancel suffocation damage (only when phantomized due to dependsOn)
     modifyDamage(
@@ -168,7 +172,7 @@ val phasing = ability("phasing") {
     )
 
     // Handle phasing state and blindness (runs at end of each tick, after movement processing)
-    onTickEnd { player, config ->
+    onTickEnd { player, _ ->
         val inBlock = isInSolidBlock(player)
         // Sneaking starts phasing; once inside a block it remains active until clear.
         @Suppress("DEPRECATION")
@@ -186,16 +190,9 @@ val phasing = ability("phasing") {
                 NMSInvoker.sendPhasingGamemodeUpdate(player, GameMode.SPECTATOR)
                 // Restore velocity after gamemode packet (entity-tied: follows player across regions)
                 player.runTask(OriginsReforged.instance) { player.velocity = currentVelocity }
-                OriginsReforged.v2Container
-                    ?.conditionalFlightController
-                    ?.acquire(player, phasingFlightOwner)
-                player.flySpeed = config.getFloat("flight_speed", 0.1f)
             } else {
                 // Disable phasing - restore normal gamemode
                 NMSInvoker.sendPhasingGamemodeUpdate(player, player.gameMode)
-                OriginsReforged.v2Container
-                    ?.conditionalFlightController
-                    ?.release(player, phasingFlightOwner)
             }
         }
 
@@ -204,14 +201,8 @@ val phasing = ability("phasing") {
         NMSInvoker.setNoPhysics(player, player.gameMode == GameMode.SPECTATOR || phasingActive)
 
         // Handle flight and fall damage when phasing
-        if (phasingActive) {
-            OriginsReforged.v2Container
-                ?.conditionalFlightController
-                ?.acquire(player, phasingFlightOwner)
-            player.fallDistance = 0f
+        if (phasingActive && player.allowFlight) {
             player.isFlying = true
-            // Enforce flight speed every tick to prevent scroll wheel changes
-            player.flySpeed = config.getFloat("flight_speed", 0.1f)
         }
 
         // Apply/remove blindness based on eye position
@@ -234,9 +225,6 @@ val phasing = ability("phasing") {
             NMSInvoker.setNoPhysics(player, false)
             NMSInvoker.sendPhasingGamemodeUpdate(player, player.gameMode)
         }
-        OriginsReforged.v2Container
-            ?.conditionalFlightController
-            ?.release(player, phasingFlightOwner)
         player.removePotionEffect(PotionEffectType.BLINDNESS)
     }
 }

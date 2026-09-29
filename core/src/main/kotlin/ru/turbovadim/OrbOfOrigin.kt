@@ -35,14 +35,17 @@ class OrbOfOrigin : Listener {
 
         /**
          * Create an Orb of Origin item.
-         * Uses NAUTILUS_SHELL with custom model data 1 to match resource pack.
+         *
+         * Modern versions use a namespaced item model so resource-pack
+         * generators cannot replace its appearance. Versions before 1.21.4
+         * use custom model data 1 as a compatibility fallback.
          */
         @JvmField
         val orb: ItemStack = ItemStack(Material.NAUTILUS_SHELL).apply {
             var meta = itemMeta ?: return@apply
             meta.persistentDataContainer.set(orbKey, PersistentDataType.BYTE, 1)
             meta.persistentDataContainer.set(updatedKey, PersistentDataType.BYTE, 1)
-            meta = NMSInvoker.setCustomModelData(meta, 1)
+            meta = NMSInvoker.setResourcePackModel(meta, ResourcePackItemModels.ORB_OF_ORIGIN, 1)
             meta.displayName(
                 Component.text("Orb of Origin")
                     .color(NamedTextColor.AQUA)

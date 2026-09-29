@@ -108,6 +108,12 @@ class GenericListenerProcessor(private val container: OriginsContainer) {
 
     @Suppress("UNCHECKED_CAST")
     private fun dispatchEvent(key: RegistrationKey, event: Event) {
+        // Related Bukkit event types can share a HandlerList. In that case Bukkit
+        // invokes every executor in the shared list, including executors registered
+        // for a more specific event subtype. Guard the erased generic boundary
+        // before invoking extractors and handlers compiled for that subtype.
+        if (!key.eventClass.isInstance(event)) return
+
         val entries = handlers[key] ?: return
 
         for (entry in entries) {

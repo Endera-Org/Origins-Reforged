@@ -44,7 +44,6 @@ import kotlin.math.floor
 /** Tracks temporary cobweb locations to prevent drops when broken */
 private val temporaryCobwebs = ConcurrentHashMap.newKeySet<Location>()
 private val webSensedEntities = ConcurrentHashMap<UUID, Map<UUID, Byte>>()
-private val masterOfWebsFlightOwner = Key.key("origins", "master_of_webs")
 
 object MasterOfWebsBehavior : Listener {
     private var registered = false
@@ -113,39 +112,25 @@ val masterOfWebs = ability("master_of_webs") {
     title = text("Master of Webs")
     description("You navigate cobweb perfectly, and are able to climb in them. When you hit an enemy in melee, they get stuck in cobweb for a while. Non-arthropods stuck in cobweb will be sensed by you. You are able to craft cobweb from string.")
 
-    option("flight_speed", 0.04f)
     option("web_trap_cooldown", 40)
     option("web_trap_duration", 60)
     option("sense_range", 16.0)
 
-    fun enableOwnedFlight(player: Player) {
-        OriginsReforged.v2Container
-            ?.conditionalFlightController
-            ?.acquire(player, masterOfWebsFlightOwner)
-        player.isFlying = true
+    flight {
+        speed = 0.04f
+        condition { player, _ -> isInsideCobweb(player) }
     }
 
-    fun disableOwnedFlight(player: Player) {
-        OriginsReforged.v2Container
-            ?.conditionalFlightController
-            ?.release(player, masterOfWebsFlightOwner)
-    }
-
-    onTick(interval = 1) { player, config ->
+    onTick(interval = 1) { player, _ ->
         if (player.gameMode == GameMode.CREATIVE || player.gameMode == GameMode.SPECTATOR) {
-            disableOwnedFlight(player)
             return@onTick false
         }
 
-        if (isInsideCobweb(player)) {
-            enableOwnedFlight(player)
-            player.flySpeed = config.getFloat("flight_speed", 0.04f).coerceIn(0.0001f, 1.0f)
-            player.fallDistance = 0f
-            true
-        } else {
-            disableOwnedFlight(player)
-            false
+        val insideWeb = isInsideCobweb(player)
+        if (insideWeb && player.allowFlight) {
+            player.isFlying = true
         }
+        insideWeb
     }
 
     onTick(interval = 5) { player, config ->
@@ -206,8 +191,6 @@ val masterOfWebs = ability("master_of_webs") {
     }
 
     onDependencyDisabled { player, config ->
-        disableOwnedFlight(player)
-
         val range = config.getDouble("sense_range", 16.0).coerceAtLeast(0.0)
         val sensed = webSensedEntities.remove(player.uniqueId).orEmpty()
         val nearby = player.getNearbyEntities(range, range, range).associateBy { it.uniqueId }

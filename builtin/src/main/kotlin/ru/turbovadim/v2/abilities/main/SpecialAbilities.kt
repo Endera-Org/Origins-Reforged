@@ -11,7 +11,6 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.EntityToggleGlideEvent
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryType
-import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerToggleFlightEvent
 import org.bukkit.event.world.TimeSkipEvent
 import org.bukkit.persistence.PersistentDataType
@@ -19,6 +18,7 @@ import org.bukkit.util.Vector
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.ShortcutUtils.isBedrockPlayer
 import ru.turbovadim.v2.ability.DependencyAbility
+import ru.turbovadim.v2.ability.FallDamageMode
 import ru.turbovadim.v2.ability.InvisibilityCondition
 import ru.turbovadim.v2.api.OriginsApi
 import ru.turbovadim.v2.dsl.ability
@@ -26,7 +26,6 @@ import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.listenerForPlayers
 import ru.turbovadim.v2.dsl.text
 import ru.turbovadim.v2.dsl.toggleAbility
-import ru.turbovadim.v2.event.OriginChangedEvent
 import ru.turbovadim.v2.ui.ShulkerInventoryUI
 
 // ============================================
@@ -113,7 +112,6 @@ val invisibility = ability("invisibility") {
 
 /** Key for marking no-damage ender pearls */
 private val noDamagePearlKey by lazy { NamespacedKey(OriginsReforged.instance, "no-damage-pearl") }
-private val elytraFlightOwner = Key.key("origins", "elytra")
 
 /**
  * Throw Ender Pearl - throw ender pearl by left-clicking with empty hand.
@@ -235,27 +233,8 @@ val elytra = ability("elytra") {
     title = text("Winged")
     description("You have Elytra wings without needing to equip any.")
 
-    fun enableOwnedFlight(player: Player) {
-        OriginsReforged.v2Container
-            ?.conditionalFlightController
-            ?.acquire(player, elytraFlightOwner)
-    }
-
-    fun disableOwnedFlight(player: Player) {
-        OriginsReforged.v2Container
-            ?.conditionalFlightController
-            ?.release(player, elytraFlightOwner)
-        player.isGliding = false
-    }
-
-    listener<PlayerJoinEvent>(
-        playerFrom = { it.player }
-    ) { player, _, _ ->
-        enableOwnedFlight(player)
-    }
-
-    onOriginChanged { player, _: OriginChangedEvent, _ ->
-        enableOwnedFlight(player)
+    flight {
+        fallDamage = FallDamageMode.NORMAL
     }
 
     // Convert flight toggle to glide toggle
@@ -280,7 +259,7 @@ val elytra = ability("elytra") {
     }
 
     onDependencyDisabled { player, _ ->
-        disableOwnedFlight(player)
+        player.isGliding = false
     }
 }
 

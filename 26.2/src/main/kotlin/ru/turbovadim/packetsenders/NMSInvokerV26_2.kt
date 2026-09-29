@@ -2,6 +2,7 @@ package ru.turbovadim.packetsenders
 
 import com.destroystokyo.paper.entity.ai.Goal
 import net.minecraft.Optionull
+import net.minecraft.core.BlockPos
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket
 import net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket
 import net.minecraft.network.syncher.EntityDataAccessor
@@ -15,6 +16,7 @@ import net.minecraft.world.entity.ai.goal.AvoidEntityGoal
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal
 import net.minecraft.world.entity.ai.memory.MemoryModuleType
 import net.minecraft.world.entity.ai.targeting.TargetingConditions
+import net.minecraft.world.level.EmptyBlockGetter
 import net.minecraft.world.level.GameType
 import net.minecraft.world.phys.Vec3
 import org.bukkit.GameMode
@@ -35,17 +37,25 @@ import java.util.function.Function
 import java.util.function.Predicate
 
 @Suppress("UnstableApiUsage")
-class NMSInvokerV1_21_10 : NMSInvoker() {
+class NMSInvokerV26_2 : NMSInvoker() {
 
     override fun dealExplosionDamage(player: Player, amount: Int) {
         val serverPlayer = (player as CraftPlayer).handle
-        serverPlayer.hurt(serverPlayer.damageSources().explosion(null), amount.toFloat())
+        serverPlayer.hurtServer(
+            serverPlayer.level(),
+            serverPlayer.damageSources().explosion(null),
+            amount.toFloat()
+        )
     }
 
     override fun dealSonicBoomDamage(entity: LivingEntity, amount: Int, source: Player) {
         val serverPlayer = (source as CraftPlayer).handle
         val e = (entity as CraftEntity).handle
-        e.hurt(e.damageSources().sonicBoom(serverPlayer), amount.toFloat())
+        e.hurtServer(
+            e.level() as ServerLevel,
+            e.damageSources().sonicBoom(serverPlayer),
+            amount.toFloat()
+        )
     }
 
     override fun getVillagerAfraidGoal(villager: LivingEntity, hasAbility: Predicate<Player>): Goal<Villager> {
@@ -191,8 +201,7 @@ class NMSInvokerV1_21_10 : NMSInvoker() {
         val serverPlayer = (player as CraftPlayer).handle
         val target = (entity as CraftEntity).handle
 
-        val eData: MutableList<SynchedEntityData.DataValue<*>?> = ArrayList<SynchedEntityData.DataValue<*>?>()
-        eData.add(
+        val eData: List<SynchedEntityData.DataValue<*>> = listOf(
             SynchedEntityData.DataValue.create(
                 EntityDataAccessor(0, EntityDataSerializers.BYTE),
                 bytes
@@ -227,11 +236,12 @@ class NMSInvokerV1_21_10 : NMSInvoker() {
     }
 
     override fun wasTouchingWater(player: Player): Boolean {
-        return (player as CraftPlayer).handle.wasTouchingWater
+        return (player as CraftPlayer).handle.isInWater()
     }
 
     override fun getDestroySpeed(block: Material): Float {
-        return (block.createBlockData().createBlockState() as CraftBlockState).handle.destroySpeed
+        val state = (block.createBlockData().createBlockState() as CraftBlockState).handle
+        return state.getDestroySpeed(EmptyBlockGetter.INSTANCE, BlockPos.ZERO)
     }
 
     override fun getDestroySpeed(item: ItemStack, block: Material): Float {
@@ -278,7 +288,7 @@ class NMSInvokerV1_21_10 : NMSInvoker() {
             true,
             0,
             Optionull.map(serverPlayer.chatSession) { obj ->
-                obj!!.asData()
+                obj.asData()
             }
         )
         val packet = ClientboundPlayerInfoUpdatePacket(

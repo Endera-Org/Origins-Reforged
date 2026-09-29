@@ -24,21 +24,11 @@ import ru.turbovadim.v2.event.OriginChangedEvent
  *     title = text("Climbing")
  *     description("You can climb walls by holding jump near solid blocks")
  *
- *     // Config options with defaults - exposed in abilities.yml
- *     option("flight_speed", 0.05f)
- *     option("fall_damage", "REDUCED")
- *     option("check_interval", 5)
- *
  *     // Grant conditional flight
  *     flight {
- *         speed = configFloat("flight_speed", 0.05f)
+ *         speed = 0.05f
  *         fallDamage = FallDamageMode.REDUCED
- *     }
- *
- *     // Periodic check for nearby walls
- *     onTick(interval = configInt("check_interval", 5)) { player, config ->
- *         val nearWall = isNearSolidBlock(player)
- *         // Update flight state...
+ *         condition { player, _ -> isNearSolidBlock(player) }
  *     }
  * }
  * ```
@@ -757,9 +747,14 @@ class AbilityBuilder(@PublishedApi internal val key: Key) {
 class FlightBuilder {
     var speed: Float = 0.1f
     var fallDamage: FallDamageMode = FallDamageMode.NONE
+    private var condition: EnvironmentCheckHandler = EnvironmentCheckHandler { _, _ -> true }
+
+    fun condition(handler: EnvironmentCheckHandler) {
+        condition = handler
+    }
 
     fun build(): AbilityEffect.Passive.Flight {
-        return AbilityEffect.Passive.Flight(speed, fallDamage)
+        return AbilityEffect.Passive.Flight(speed, fallDamage, condition)
     }
 }
 

@@ -157,6 +157,7 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
      * Process a batch of tasks efficiently.
      */
     private fun processBatch(tasks: Set<PeriodicTask>) {
+        val flightPlayers = mutableSetOf<UUID>()
         val potionTasks = mutableListOf<PeriodicTask>()
         val envCheckTasks = mutableListOf<PeriodicTask>()
         val particleTasks = mutableListOf<PeriodicTask>()
@@ -164,12 +165,17 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
 
         for (task in tasks) {
             when (task.effect) {
+                is AbilityEffect.Passive.Flight -> flightPlayers.add(task.playerId)
                 is AbilityEffect.Periodic.ApplyPotion -> potionTasks.add(task)
                 is AbilityEffect.Periodic.EnvironmentCheck -> envCheckTasks.add(task)
                 is AbilityEffect.Periodic.Particles -> particleTasks.add(task)
                 is AbilityEffect.Periodic.CustomParticles -> customParticleTasks.add(task)
                 is AbilityEffect.Periodic.TickEnd -> {} // Handled by ServerTickEndEvent, not here
             }
+        }
+
+        if (flightPlayers.isNotEmpty()) {
+            processFlightEffects(flightPlayers)
         }
 
         if (potionTasks.isNotEmpty()) {
@@ -188,6 +194,15 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
 
         if (envCheckTasks.isNotEmpty()) {
             processEnvironmentChecks(envCheckTasks)
+        }
+    }
+
+    private fun processFlightEffects(playerIds: Set<UUID>) {
+        for (playerId in playerIds) {
+            val player = Bukkit.getPlayer(playerId) ?: continue
+            player.runTask(container.plugin) {
+                container.passiveEffectProcessor.refreshFlight(player)
+            }
         }
     }
 
