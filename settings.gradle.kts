@@ -1,4 +1,5 @@
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         gradlePluginPortal()
         maven("https://repo.papermc.io/repository/maven-public/")
@@ -9,6 +10,21 @@ plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven("https://repo.papermc.io/repository/maven-public/")
+        maven("https://jitpack.io")
+        maven("https://maven.noxcrew.com/public")
+        maven("https://repo.codemc.io/repository/maven-snapshots/")
+        maven("https://repo.codemc.io/repository/maven-releases/")
+        maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
+        maven("https://repo.opencollab.dev/main/")
+        maven("https://repo.viaversion.com")
+    }
+}
 
 rootProject.name = "Origins-Reforged"
 include("api")

@@ -1,22 +1,6 @@
 plugins {
-    id("java")
+    java
     alias(libs.plugins.shadow)
-    alias(libs.plugins.paperweight.userdev) apply false
-    alias(libs.plugins.kotlin.jvm)
-}
-
-group = "ru.turbovadim"
-version = "4.0.0-SNAPSHOT"
-
-repositories {
-    mavenLocal()
-    mavenCentral()
-
-    maven("https://repo.papermc.io/repository/maven-public/")
-
-    maven { url = uri("https://jitpack.io") }
-
-    maven("https://maven.noxcrew.com/public")
 }
 
 dependencies {
@@ -39,39 +23,14 @@ dependencies {
     implementation(libs.adventure.platform.bukkit)
 }
 
-tasks {
-    compileJava {
-        options.release.set(21)
-    }
-}
-
-allprojects {
-    tasks.withType<ProcessResources> {
-        inputs.property("version", rootProject.version)
-        filesMatching("**plugin.yml") {
-            expand("version" to rootProject.version)
+tasks.shadowJar {
+    archiveFileName.set("${rootProject.name}-${rootProject.version}.jar")
+    dependencies {
+        exclude(dependency("com.github.Endera-Org:EnderaLib"))
+        exclude {
+            it.moduleGroup == "org.jetbrains.kotlin" || it.moduleGroup == "org.jetbrains.kotlinx"
         }
     }
-}
-
-
-tasks {
-
-    shadowJar {
-        archiveFileName.set("${rootProject.name}-${rootProject.version}.jar")
-        from(sourceSets.main.get().output)
-        dependencies {
-            exclude(dependency("com.github.Endera-Org:EnderaLib"))
-            exclude {
-                it.moduleGroup == "org.jetbrains.kotlin" || it.moduleGroup == "org.jetbrains.kotlinx"
-            }
-        }
-    }
-
-    test {
-        useJUnitPlatform()
-    }
-
 }
 
 java {
