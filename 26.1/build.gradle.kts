@@ -2,8 +2,8 @@ import io.papermc.paperweight.userdev.ReobfArtifactConfiguration
 
 plugins {
     id("java")
-    id("io.papermc.paperweight.userdev")
-    kotlin("jvm") version "2.3.20"
+    alias(libs.plugins.paperweight.userdev)
+    alias(libs.plugins.kotlin.jvm)
 }
 
 repositories {
@@ -16,8 +16,7 @@ repositories {
 }
 
 dependencies {
-    testImplementation(platform("org.junit:junit-bom:5.10.0"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation(libs.junit.jupiter)
     implementation(project(":version"))
     paperweight.paperDevBundle("26.1.2.build.+")
     implementation(kotlin("stdlib-jdk8"))

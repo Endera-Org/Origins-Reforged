@@ -1,6 +1,6 @@
 plugins {
     id("java-library")
-    kotlin("jvm") version "2.3.20"
+    alias(libs.plugins.kotlin.jvm)
 }
 
 repositories {
@@ -13,8 +13,8 @@ dependencies {
     compileOnly(project(":api"))
     compileOnly(project(":core"))
     compileOnly(project(":version"))
-    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
-    compileOnly("com.github.Endera-Org:EnderaLib:1.5.0") { isTransitive = false }
+    compileOnly(libs.paper.api)
+    compileOnly(libs.enderalib) { isTransitive = false }
     implementation(kotlin("stdlib-jdk8"))
 }
 

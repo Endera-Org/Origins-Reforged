@@ -2,8 +2,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id("java-library")
-    kotlin("jvm") version "2.3.20"
-    kotlin("plugin.serialization") version "2.2.21" apply true
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 repositories {
@@ -24,24 +24,21 @@ repositories {
 }
 
 dependencies {
-    val exposedVersion = "1.2.0"
-
     api(project(":api"))
-    implementation("org.jetbrains:annotations:23.0.0")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
-    compileOnly("com.viaversion:viaversion-api:5.0.0")
-    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT") // Paper
-    compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
-    compileOnly("org.geysermc.geyser:api:2.9.0-SNAPSHOT")
-    compileOnly("org.geysermc.floodgate:api:2.2.2-SNAPSHOT")
-    compileOnly("com.github.authme:authmereloaded:5.6.0-beta2")
-    compileOnly("me.clip:placeholderapi:2.11.5")
-    implementation("org.json:json:20250517")
-    compileOnly("net.objecthunter:exp4j:0.4.8")
+    implementation(libs.jetbrains.annotations)
+    testImplementation(libs.junit.jupiter)
+    compileOnly(libs.viaversion.api)
+    compileOnly(libs.paper.api) // Paper
+    compileOnly(libs.vault.api)
+    compileOnly(libs.geyser.api)
+    compileOnly(libs.floodgate.api)
+    compileOnly(libs.authme)
+    compileOnly(libs.placeholderapi)
+    implementation(libs.json)
+    compileOnly(libs.exp4j)
 
-    implementation("com.noxcrew.interfaces:interfaces:2.1.0-folia-SNAPSHOT")
-    compileOnly("com.github.retrooper:packetevents-spigot:2.12.0-SNAPSHOT")
+    implementation(libs.interfaces)
+    compileOnly(libs.packetevents)
 
     compileOnly(project(":version"))
     compileOnly(project(":1.21.1"))
@@ -54,17 +51,15 @@ dependencies {
     compileOnly(files("libs/worldguard.jar"))
     compileOnly(files("libs/worldedit.jar"))
     implementation(kotlin("stdlib-jdk8"))
-    implementation("com.github.Endera-Org:EnderaLib:1.5.0") {
+    implementation(libs.enderalib) {
         isTransitive = false
     }
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.coroutines.core)
 
-    implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
-    implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
-    implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
-    implementation("com.zaxxer:HikariCP:6.2.1")
-    implementation("com.h2database:h2:2.3.232")
+    implementation(libs.bundles.exposed)
+    implementation(libs.hikaricp)
+    implementation(libs.h2)
 
 }
 

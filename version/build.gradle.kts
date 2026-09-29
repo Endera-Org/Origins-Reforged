@@ -1,6 +1,6 @@
 plugins {
     id("java")
-    kotlin("jvm") version "2.3.20"
+    alias(libs.plugins.kotlin.jvm)
 }
 
 repositories {
@@ -9,10 +9,9 @@ repositories {
 }
 
 dependencies {
-    implementation("org.jetbrains:annotations:23.0.0")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.1")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.1")
-    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
+    implementation(libs.jetbrains.annotations)
+    testImplementation(libs.junit.jupiter)
+    compileOnly(libs.paper.api)
     implementation(kotlin("stdlib-jdk8"))
 }
 

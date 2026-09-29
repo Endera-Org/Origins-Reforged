@@ -1,8 +1,8 @@
 plugins {
     id("java")
-    id("com.gradleup.shadow") version "9.2.2"
-    id("io.papermc.paperweight.userdev") version "2.0.0-beta.21" apply false
-    kotlin("jvm") version "2.3.20"
+    alias(libs.plugins.shadow)
+    alias(libs.plugins.paperweight.userdev) apply false
+    alias(libs.plugins.kotlin.jvm)
 }
 
 group = "ru.turbovadim"
@@ -20,8 +20,8 @@ repositories {
 }
 
 dependencies {
-    implementation("org.json:json:20250517")
-    implementation("net.objecthunter:exp4j:0.4.8")
+    implementation(libs.json)
+    implementation(libs.exp4j)
     implementation(project(":api"))
     implementation(project(":core"))
     implementation(project(":builtin"))
@@ -36,7 +36,7 @@ dependencies {
     implementation(project(":26.1"))
     implementation(project(":26.2"))
     implementation(project(":26.3"))
-    implementation("net.kyori:adventure-platform-bukkit:4.3.4")
+    implementation(libs.adventure.platform.bukkit)
 }
 
 tasks {

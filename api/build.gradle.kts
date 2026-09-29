@@ -1,7 +1,7 @@
 plugins {
     id("java")
-    kotlin("jvm") version "2.3.20"
-    kotlin("plugin.serialization") version "2.2.21" apply true
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
     `maven-publish`
 }
 
@@ -17,11 +17,11 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
+    compileOnly(libs.paper.api)
     compileOnly(project(":version"))
-    compileOnly("com.github.retrooper:packetevents-spigot:2.12.0-SNAPSHOT")
-    compileOnly("com.github.Endera-Org:EnderaLib:1.5.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
+    compileOnly(libs.packetevents)
+    compileOnly(libs.enderalib)
+    implementation(libs.kotlinx.serialization.json)
     implementation(kotlin("stdlib-jdk8"))
 }
 
