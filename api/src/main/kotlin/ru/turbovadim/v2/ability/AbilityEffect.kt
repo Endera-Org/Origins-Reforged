@@ -68,7 +68,9 @@ sealed interface AbilityEffect {
          */
         data class Invisibility(
             val condition: InvisibilityCondition = InvisibilityCondition.Always
-        ) : Passive
+        ) : Passive, Periodic {
+            override val intervalTicks: Int = 1
+        }
     }
 
     // ============================================

@@ -2,6 +2,15 @@ package ru.turbovadim.v2.state
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.cancel
+import org.endera.enderalib.utils.async.coroutines
+import org.endera.enderalib.utils.async.withScheduler
+import ru.turbovadim.v2.event.OriginChangeRequest
+import ru.turbovadim.v2.event.OriginChangeResult
 import org.bukkit.Bukkit
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -29,6 +38,9 @@ class PlayerStateManager(
 ) : Listener {
 
     private val states = ConcurrentHashMap<UUID, PlayerOriginState>()
+    private val saveScope = CoroutineScope(container.dispatchers.io + SupervisorJob())
+    private val saves = mutableMapOf<UUID, Job>()
+    private val loads = ConcurrentHashMap<UUID, Job>()
 
     /**
      * Get or create state for a player.
@@ -68,30 +80,17 @@ class PlayerStateManager(
         player: Player,
         layer: String,
         origin: Origin,
-        reason: OriginChangeReason = OriginChangeReason.PLUGIN
-    ) {
-        val result = container.eventBus.processOriginChangeSync(player, layer, origin, reason)
+        reason: OriginChangeReason = OriginChangeReason.PLUGIN,
+        beforeCommit: (OriginChangeRequest) -> Boolean = { true }
+    ): OriginChangeResult {
+        val result = container.eventBus.processOriginChangeSync(player, layer, origin, reason, beforeCommit)
         val newOrigin = result.newOrigin
         if (result.cancelled || newOrigin == null) {
-            return
+            return result
         }
 
-        // Persist to database asynchronously using the final, possibly rewritten layer/origin
-        CoroutineScope(container.dispatchers.io).launch {
-            try {
-                DatabaseManager.updateOrigin(
-                    player.uniqueId.toString(),
-                    result.layer,
-                    newOrigin.name
-                )
-            } catch (t: Throwable) {
-                container.plugin.logger.severe(
-                    "Failed to persist origin '${newOrigin.name}' for ${player.name} " +
-                        "(layer: ${result.layer}): ${t.message}"
-                )
-                t.printStackTrace()
-            }
-        }
+        persist(player.uniqueId, result.layer, newOrigin.key.asString())
+        return result
     }
 
     /**
@@ -110,25 +109,40 @@ class PlayerStateManager(
             return oldOrigin
         }
 
-        // Persist removal to database asynchronously using the final layer
-        CoroutineScope(container.dispatchers.io).launch {
-            try {
-                DatabaseManager.updateOrigin(player.uniqueId.toString(), result.layer, null)
-            } catch (t: Throwable) {
-                container.plugin.logger.severe(
-                    "Failed to persist origin removal for ${player.name} (layer: ${result.layer}): ${t.message}"
-                )
-                t.printStackTrace()
-            }
-        }
-
+        persist(player.uniqueId, result.layer, null)
         return oldOrigin
+    }
+
+    /** Serialize writes per player so an older change cannot overwrite a newer one. */
+    private fun persist(playerId: UUID, layer: String, origin: String?) {
+        synchronized(saves) {
+            val previous = saves[playerId]
+            val job = saveScope.launch {
+                previous?.join()
+                try {
+                    DatabaseManager.updateOrigin(playerId.toString(), layer, origin)
+                } catch (ex: Exception) {
+                    container.plugin.logger.severe("Failed to persist origin for $playerId in $layer: ${ex.message}")
+                }
+            }
+            saves[playerId] = job
+            job.invokeOnCompletion { synchronized(saves) { saves.remove(playerId, job) } }
+        }
     }
 
     /**
      * Called when a player quits - cleans up ALL state.
      */
     internal fun onPlayerQuit(player: Player) {
+        loads.remove(player.uniqueId)?.cancel()
+        getStateOrNull(player)?.origins?.values?.forEach {
+            container.eventBus.triggerRemovedAbilityLifecycles(player, it, null)
+        }
+        container.attributeAbilityProcessor.removePlayer(player.uniqueId)
+        container.nmsInvoker.removePlayer(player)
+        ru.turbovadim.v2.util.PlayerVisibility.forget(player.uniqueId)
+        container.cooldownManager.removePlayer(player.uniqueId)
+        container.passiveEffectProcessor.removePassiveEffects(player)
         container.passiveEffectProcessor.removePlayer(player.uniqueId)
         val state = states.remove(player.uniqueId)
         state?.clear()
@@ -141,6 +155,12 @@ class PlayerStateManager(
      * Clear all states. Called on plugin disable.
      */
     internal fun clearAll() {
+        loads.values.forEach { it.cancel() }
+        loads.clear()
+        runBlocking {
+            synchronized(saves) { saves.values.toList() }.forEach { it.join() }
+        }
+        saveScope.cancel()
         states.values.forEach { it.clear() }
         states.clear()
     }
@@ -161,27 +181,30 @@ class PlayerStateManager(
     fun onPlayerJoin(event: PlayerJoinEvent) {
         val player = event.player
         // Pre-create state for the player
-        getState(player)
+        val session = getState(player)
 
         // Load origins from database asynchronously
-        CoroutineScope(container.dispatchers.io).launch {
-            loadOriginsFromDatabase(player)
+        loads[player.uniqueId] = container.plugin.coroutines.launchIo {
+            loadOriginsFromDatabase(player, session)
         }
     }
 
     /**
      * Load player's origins from the database and apply them.
      */
-    private suspend fun loadOriginsFromDatabase(player: Player) {
+    private suspend fun loadOriginsFromDatabase(player: Player, session: PlayerOriginState) {
         try {
             val savedOrigins = try {
+                synchronized(saves) { saves[player.uniqueId] }?.join()
                 DatabaseManager.getSelectedOrigins(player.uniqueId.toString())
             } catch (t: Throwable) {
+                if (t is CancellationException) throw t
                 container.plugin.logger.severe(
                     "Failed to load saved origins for ${player.name}: ${t.message}"
                 )
                 t.printStackTrace()
-                null
+                session.dbLoadFailed = true
+                return
             }
 
             if (savedOrigins != null) {
@@ -191,26 +214,25 @@ class PlayerStateManager(
 
                     val origin = container.originRegistry.getByName(originName)
                     if (origin == null) {
+                        session.dbLoadFailed = true
                         container.plugin.logger.warning(
                             "Could not find origin '$originName' for player ${player.name} (layer: $layer)"
                         )
                         continue
                     }
 
-                    // Apply via pipeline on the main thread without re-saving to database
-                    if (player.isOnline) {
-                        container.eventBus.processOriginChange(
-                            player = player,
-                            layer = layer,
-                            newOrigin = origin,
-                            reason = OriginChangeReason.DATABASE_LOAD
-                        )
+                    // Apply on the player's owning thread without re-saving to the database
+                    player.withScheduler(container.plugin) {
+                        if (player.isOnline && getStateOrNull(player) === session) {
+                            val result = container.eventBus.processOriginChangeSync(player, layer, origin, OriginChangeReason.DATABASE_LOAD)
+                            if (result.cancelled) session.dbLoadFailed = true
+                        }
                     }
                 }
             }
         } finally {
             // Mark load complete so join-flow listeners can proceed.
-            getStateOrNull(player.uniqueId)?.dbLoadComplete = true
+            if (getStateOrNull(player.uniqueId) === session) session.dbLoadComplete = true
         }
     }
 

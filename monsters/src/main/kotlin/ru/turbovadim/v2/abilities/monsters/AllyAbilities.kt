@@ -35,6 +35,7 @@ val creeperAlly = ability("creeper_ally", "monsterorigins") {
 val undeadAllyMonsters = ability("undead_ally", "monsterorigins") {
     title = text("Undead Ally")
     description("Undead mobs don't attack you, unless you attack them first.")
+    onDependencyDisabled { player, _ -> undeadAttackedBy.remove(player.uniqueId) }
 
     onEntityTarget { player, attacker, _ ->
         if (!EntityTags.UNDEADS.isTagged(attacker.type)) return@onEntityTarget true
@@ -68,6 +69,7 @@ val guardianAllyMonsters = ability("guardian_ally", "monsterorigins") {
 val piglinAlly = ability("piglin_ally", "monsterorigins") {
     title = text("Piglin Ally")
     description("Piglins don't attack you, unless you attack them first.")
+    onDependencyDisabled { player, _ -> piglinAttackedBy.remove(player.uniqueId) }
 
     onEntityTarget { player, attacker, _ ->
         if (attacker.type != EntityType.PIGLIN && attacker.type != EntityType.PIGLIN_BRUTE) {

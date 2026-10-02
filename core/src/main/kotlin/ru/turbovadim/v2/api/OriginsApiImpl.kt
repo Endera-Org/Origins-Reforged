@@ -33,6 +33,7 @@ class OriginsApiImpl(private val container: OriginsContainer) : OriginsApi {
 
     override fun registerOrigin(origin: Origin) {
         container.originRegistry.register(origin)
+        container.originLoader.registerApiOrigin(origin)
     }
 
     override fun registerAbilityCheckHook(hook: AbilityCheckHook) {

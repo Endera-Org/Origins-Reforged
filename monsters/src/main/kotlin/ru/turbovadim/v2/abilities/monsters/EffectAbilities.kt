@@ -1,5 +1,7 @@
 package ru.turbovadim.v2.abilities.monsters
 
+import ru.turbovadim.v2.util.refreshPotionEffect
+
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
@@ -24,18 +26,18 @@ val landNightVision = ability("land_night_vision", "monsterorigins") {
             val currentEffect = player.getPotionEffect(PotionEffectType.NIGHT_VISION)
             val ambient = currentEffect?.isAmbient ?: false
             val showParticles = currentEffect?.hasParticles() ?: false
-            player.addPotionEffect(
+            player.refreshPotionEffect(
                 PotionEffect(
                     PotionEffectType.NIGHT_VISION,
-                    Int.MAX_VALUE,
-                    -1,
+                    400,
+                    0,
                     ambient,
                     showParticles
                 )
             )
         } else {
             val effect = player.getPotionEffect(PotionEffectType.NIGHT_VISION)
-            if (effect != null && effect.amplifier == -1) {
+            if (effect != null && effect.amplifier == 0) {
                 player.removePotionEffect(PotionEffectType.NIGHT_VISION)
             }
         }
@@ -57,12 +59,12 @@ val blindness = ability("blindness", "monsterorigins") {
 
         if (player.hasPotionEffect(PotionEffectType.NIGHT_VISION)) {
             player.removePotionEffect(PotionEffectType.BLINDNESS)
-            player.addPotionEffect(
+            player.refreshPotionEffect(
                 PotionEffect(PotionEffectType.DARKNESS, duration, 0, false, false)
             )
         } else {
             player.removePotionEffect(PotionEffectType.DARKNESS)
-            player.addPotionEffect(
+            player.refreshPotionEffect(
                 PotionEffect(PotionEffectType.BLINDNESS, duration, 0, false, false)
             )
         }
@@ -111,10 +113,10 @@ val fearCats = ability("fear_cats", "monsterorigins") {
             .any { it.type == EntityType.CAT }
 
         if (catsNearby) {
-            player.addPotionEffect(
+            player.refreshPotionEffect(
                 PotionEffect(OriginsReforged.NMSInvoker.nauseaEffect, duration, 0, false, true)
             )
-            player.addPotionEffect(
+            player.refreshPotionEffect(
                 PotionEffect(PotionEffectType.WEAKNESS, duration, 0, false, true)
             )
         }

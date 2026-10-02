@@ -36,6 +36,7 @@ class AbilityRegistry(private val container: OriginsContainer) {
      * Register an ability.
      */
     fun register(ability: Ability) {
+        unregister(ability.key)
         abilities[ability.key] = ability
 
         // Index by effect type
@@ -225,6 +226,7 @@ class AbilityRegistry(private val container: OriginsContainer) {
                 }
                 is AbilityEffect.Passive.Invisibility -> {
                     invisibilityAbilities.add(ability.key)
+                    periodic.add(effect)
                 }
                 is AbilityEffect.Periodic -> {
                     periodic.add(effect)

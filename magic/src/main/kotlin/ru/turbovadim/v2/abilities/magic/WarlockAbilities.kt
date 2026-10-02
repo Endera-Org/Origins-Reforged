@@ -111,7 +111,7 @@ private fun adjustBoost(player: Player, cap: Double, transform: (Double) -> Doub
             if (player.isDead) return@runTaskLater
             val attr = player.getAttribute(OriginsReforged.NMSInvoker.maxHealthAttribute)
             if (attr != null) {
-                player.health = min(attr.value, max(player.health, attr.value))
+                player.health = min(attr.value, player.health)
             }
         }
     }

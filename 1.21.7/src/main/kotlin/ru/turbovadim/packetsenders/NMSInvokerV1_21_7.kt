@@ -65,7 +65,7 @@ class NMSInvokerV1_21_7 : NMSInvoker() {
         ).asPaperGoal()
     }
 
-    override fun getNearestVisiblePlayer(piglin: Piglin): Player {
+    override fun getNearestVisiblePlayer(piglin: Piglin): Player? {
         val optional = (piglin as CraftPiglin).handle.getBrain()
             .getMemory(MemoryModuleType.NEAREST_VISIBLE_PLAYER)
         return optional.map(Function { player -> player.bukkitEntity as Player })
@@ -118,18 +118,22 @@ class NMSInvokerV1_21_7 : NMSInvoker() {
             }).asPaperGoal()
     }
 
-    private val lastVec3Map: MutableMap<Player?, Vec3?> = HashMap<Player?, Vec3?>()
+    private val lastVec3Map = java.util.concurrent.ConcurrentHashMap<java.util.UUID, Vec3>()
+
+    override fun removePlayer(player: Player) {
+        lastVec3Map.remove(player.uniqueId)
+    }
 
     override fun bounce(player: Player) {
         val p = (player as CraftPlayer).handle
         if (player.isOnGround) {
             if (player.fallDistance <= 0) return
-            val dm = lastVec3Map[player]
+            val dm = lastVec3Map[player.uniqueId]
             if (dm != null) {
                 player.velocity = player.velocity.add(Vector(0.0, -dm.y, 0.0))
             }
         }
-        lastVec3Map[player] = p.deltaMovement
+        lastVec3Map[player.uniqueId] = p.deltaMovement
     }
 
     override val armorAttribute: Attribute = Attribute.ARMOR

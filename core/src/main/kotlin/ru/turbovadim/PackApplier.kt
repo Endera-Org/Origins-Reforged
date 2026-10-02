@@ -21,7 +21,7 @@ class PackApplier : Listener {
 
     companion object {
         private val addonPacks: MutableMap<String, OriginsReforgedResourcePackInfo> =
-            HashMap()
+            java.util.concurrent.ConcurrentHashMap()
 
         fun sendPacks(player: Player) {
             CoroutineScope(ioDispatcher).launch {
@@ -30,7 +30,7 @@ class PackApplier : Listener {
         }
 
         fun getPackURL(): String {
-            return "https://raw.githubusercontent.com/Endera-Org/Origins-Reforged/refs/heads/master/OriginsPack.zip"
+            return OriginsReforged.mainConfig.resourcePack.url
         }
 
         /**

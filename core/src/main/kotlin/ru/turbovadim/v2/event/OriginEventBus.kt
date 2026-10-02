@@ -1,6 +1,9 @@
 package ru.turbovadim.v2.event
 
-import kotlinx.coroutines.withContext
+import org.endera.enderalib.utils.async.withScheduler
+import org.endera.enderalib.isFolia
+import net.kyori.adventure.text.Component
+import ru.turbovadim.database.DatabaseManager
 import org.bukkit.Bukkit
 import org.bukkit.World
 import org.bukkit.entity.Player
@@ -27,13 +30,14 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 class OriginEventBus(private val container: OriginsContainer) : Listener {
 
+    private val changeLock = Any()
     private val interceptors = CopyOnWriteArrayList<OriginChangeInterceptor>()
     private val changedListeners = CopyOnWriteArrayList<OriginChangedListener>()
 
     /**
      * Register an internal origin change interceptor.
      *
-     * Interceptors run on the main thread and may cancel or rewrite the request.
+     * Interceptors run on the player's thread and may cancel or rewrite the request.
      */
     fun registerInterceptor(interceptor: OriginChangeInterceptor) {
         interceptors.addIfAbsent(interceptor)
@@ -63,32 +67,41 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
     /**
      * Process an origin change through the internal pipeline.
      *
-     * This function always executes on the main thread, even if called from async code.
+     * Executes on the player's owning thread, including calls from async code.
      */
     suspend fun processOriginChange(
         player: Player,
         layer: String,
         newOrigin: Origin?,
         reason: OriginChangeReason
-    ): OriginChangeResult = withContext(container.dispatchers.main) {
+    ): OriginChangeResult = player.withScheduler(container.plugin) {
         processOriginChangeSync(player, layer, newOrigin, reason)
     }
 
     /**
-     * Process an origin change on the main thread.
+     * Process an origin change on the player's owning thread.
      *
-     * Call this only from synchronous/main-thread code paths.
+     * Call only from the player's owning thread.
+     * [beforeCommit] runs after interception, before state changes, and may reject the change.
      */
     fun processOriginChangeSync(
         player: Player,
         layer: String,
         newOrigin: Origin?,
-        reason: OriginChangeReason
-    ): OriginChangeResult {
-        check(Bukkit.isPrimaryThread()) {
-            "Origin changes must be processed on the main thread."
+        reason: OriginChangeReason,
+        beforeCommit: (OriginChangeRequest) -> Boolean = { true }
+    ): OriginChangeResult = synchronized(changeLock) {
+        check(if (isFolia) Bukkit.isOwnedByCurrentRegion(player) else Bukkit.isPrimaryThread()) {
+            "Origin changes must be processed on the player's thread."
         }
         val state = container.playerStateManager.getState(player)
+        val userChange = reason == OriginChangeReason.UI || reason == OriginChangeReason.ORB ||
+            reason == OriginChangeReason.COMMAND
+        if ((reason != OriginChangeReason.DATABASE_LOAD && !state.dbLoadComplete) ||
+            (userChange && state.dbLoadFailed)) {
+            player.sendMessage(Component.text("Your saved origins are not loaded yet."))
+            return OriginChangeResult(true, layer, state.getOrigin(layer), newOrigin, false)
+        }
         val oldOrigin = state.getOrigin(layer)
 
         val request = OriginChangeRequest(
@@ -113,6 +126,9 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
             }
         }
 
+        if (!beforeCommit(request)) {
+            return OriginChangeResult(true, request.layer, request.oldOrigin, request.newOrigin, false)
+        }
         val finalLayer = request.layer
         val finalNewOrigin = request.newOrigin
         val finalOldOrigin = if (finalLayer == layer) {
@@ -121,11 +137,14 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
             state.getOrigin(finalLayer)
         }
 
-        // Apply the change to state on the main thread
+        // Apply only after restrictions and pre-commit work succeed.
         if (finalNewOrigin == null) {
             state.removeOrigin(finalLayer)
         } else {
             state.setOrigin(finalLayer, finalNewOrigin)
+            if (reason != OriginChangeReason.DATABASE_LOAD) {
+                DatabaseManager.recordUsedOriginSync(player.uniqueId.toString(), finalNewOrigin.key.asString())
+            }
         }
 
         val changed = finalOldOrigin != finalNewOrigin || finalLayer != layer
@@ -146,11 +165,7 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
      * Called after a player's origin has been applied to state.
      * Triggers passive effect reapplication, periodic task scheduling, and post hooks.
      *
-     * Folia: everything that mutates the player (lifecycle callbacks, passive
-     * effects, conditional attribute updates, user-supplied change listeners)
-     * runs on the player's own entity scheduler so it lands on the region that
-     * owns them. Pure bookkeeping on ConcurrentHashMaps (periodic tasks) can
-     * stay on the caller's thread.
+     * Called on the player's owning thread by the change pipeline.
      */
     private fun notifyOriginChanged(
         player: Player,
@@ -161,33 +176,23 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
     ) {
         val state = container.playerStateManager.getState(player)
 
-        // Update periodic tasks — only touches ConcurrentHashMaps, thread-agnostic.
+        // Register periodic work before applying the new effects.
         container.periodicAbilityProcessor.updatePlayer(player.uniqueId, state.getAbilityKeys())
 
-        // Everything below mutates the player; hop to the player's region thread.
-        player.runTask(container.plugin) {
-            // Trigger lifecycle callbacks for abilities being removed
-            triggerRemovedAbilityLifecycles(player, oldOrigin, newOrigin)
+        // The change pipeline already runs on the player's owning thread.
+        triggerRemovedAbilityLifecycles(player, oldOrigin, newOrigin)
+        container.passiveEffectProcessor.applyPassiveEffects(player, state)
+        container.attributeAbilityProcessor.updatePlayer(player.uniqueId, state.getAbilityKeys())
 
-            // Apply passive effects (attributes, flight, visibility)
-            container.passiveEffectProcessor.applyPassiveEffects(player, state)
-
-            // Update conditional attribute tasks — clearModifiersByNamespace mutates attributes
-            container.attributeAbilityProcessor.updatePlayer(player.uniqueId, state.getAbilityKeys())
-
-            // Fire internal post-change listeners (handlers may touch the player)
-            if (changedListeners.isEmpty()) return@runTask
-
-            val event = OriginChangedEvent(player, layer, oldOrigin, newOrigin, reason)
-            for (listener in changedListeners) {
-                try {
-                    listener.onChanged(event)
-                } catch (t: Throwable) {
-                    container.plugin.logger.severe(
-                        "OriginChangedListener failed for ${player.name} (layer: $layer): ${t.message}"
-                    )
-                    t.printStackTrace()
-                }
+        val event = OriginChangedEvent(player, layer, oldOrigin, newOrigin, reason)
+        for (listener in changedListeners) {
+            try {
+                listener.onChanged(event)
+            } catch (t: Throwable) {
+                container.plugin.logger.severe(
+                    "OriginChangedListener failed for ${player.name} (layer: $layer): ${t.message}"
+                )
+                t.printStackTrace()
             }
         }
     }
@@ -195,7 +200,7 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
     /**
      * Trigger onDependencyDisabled lifecycle callbacks for abilities being removed.
      */
-    private fun triggerRemovedAbilityLifecycles(
+    internal fun triggerRemovedAbilityLifecycles(
         player: Player,
         oldOrigin: Origin?,
         newOrigin: Origin?

@@ -1,13 +1,11 @@
 package ru.turbovadim.v2.listener
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.bukkit.event.EventHandler
+import org.endera.enderalib.utils.async.coroutines
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerRespawnEvent
 import org.endera.enderalib.utils.async.runTaskLater
-import ru.turbovadim.OriginsReforged.Companion.bukkitDispatcher
 import ru.turbovadim.OriginsReforged.Companion.mainConfig
 import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.event.OriginChangeReason
@@ -52,7 +50,7 @@ class OriginDeathListener(
                 }
                 if (!openedGui) {
                     openedGui = true
-                    CoroutineScope(bukkitDispatcher).launch {
+                    plugin.coroutines.launchIo {
                         OriginSelectorUI.open(
                             player = player,
                             layer = layer,

@@ -23,6 +23,10 @@ fun initDb(dataFolder: File) {
         println("Creating missing tables and columns if any...")
         SchemaUtils.createMissingTablesAndColumns(OriginKeyValuePairs, UsedOrigins, UUIDOrigins, ShulkerInventory)
     }
+    transaction(db) {
+        // H2 preserves existing bytes while removing the old 16 KiB limit.
+        exec(SHULKER_STORAGE_MIGRATION)
+    }
     runBlocking {
         DatabaseManager.fillOriginCache()
     }

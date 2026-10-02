@@ -100,7 +100,7 @@ class LineData {
                 for (i in 1 until tokens.size) {
                     val token = tokens[i]
                     val tokenWidth = TextRenderingUtils.getStringWidth(token)
-                    if (currentWidth + spaceWidth + tokenWidth <= MAX_LINE_WIDTH) {
+                    if (overflow.isEmpty() && currentWidth + spaceWidth + tokenWidth <= MAX_LINE_WIDTH) {
                         firstPart.append(' ').append(token)
                         currentWidth += spaceWidth + tokenWidth
                     } else {
@@ -121,8 +121,8 @@ class LineData {
             }
 
             val formatted = buildString(displayLine.length * 2) {
-                for (char in displayLine) {
-                    append(char)
+                displayLine.codePoints().forEach {
+                    appendCodePoint(it)
                     append(CHAR_SPACER)
                 }
             }

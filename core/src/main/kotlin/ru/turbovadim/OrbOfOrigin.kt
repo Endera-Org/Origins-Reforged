@@ -1,6 +1,6 @@
 package ru.turbovadim
 
-import kotlinx.coroutines.launch
+import org.endera.enderalib.utils.async.coroutines
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextDecoration
@@ -13,13 +13,13 @@ import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
-import ru.turbovadim.OriginsReforged.Companion.bukkitDispatcher
 import ru.turbovadim.OriginsReforged.Companion.instance
 import ru.turbovadim.OriginsReforged.Companion.mainConfig
 import ru.turbovadim.OriginsReforged.Companion.v2Container
 import ru.turbovadim.v2.event.OriginChangeReason
 import ru.turbovadim.v2.ui.OriginSelectorUI
 import ru.turbovadim.v2.util.PlayerResetter
+import org.bukkit.inventory.EquipmentSlot
 
 /**
  * Handles the Orb of Origin item.
@@ -83,7 +83,7 @@ class OrbOfOrigin : Listener {
         }
 
         val layer = "origin"
-        val orbSlot = player.inventory.heldItemSlot
+        val orbSlot = if (event.hand == EquipmentSlot.OFF_HAND) 40 else player.inventory.heldItemSlot
 
         // Check if random on orb is enabled
         val randomOnOrb = mainConfig.orbOfOrigin.random[layer] ?: false
@@ -92,12 +92,14 @@ class OrbOfOrigin : Listener {
             // Give random origin directly
             val randomOrigin = container.originRegistry.getRandomOrigin(layer)
             if (randomOrigin != null) {
-                // Apply reset BEFORE setOrigin so passive effects land on the fresh player.
-                if (mainConfig.orbOfOrigin.resetPlayer) {
-                    PlayerResetter.reset(player)
+                val result = container.playerStateManager.setOrigin(player, layer, randomOrigin, OriginChangeReason.ORB) {
+                    val current = player.inventory.getItem(orbSlot)
+                    if (!isOrb(current)) return@setOrigin false
+                    if (mainConfig.orbOfOrigin.consume) current!!.amount -= 1
+                    if (mainConfig.orbOfOrigin.resetPlayer) PlayerResetter.reset(player)
+                    true
                 }
-
-                container.playerStateManager.setOrigin(player, layer, randomOrigin, OriginChangeReason.ORB)
+                if (result.cancelled) return
                 player.sendMessage(
                     Component.text("You are now a ")
                         .color(NamedTextColor.GREEN)
@@ -105,16 +107,12 @@ class OrbOfOrigin : Listener {
                         .append(Component.text("!").color(NamedTextColor.GREEN))
                 )
 
-                // Consume orb if configured
-                if (mainConfig.orbOfOrigin.consume) {
-                    item.amount -= 1
-                }
             } else {
                 player.sendMessage(Component.text("No origins available.", NamedTextColor.RED))
             }
         } else {
             // Open origin selection UI
-            kotlinx.coroutines.CoroutineScope(bukkitDispatcher).launch {
+            instance.coroutines.launchIo {
                 OriginSelectorUI.open(
                     player = player,
                     layer = layer,

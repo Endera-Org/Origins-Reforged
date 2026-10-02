@@ -1,5 +1,7 @@
 package ru.turbovadim.v2.abilities.magic
 
+import ru.turbovadim.v2.util.refreshPotionEffect
+
 import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
 import org.bukkit.Material
@@ -141,7 +143,7 @@ val regenerationWhenStill = ability("regeneration_when_still", "magicorigins") {
                     player.removePotionEffect(PotionEffectType.REGENERATION)
                 }
             }
-            player.addPotionEffect(
+            player.refreshPotionEffect(
                 PotionEffect(
                     PotionEffectType.REGENERATION,
                     ShortcutUtils.infiniteDuration(),
@@ -160,7 +162,7 @@ val regenerationWhenStill = ability("regeneration_when_still", "magicorigins") {
                 val effect = stored.effect!!
                 val remaining = effect.duration - (currentTick - stored.currentTime)
                 if (remaining > 0) {
-                    player.addPotionEffect(
+                    player.refreshPotionEffect(
                         PotionEffect(
                             effect.type,
                             remaining,
@@ -173,6 +175,14 @@ val regenerationWhenStill = ability("regeneration_when_still", "magicorigins") {
             }
         }
         true
+    }
+
+    onDependencyDisabled { player, _ ->
+        val effect = player.getPotionEffect(PotionEffectType.REGENERATION)
+        if (effect != null && ShortcutUtils.isInfinite(effect)) {
+            player.removePotionEffect(PotionEffectType.REGENERATION)
+        }
+        StillnessTracker.clear(player)
     }
 
     // Drinking milk cancels the stored effect so it isn't re-applied
@@ -193,6 +203,11 @@ val regenerationWhenStill = ability("regeneration_when_still", "magicorigins") {
 internal object StillnessTracker {
     private val lastMovedTicks: ConcurrentHashMap<UUID, Int> = ConcurrentHashMap()
     private val storedEffects: ConcurrentHashMap<UUID, SavedPotionEffect> = ConcurrentHashMap()
+
+    fun clear(player: Player) {
+        lastMovedTicks.remove(player.uniqueId)
+        storedEffects.remove(player.uniqueId)
+    }
 
     fun markMoved(player: Player) {
         lastMovedTicks[player.uniqueId] = Bukkit.getCurrentTick()

@@ -1,5 +1,7 @@
 package ru.turbovadim.v2.abilities.mobs
 
+import ru.turbovadim.v2.util.refreshPotionEffect
+
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
@@ -36,7 +38,7 @@ val becomesElderGuardian = ability("becomes_elder_guardian", "moborigins") {
     title = text("Become Elder Guardian")
     description("Defeating an Elder Guardian will turn you into one!")
 
-    option("target_origin", "moborigins:elder_guardian")
+    option("target_origin", "moborigins:elder-guardian")
     option("layer", "origin")
 
     listener<EntityDeathEvent>(
@@ -46,7 +48,7 @@ val becomesElderGuardian = ability("becomes_elder_guardian", "moborigins") {
         }
     ) { player, _, config ->
         val api = OriginsApi.getOrNull() ?: return@listener
-        val targetKeyString = config.getString("target_origin", "moborigins:elder_guardian")
+        val targetKeyString = config.getString("target_origin", "moborigins:elder-guardian")
         val layer = config.getString("layer", "origin")
 
         val targetKey = runCatching { Key.key(targetKeyString) }.getOrNull() ?: return@listener
@@ -239,7 +241,7 @@ val surfaceWeakness = ability("surface_weakness", "moborigins") {
 
     onTick(interval = 20) { player, _ ->
         if (!player.isInWater) {
-            player.addPotionEffect(PotionEffect(PotionEffectType.WEAKNESS, 100, 0, true, true))
+            player.refreshPotionEffect(PotionEffect(PotionEffectType.WEAKNESS, 100, 0, true, true))
         } else if (player.hasPotionEffect(PotionEffectType.WEAKNESS)) {
             player.removePotionEffect(PotionEffectType.WEAKNESS)
         }

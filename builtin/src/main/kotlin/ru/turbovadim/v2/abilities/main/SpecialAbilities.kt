@@ -12,6 +12,12 @@ import org.bukkit.event.entity.EntityToggleGlideEvent
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.event.player.PlayerToggleFlightEvent
+import org.bukkit.event.player.PlayerBedEnterEvent
+import org.bukkit.event.player.PlayerBedLeaveEvent
+import org.bukkit.event.EventPriority
+import org.endera.enderalib.utils.async.EntityScheduler
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import org.bukkit.event.world.TimeSkipEvent
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.Vector
@@ -134,7 +140,7 @@ val throwEnderPearl = ability("throw_ender_pearl") {
     title = text("Teleportation")
     description("Whenever you want, you may throw an ender pearl which deals no damage, allowing you to teleport.")
 
-    option("cooldown_ticks", 600)
+    option("cooldown_ticks", 30)
 
     onInteract(Action.LEFT_CLICK_AIR) { player, _, config ->
         if (player.inventory.itemInMainHand.type != Material.AIR) return@onInteract false
@@ -146,7 +152,7 @@ val throwEnderPearl = ability("throw_ender_pearl") {
         if (api.hasCooldown(player, abilityKey)) return@onInteract false
 
         // Set cooldown with ender_pearl icon
-        val cooldownTicks = config.getInt("cooldown_ticks", 600)
+        val cooldownTicks = config.getInt("cooldown_ticks", 30)
         api.setCooldown(player, abilityKey, cooldownTicks, "ender_pearl")
 
         // Launch ender pearl and mark it as no-damage
@@ -184,17 +190,37 @@ val layEggs = ability("lay_eggs") {
     title = text("Oviparous")
     description("Whenever you wake up in the morning, you will lay an egg.")
 
+    val sleepers = ConcurrentHashMap<UUID, Long>()
+    listener<PlayerBedEnterEvent>(
+        priority = EventPriority.MONITOR,
+        playerFrom = { it.player }
+    ) { player, event, _ ->
+        if (event.bedEnterResult == PlayerBedEnterEvent.BedEnterResult.OK) {
+            sleepers[player.uniqueId] = player.world.fullTime
+        }
+    }
+    listener<PlayerBedLeaveEvent>(playerFrom = { it.player }) { player, _, _ ->
+        sleepers.remove(player.uniqueId)
+    }
+    onDependencyDisabled { player, _ -> sleepers.remove(player.uniqueId) }
+
     listenerForPlayers<TimeSkipEvent>(
+        priority = EventPriority.MONITOR,
         playersFrom = { event ->
-            if (event.skipReason != TimeSkipEvent.SkipReason.NIGHT_SKIP) {
-                emptyList()
-            } else {
-                event.world.players.filter { it.isDeeplySleeping }
+            if (event.skipReason != TimeSkipEvent.SkipReason.NIGHT_SKIP) emptyList()
+            else {
+                val now = event.world.fullTime
+                event.world.players.filter { player ->
+                    sleepers[player.uniqueId]?.let { now - it >= 100 } == true
+                }
             }
         }
-    ) { player, _, _ ->
-        player.world.dropItemNaturally(player.location, org.bukkit.inventory.ItemStack(Material.EGG))
-        player.world.playSound(player.location, Sound.ENTITY_CHICKEN_EGG, 1.0f, 1.0f)
+    ) { player, event, _ ->
+        EntityScheduler.execute(OriginsReforged.instance, player, {
+            if (player.world != event.world) return@execute
+            player.world.dropItemNaturally(player.location, org.bukkit.inventory.ItemStack(Material.EGG))
+            player.world.playSound(player.location, Sound.ENTITY_CHICKEN_EGG, 1.0f, 1.0f)
+        })
     }
 }
 

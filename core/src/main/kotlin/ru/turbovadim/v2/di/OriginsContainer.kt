@@ -35,7 +35,7 @@ class OriginsContainer private constructor(
 ) {
     // Core registries
     val abilityRegistry: AbilityRegistry by lazy { AbilityRegistry(this) }
-    val originRegistry: OriginRegistry by lazy { OriginRegistry(this) }
+    val originRegistry: OriginRegistry by lazy { OriginRegistry { originLoader.getDefaultOriginName(it) } }
 
     // Origin loading
     val originLoader: OriginLoader by lazy { OriginLoader(this) }

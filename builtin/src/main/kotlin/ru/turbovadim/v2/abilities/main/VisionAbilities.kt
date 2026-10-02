@@ -1,5 +1,7 @@
 package ru.turbovadim.v2.abilities.main
 
+import ru.turbovadim.v2.util.refreshPotionEffect
+
 import org.bukkit.entity.Player
 import org.bukkit.event.entity.EntityPotionEffectEvent
 import org.bukkit.potion.PotionEffect
@@ -28,10 +30,10 @@ val catVision = ability("cat_vision") {
 
     onTick(interval = 1) { player, _ ->
         if (!player.isUnderWater) {
-            player.addPotionEffect(
+            player.refreshPotionEffect(
                 PotionEffect(
                     PotionEffectType.NIGHT_VISION,
-                    80,
+                    400,
                     0,
                     false,
                     false
@@ -66,7 +68,7 @@ val waterVision = ability("water_vision") {
     // This ensures the effect naturally expires when the ability is removed (e.g., origin change)
     onTick(interval = 1) { player, _ ->
         if (player.isUnderWater) {
-            player.addPotionEffect(
+            player.refreshPotionEffect(
                 PotionEffect(
                     PotionEffectType.NIGHT_VISION,
                     400, // Long enough to avoid flickering, short enough to expire on ability removal
@@ -123,7 +125,7 @@ val slowFalling = ability("slow_falling") {
     // This ensures the effect naturally expires when the ability is removed (e.g., origin change)
     onTick(interval = 1) { player, _ ->
         if (!player.isSneaking) {
-            player.addPotionEffect(
+            player.refreshPotionEffect(
                 PotionEffect(
                     PotionEffectType.SLOW_FALLING,
                     40, // Short duration, refreshed every tick

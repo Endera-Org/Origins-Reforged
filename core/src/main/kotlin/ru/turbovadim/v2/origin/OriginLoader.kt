@@ -22,6 +22,12 @@ class OriginLoader(private val container: OriginsContainer) {
 
     // Track files per addon for reloading
     private val originFiles = mutableMapOf<String, MutableList<File>>()
+    private val apiOrigins = mutableMapOf<Key, Origin>()
+
+    fun registerApiOrigin(origin: Origin) {
+        apiOrigins[origin.key] = origin
+        registerLayer(origin.layer)
+    }
 
     // Layer management
     private val _layers = mutableListOf<String>()
@@ -74,6 +80,10 @@ class OriginLoader(private val container: OriginsContainer) {
         }
 
         sortLayers()
+        apiOrigins.values.forEach { origin ->
+            container.originRegistry.register(origin)
+            registerLayer(origin.layer)
+        }
         logger.info("Reloaded ${container.originRegistry.size} origins across ${_layers.size} layers")
     }
 

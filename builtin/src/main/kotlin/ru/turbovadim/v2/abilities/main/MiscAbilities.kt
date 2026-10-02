@@ -1,8 +1,11 @@
 package ru.turbovadim.v2.abilities.main
 
+import ru.turbovadim.v2.util.refreshPotionEffect
+
 import com.github.retrooper.packetevents.protocol.particle.type.ParticleTypes
 import net.kyori.adventure.key.Key
 import org.bukkit.GameMode
+import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause
 import org.bukkit.event.entity.EntityExhaustionEvent
@@ -117,10 +120,22 @@ private val isPhasingState = StateKey(
 
 fun isPhantomized(player: Player): Boolean = phantomize.isEnabled(player)
 
-/**
- * Check if entity is inside a solid block.
- * Uses multiple offset checks like the legacy implementation.
- */
+private val unphasable = setOf(Material.BEDROCK, Material.OBSIDIAN)
+
+private fun intersectsUnphasable(player: Player, location: org.bukkit.Location): Boolean {
+    val box = player.boundingBox.shift(location.toVector().subtract(player.location.toVector()))
+    for (x in kotlin.math.floor(box.minX).toInt()..kotlin.math.floor(box.maxX - 1e-7).toInt())
+        for (y in kotlin.math.floor(box.minY).toInt()..kotlin.math.floor(box.maxY - 1e-7).toInt())
+            for (z in kotlin.math.floor(box.minZ).toInt()..kotlin.math.floor(box.maxZ - 1e-7).toInt())
+                if (location.world.getBlockAt(x, y, z).type in unphasable) return true
+    return false
+}
+
+private fun canStartPhasing(player: Player): Boolean =
+    player.isOnGround && player.isSneaking &&
+        player.location.block.getRelative(org.bukkit.block.BlockFace.DOWN).type !in unphasable
+
+/** Checks solid blocks around the player's feet and head. */
 private fun isInSolidBlock(player: Player): Boolean {
     val location = player.location
     val offsets = listOf(0.4, -0.4)
@@ -133,7 +148,7 @@ private fun isInSolidBlock(player: Player): Boolean {
         offsets.any { dx ->
             offsets.any { dz ->
                 val block = base.clone().add(dx, 0.0, dz).block
-                block.type.isSolid
+                block.type.isSolid && block.type !in unphasable
             }
         }
     }
@@ -160,10 +175,12 @@ val phasing = ability("phasing") {
     flight {
         speed = 0.1f
         condition { player, _ ->
-            @Suppress("DEPRECATION")
-            val onGround = player.isOnGround
-            (onGround && player.isSneaking) || isInSolidBlock(player)
+            canStartPhasing(player) || isInSolidBlock(player)
         }
+    }
+
+    listener<org.bukkit.event.player.PlayerMoveEvent>(playerFrom = { it.player }) { player, event, _ ->
+        if (isPhasingState[player] && intersectsUnphasable(player, event.to)) event.isCancelled = true
     }
 
     // Cancel suffocation damage (only when phantomized due to dependsOn)
@@ -176,7 +193,7 @@ val phasing = ability("phasing") {
         val inBlock = isInSolidBlock(player)
         // Sneaking starts phasing; once inside a block it remains active until clear.
         @Suppress("DEPRECATION")
-        val shouldPhase = (player.isOnGround && player.isSneaking) || inBlock
+        val shouldPhase = canStartPhasing(player) || inBlock
 
         val currentlyPhasing = isPhasingState[player]
 
@@ -208,7 +225,7 @@ val phasing = ability("phasing") {
         // Apply/remove blindness based on eye position
         val eyeBlock = player.eyeLocation.block
         if (eyeBlock.type.isCollidable && phasingActive) {
-            player.addPotionEffect(
+            player.refreshPotionEffect(
                 PotionEffect(PotionEffectType.BLINDNESS, -1, 0, false, false)
             )
         } else {

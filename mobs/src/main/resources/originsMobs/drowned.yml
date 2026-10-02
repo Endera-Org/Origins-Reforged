@@ -19,7 +19,7 @@ abilities:
   - origins:water_vision
   - moborigins:guardian_ally
   - moborigins:water_combatant
-  - moborigins:water_breathing
+  - origins:water_breathing
   - moborigins:undead
   - moborigins:zombie_hunger
   - moborigins:surface_slowness

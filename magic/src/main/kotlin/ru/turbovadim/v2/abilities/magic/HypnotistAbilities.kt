@@ -30,7 +30,10 @@ import java.util.concurrent.ConcurrentHashMap
 internal object HypnosisMemory {
     private val lastHurt: ConcurrentHashMap<UUID, UUID> = ConcurrentHashMap()
     private val secondLastHurt: ConcurrentHashMap<UUID, UUID> = ConcurrentHashMap()
-    private val entityLookup: ConcurrentHashMap<UUID, LivingEntity> = ConcurrentHashMap()
+    fun clear(player: Player) {
+        lastHurt.remove(player.uniqueId)
+        secondLastHurt.remove(player.uniqueId)
+    }
 
     fun recordHit(player: Player, target: LivingEntity) {
         val currentLastId = lastHurt[player.uniqueId]
@@ -38,7 +41,6 @@ internal object HypnosisMemory {
             secondLastHurt[player.uniqueId] = currentLastId
         }
         lastHurt[player.uniqueId] = target.uniqueId
-        entityLookup[target.uniqueId] = target
     }
 
     fun lastTarget(player: Player): LivingEntity? =
@@ -48,10 +50,7 @@ internal object HypnosisMemory {
         secondLastHurt[player.uniqueId]?.let(::resolve)
 
     private fun resolve(id: UUID): LivingEntity? {
-        val cached = entityLookup[id]
-        if (cached != null && cached.isValid && !cached.isDead) return cached
-        entityLookup.remove(id)
-        return null
+        return (org.bukkit.Bukkit.getEntity(id) as? LivingEntity)?.takeIf { it.isValid && !it.isDead }
     }
 }
 
@@ -64,6 +63,8 @@ val controlMonsters = ability("control_monsters", "magicorigins") {
     description("Right clicking a monster will hypnotise it to target the last other thing you attacked.")
 
     option("cooldown_ticks", 600)
+
+    onDependencyDisabled { player, _ -> HypnosisMemory.clear(player) }
 
     // Track the last two entities the player has damaged
     listener<EntityDamageByEntityEvent>(

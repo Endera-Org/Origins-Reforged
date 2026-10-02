@@ -119,13 +119,12 @@ class GenericListenerProcessor(private val container: OriginsContainer) {
         for (entry in entries) {
             val typedEntry = entry as HandlerEntry<Event>
             val ability = container.abilityRegistry.get(entry.abilityKey) ?: continue
-            val accessor = container.configLoader.getAccessor(entry.abilityKey, ability.defaultOptions)
-
             for (player in typedEntry.effect.playersExtractor(event).distinctBy { it.uniqueId }) {
                 val state = container.playerStateManager.getState(player)
                 if (!state.hasAbility(entry.abilityKey)) continue
                 if (!isAbilityActive(player, entry.abilityKey)) continue
 
+                val accessor = container.configLoader.getAccessor(entry.abilityKey, ability.defaultOptions)
                 typedEntry.effect.handler(player, event, accessor)
             }
         }

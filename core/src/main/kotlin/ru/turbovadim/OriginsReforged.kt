@@ -20,7 +20,6 @@ import ru.turbovadim.v2.listener.OriginCommandDispatcher
 import ru.turbovadim.v2.listener.OriginDeathListener
 import ru.turbovadim.v2.listener.OriginJoinFlowListener
 import ru.turbovadim.v2.listener.OriginSelectionInvulnerabilityListener
-import ru.turbovadim.v2.listener.OriginUsageTracker
 import ru.turbovadim.v2.restriction.OriginRestrictionInterceptor
 import ru.turbovadim.v2.ui.ShulkerInventoryUI
 import java.io.File
@@ -98,6 +97,7 @@ class OriginsReforged : JavaPlugin() {
     }
 
     override fun onDisable() {
+        ShulkerInventoryUI.shutdown()
         OrbRecipe.unregister()
         v2Container?.shutdown()
         PacketEvents.getAPI().terminate()
@@ -173,7 +173,6 @@ class OriginsReforged : JavaPlugin() {
 
             // Register the origin-change interceptor + post-change listeners.
             container.eventBus.registerInterceptor(OriginRestrictionInterceptor(container))
-            container.eventBus.registerChangedListener(OriginUsageTracker(container))
             container.eventBus.registerChangedListener(OriginCommandDispatcher(container))
 
             // Register Bukkit listeners for join flow, invulnerability, death-change.

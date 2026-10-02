@@ -4,12 +4,12 @@ import com.noxcrew.interfaces.drawable.Drawable.Companion.drawable
 import com.noxcrew.interfaces.element.StaticElement
 import com.noxcrew.interfaces.interfaces.buildChestInterface
 import com.noxcrew.interfaces.properties.interfaceProperty
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import net.kyori.adventure.text.format.TextDecoration
+import org.endera.enderalib.utils.async.coroutines
+import org.endera.enderalib.utils.async.withScheduler
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.Sound
@@ -18,7 +18,6 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import ru.turbovadim.OrbOfOrigin
 import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
-import ru.turbovadim.OriginsReforged.Companion.bukkitDispatcher
 import ru.turbovadim.OriginsReforged.Companion.mainConfig
 import ru.turbovadim.OriginsReforged.Companion.v2Container
 import ru.turbovadim.ResourcePackItemModels
@@ -87,172 +86,166 @@ object OriginSelectorUI {
         displayOnly: Boolean = false,
         reason: OpenReason = OpenReason.ORB
     ) {
-        val container = v2Container ?: return
-        val config = mainConfig
+        val ui = player.withScheduler(ru.turbovadim.OriginsReforged.instance) {
+            val container = v2Container ?: return@withScheduler null
+            val config = mainConfig
 
-        val origins = if (displayOnly) {
-            container.originRegistry.getByLayer(layer).toMutableList()
-        } else {
-            container.originRegistry.getChoosableByLayer(layer).filter { origin ->
-                !origin.requiresPermission || player.hasPermission(origin.permission!!)
-            }.toMutableList()
-        }
-
-        if (origins.isEmpty()) {
-            player.sendMessage(Component.text("No origins available.", NamedTextColor.RED))
-            return
-        }
-
-        val enableRandom = config.originSelection.randomOption.enabled
-
-        val ui = buildChestInterface {
-            rows = 6
-            onlyCancelItemInteraction = false
-            prioritiseBlockInteractions = false
-
-            val pageProperty = interfaceProperty(normalizePageIndex(initialPage, origins.size, enableRandom))
-            val scrollProperty = interfaceProperty(initialScroll)
-
-            // Set initial title
-            val initialOriginData = getOriginData(
-                normalizePageIndex(initialPage, origins.size, enableRandom),
-                origins, config, player
-            )
-            titleSupplier = {
-                buildTitle(
-                    initialOriginData.nameForDisplay,
-                    initialOriginData.impact,
-                    initialOriginData.data,
-                    initialScroll,
-                    config
-                )
+            val origins = if (displayOnly) {
+                container.originRegistry.getByLayer(layer).toMutableList()
+            } else {
+                container.originRegistry.getChoosableByLayer(layer).filter { origin ->
+                    !origin.requiresPermission || player.hasPermission(origin.permission!!)
+                }.toMutableList()
             }
 
-            withTransform(pageProperty, scrollProperty) { pane, view ->
-                var page by pageProperty
-                var scroll by scrollProperty
+            if (origins.isEmpty()) {
+                player.sendMessage(Component.text("No origins available.", NamedTextColor.RED))
+                return@withScheduler null
+            }
 
-                // Get current origin data
-                val (icon, name, nameForDisplay, impact, data, originCost) = getOriginData(
-                    page, origins, config, player
+            val enableRandom = config.originSelection.randomOption.enabled
+
+            val ui = buildChestInterface {
+                rows = 6
+                onlyCancelItemInteraction = false
+                prioritiseBlockInteractions = false
+
+                val pageProperty = interfaceProperty(normalizePageIndex(initialPage, origins.size, enableRandom))
+                val scrollProperty = interfaceProperty(initialScroll)
+
+                // Set initial title
+                val initialOriginData = getOriginData(
+                    normalizePageIndex(initialPage, origins.size, enableRandom),
+                    origins, config, player
                 )
-
-                // Build and set title
-                val title = buildTitle(nameForDisplay, impact, data, scroll, config)
-                view.title(title)
-
-                // Place origin icon at slot (row 0, col 1)
-                pane[0, 1] = StaticElement(drawable(icon.clone()))
-
-                // Navigation buttons (only if not display-only)
-                if (!displayOnly) {
-                    // Previous origin button (row 5, col 2)
-                    val leftArrow = createNavigationItem(
-                        "Previous origin",
-                        ResourcePackItemModels.SELECTOR_LEFT,
-                        1
+                titleSupplier = {
+                    buildTitle(
+                        initialOriginData.nameForDisplay,
+                        initialOriginData.impact,
+                        initialOriginData.data,
+                        initialScroll,
+                        config
                     )
-                    pane[5, 2] = StaticElement(drawable(leftArrow)) {
-                        player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
-                        page = normalizePageIndex(page - 1, origins.size, enableRandom)
-                        scroll = 0
-                    }
+                }
 
-                    // Next origin button (row 5, col 6)
-                    val rightArrow = createNavigationItem(
-                        "Next origin",
-                        ResourcePackItemModels.SELECTOR_RIGHT,
-                        2
+                var confirmed = false
+                withTransform(pageProperty, scrollProperty) { pane, view ->
+                    var page by pageProperty
+                    var scroll by scrollProperty
+
+                    // Get current origin data
+                    val (icon, name, nameForDisplay, impact, data, originCost) = getOriginData(
+                        page, origins, config, player
                     )
-                    pane[5, 6] = StaticElement(drawable(rightArrow)) {
+
+                    // Build and set title
+                    val title = buildTitle(nameForDisplay, impact, data, scroll, config)
+                    view.title(title)
+
+                    // Place origin icon at slot (row 0, col 1)
+                    pane[0, 1] = StaticElement(drawable(icon.clone()))
+
+                    // Navigation buttons (only if not display-only)
+                    if (!displayOnly) {
+                        // Previous origin button (row 5, col 2)
+                        val leftArrow = createNavigationItem(
+                            "Previous origin",
+                            ResourcePackItemModels.SELECTOR_LEFT,
+                            1
+                        )
+                        pane[5, 2] = StaticElement(drawable(leftArrow)) {
+                            player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
+                            page = normalizePageIndex(page - 1, origins.size, enableRandom)
+                            scroll = 0
+                        }
+
+                        // Next origin button (row 5, col 6)
+                        val rightArrow = createNavigationItem(
+                            "Next origin",
+                            ResourcePackItemModels.SELECTOR_RIGHT,
+                            2
+                        )
+                        pane[5, 6] = StaticElement(drawable(rightArrow)) {
+                            player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
+                            page = normalizePageIndex(page + 1, origins.size, enableRandom)
+                            scroll = 0
+                        }
+                    }
+
+                    // Scroll buttons
+                    val scrollSize = config.originSelection.scrollAmount
+                    val canScrollUp = scroll > 0
+                    val remainingSize = data.size - scroll - 6
+                    val canScrollDown = remainingSize > 0
+
+                    // Up button (row 5, col 7)
+                    val upArrow = createScrollItem(
+                        name = "Up",
+                        itemModel = ResourcePackItemModels.SELECTOR_UP,
+                        disabledItemModel = ResourcePackItemModels.SELECTOR_UP_DISABLED,
+                        legacyCustomModelData = 3,
+                        disabled = !canScrollUp
+                    )
+                    pane[5, 7] = StaticElement(drawable(upArrow)) {
+                        if (canScrollUp) {
+                            player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
+                            scroll = max(scroll - scrollSize, 0)
+                        }
+                    }
+
+                    // Down button (row 5, col 8)
+                    val downArrow = createScrollItem(
+                        name = "Down",
+                        itemModel = ResourcePackItemModels.SELECTOR_DOWN,
+                        disabledItemModel = ResourcePackItemModels.SELECTOR_DOWN_DISABLED,
+                        legacyCustomModelData = 4,
+                        disabled = !canScrollDown
+                    )
+                    pane[5, 8] = StaticElement(drawable(downArrow)) {
+                        if (canScrollDown) {
+                            player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
+                            scroll = min(scroll + scrollSize, scroll + remainingSize)
+                        }
+                    }
+
+                    // Confirm buttons (row 5, cols 3, 4, 5)
+                    val confirmItem = createConfirmItem(displayOnly)
+                    val invisibleConfirmItem = createConfirmItem(displayOnly, invisible = true)
+
+                    val confirmHandler: () -> Unit = {
+                        if (!confirmed) {
+                            confirmed = true
+                            if (!displayOnly) {
+                                handleConfirmation(player, name, origins, layer, consumeOrb, orbSlot, originCost, config, reason)
+                            }
+                            view.close(ru.turbovadim.OriginsReforged.instance.coroutines, changingView = true)
+                            player.closeInventory()
+                        }
+                    }
+
+                    pane[5, 3] = StaticElement(drawable(confirmItem)) {
                         player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
-                        page = normalizePageIndex(page + 1, origins.size, enableRandom)
-                        scroll = 0
+                        confirmHandler()
                     }
-                }
 
-                // Scroll buttons
-                val scrollSize = config.originSelection.scrollAmount
-                val canScrollUp = scroll > 0
-                val remainingSize = data.size - scroll - 6
-                val canScrollDown = remainingSize > 0
-
-                // Up button (row 5, col 7)
-                val upArrow = createScrollItem(
-                    name = "Up",
-                    itemModel = ResourcePackItemModels.SELECTOR_UP,
-                    disabledItemModel = ResourcePackItemModels.SELECTOR_UP_DISABLED,
-                    legacyCustomModelData = 3,
-                    disabled = !canScrollUp
-                )
-                pane[5, 7] = StaticElement(drawable(upArrow)) {
-                    if (canScrollUp) {
+                    pane[5, 4] = StaticElement(drawable(invisibleConfirmItem)) {
                         player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
-                        scroll = max(scroll - scrollSize, 0)
+                        confirmHandler()
                     }
-                }
 
-                // Down button (row 5, col 8)
-                val downArrow = createScrollItem(
-                    name = "Down",
-                    itemModel = ResourcePackItemModels.SELECTOR_DOWN,
-                    disabledItemModel = ResourcePackItemModels.SELECTOR_DOWN_DISABLED,
-                    legacyCustomModelData = 4,
-                    disabled = !canScrollDown
-                )
-                pane[5, 8] = StaticElement(drawable(downArrow)) {
-                    if (canScrollDown) {
+                    pane[5, 5] = StaticElement(drawable(invisibleConfirmItem)) {
                         player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
-                        scroll = min(scroll + scrollSize, scroll + remainingSize)
-                    }
-                }
-
-                // Confirm buttons (row 5, cols 3, 4, 5)
-                val confirmItem = createConfirmItem(displayOnly)
-                val invisibleConfirmItem = createConfirmItem(displayOnly, invisible = true)
-
-                val confirmHandler: suspend () -> Unit = {
-                    if (displayOnly) {
-                        view.close()
-                    } else {
-                        handleConfirmation(player, name, origins, layer, consumeOrb, orbSlot, originCost, config, reason)
-                        view.close()
-                    }
-                }
-
-                pane[5, 3] = StaticElement(drawable(confirmItem)) {
-                    player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
-                    completingLater = true
-                    CoroutineScope(bukkitDispatcher).launch {
                         confirmHandler()
-                        complete()
-                    }
-                }
-
-                pane[5, 4] = StaticElement(drawable(invisibleConfirmItem)) {
-                    player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
-                    completingLater = true
-                    CoroutineScope(bukkitDispatcher).launch {
-                        confirmHandler()
-                        complete()
-                    }
-                }
-
-                pane[5, 5] = StaticElement(drawable(invisibleConfirmItem)) {
-                    player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
-                    completingLater = true
-                    CoroutineScope(bukkitDispatcher).launch {
-                        confirmHandler()
-                        complete()
                     }
                 }
             }
-        }
 
-        if (!displayOnly) {
-            openSelectors.add(player.uniqueId)
-        }
-        ui.open(player)
+            if (!displayOnly) {
+                openSelectors.add(player.uniqueId)
+            }
+            ui
+        } ?: return
+        ui.open(player, parent = null)
     }
 
     private data class OriginData(
@@ -295,7 +288,7 @@ object OriginSelectorUI {
             val origin = origins[page]
             OriginData(
                 icon = origin.icon,
-                name = origin.name,
+                name = origin.key.asString(),
                 nameForDisplay = origin.getNameForDisplay(),
                 impact = origin.impactChar,
                 data = origin.getLineData(),
@@ -314,8 +307,8 @@ object OriginSelectorUI {
         // Compress name with spacer characters
         val compressedName = buildString {
             append("\uF001")
-            nameForDisplay.forEach { c ->
-                append(c)
+            nameForDisplay.codePoints().forEach {
+                appendCodePoint(it)
                 append('\uF000')
             }
         }
@@ -421,7 +414,7 @@ object OriginSelectorUI {
         return item
     }
 
-    private suspend fun handleConfirmation(
+    private fun handleConfirmation(
         player: Player,
         originName: String,
         origins: List<Origin>,
@@ -454,55 +447,70 @@ object OriginSelectorUI {
             return
         }
 
-        // Cost: only applied on ORB / SWAP opens (initial selection is always free).
-        val shouldCharge = reason != OpenReason.INITIAL
-        if (shouldCharge &&
-            ru.turbovadim.OriginsReforged.instance.isVaultEnabled &&
-            costAmount != 0 &&
-            !player.hasPermission(config.swapCommand.vault.bypassPermission)
-        ) {
-            // `permanentPurchases`: if the player has ever held this origin, it's free now.
-            val previouslyOwned = config.swapCommand.vault.permanentPurchases &&
-                DatabaseManager.getUsedOriginsSync(player.uniqueId.toString())
-                    .any { it.equals(origin.name, ignoreCase = true) }
-
-            if (!previouslyOwned) {
-                val economy = ru.turbovadim.OriginsReforged.instance.economy
-                if (economy == null || !economy.has(player, costAmount.toDouble())) {
-                    val symbol = config.swapCommand.vault.currencySymbol
-                    player.sendMessage(
-                        Component.text(
-                            "You don't have enough money (need $symbol$costAmount).",
-                            NamedTextColor.RED
-                        )
-                    )
-                    return
-                }
-                economy.withdrawPlayer(player, costAmount.toDouble())
-                val symbol = config.swapCommand.vault.currencySymbol
-                player.sendMessage(
-                    Component.text("Charged $symbol$costAmount to switch origin.", NamedTextColor.YELLOW)
-                )
-            }
-        }
-
-        // Decide whether to reset the player based on the open reason.
-        val shouldReset = when (reason) {
-            OpenReason.ORB -> mainConfig.orbOfOrigin.resetPlayer
-            OpenReason.SWAP -> mainConfig.swapCommand.resetPlayer
-            OpenReason.INITIAL -> false
-        }
-        if (shouldReset) {
-            PlayerResetter.reset(player)
-        }
-
-        // Set the origin
         val changeReason = when (reason) {
             OpenReason.ORB -> OriginChangeReason.ORB
             OpenReason.SWAP -> OriginChangeReason.COMMAND
             OpenReason.INITIAL -> OriginChangeReason.UI
         }
-        container.playerStateManager.setOrigin(player, layer, origin, changeReason)
+        val result = container.playerStateManager.setOrigin(player, layer, origin, changeReason) { request ->
+            val selected = request.newOrigin ?: return@setOrigin false
+            val orb = if (consumeOrb && orbSlot in 0..40) player.inventory.getItem(orbSlot) else null
+            if (consumeOrb && (orbSlot !in 0..40 || !OrbOfOrigin.isOrb(orb))) {
+                player.sendMessage(Component.text("You no longer have the Orb of Origin.", NamedTextColor.RED))
+                return@setOrigin false
+            }
+            // Cost: only applied on ORB / SWAP opens (initial selection is always free).
+            val shouldCharge = reason != OpenReason.INITIAL
+            if (shouldCharge &&
+                ru.turbovadim.OriginsReforged.instance.isVaultEnabled &&
+                costAmount != 0 &&
+                !player.hasPermission(config.swapCommand.vault.bypassPermission)
+            ) {
+                // `permanentPurchases`: if the player has ever held this origin, it's free now.
+                val previouslyOwned = config.swapCommand.vault.permanentPurchases &&
+                    DatabaseManager.getUsedOriginsSync(player.uniqueId.toString())
+                        .any { it.equals(selected.key.asString(), ignoreCase = true) || it.equals(selected.name, ignoreCase = true) }
+
+                if (!previouslyOwned) {
+                    val economy = ru.turbovadim.OriginsReforged.instance.economy
+                    if (economy == null || !economy.has(player, costAmount.toDouble())) {
+                        val symbol = config.swapCommand.vault.currencySymbol
+                        player.sendMessage(
+                            Component.text(
+                                "You don't have enough money (need $symbol$costAmount).",
+                                NamedTextColor.RED
+                            )
+                        )
+                        return@setOrigin false
+                    }
+                    val payment = economy.withdrawPlayer(player, costAmount.toDouble())
+                    if (!payment.transactionSuccess()) {
+                        player.sendMessage(Component.text("Payment failed. Your origin was not changed.", NamedTextColor.RED))
+                        return@setOrigin false
+                    }
+                    val symbol = config.swapCommand.vault.currencySymbol
+                    player.sendMessage(
+                        Component.text("Charged $symbol$costAmount to switch origin.", NamedTextColor.YELLOW)
+                    )
+                }
+            }
+
+            if (consumeOrb && mainConfig.orbOfOrigin.consume) orb!!.amount -= 1
+
+            // Decide whether to reset the player based on the open reason.
+            val shouldReset = when (reason) {
+                OpenReason.ORB -> mainConfig.orbOfOrigin.resetPlayer
+                OpenReason.SWAP -> mainConfig.swapCommand.resetPlayer
+                OpenReason.INITIAL -> false
+            }
+            if (shouldReset) {
+                PlayerResetter.reset(player)
+            }
+
+            true
+        }
+        if (result.cancelled) return
+        val appliedOrigin = result.newOrigin ?: return
 
         if (reason == OpenReason.INITIAL && mainConfig.originSelection.autoSpawnTeleport) {
             val fallback = player.world.spawnLocation
@@ -512,17 +520,10 @@ object OriginSelectorUI {
         player.sendMessage(
             Component.text("You are now a ")
                 .color(NamedTextColor.GREEN)
-                .append(origin.displayName.color(NamedTextColor.GOLD))
+                .append(appliedOrigin.displayName.color(NamedTextColor.GOLD))
                 .append(Component.text("!").color(NamedTextColor.GREEN))
         )
 
-        // Consume orb if needed
-        if (consumeOrb && orbSlot >= 0 && mainConfig.orbOfOrigin.consume) {
-            val item = player.inventory.getItem(orbSlot)
-            if (item != null && item.amount > 0) {
-                item.amount -= 1
-            }
-        }
     }
 
     private fun normalizePageIndex(index: Int, originsSize: Int, enableRandom: Boolean): Int {

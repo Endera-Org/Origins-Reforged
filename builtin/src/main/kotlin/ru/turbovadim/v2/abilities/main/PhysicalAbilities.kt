@@ -14,6 +14,7 @@ import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
+import ru.turbovadim.v2.dsl.listener
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -248,7 +249,16 @@ val extraReach = ability("extra_reach") {
 /**
  * Collection of all physical abilities.
  */
+val noShield = ability("no_shield") {
+    title = text("No Shields")
+    description("You cannot block with shields.")
+    listener<org.bukkit.event.player.PlayerInteractEvent>(playerFrom = { it.player }) { _, event, _ ->
+        if (event.item?.type == org.bukkit.Material.SHIELD) event.setUseItemInHand(org.bukkit.event.Event.Result.DENY)
+    }
+}
+
 val physicalAbilities = listOf(
+    noShield,
     weakArms,
     strongArms,
     unwieldy,

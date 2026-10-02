@@ -31,6 +31,7 @@ import java.util.function.Predicate
 
 @Suppress("UnstableApiUsage")
 abstract class NMSInvoker : Listener {
+    open fun removePlayer(player: Player) {}
 
     abstract fun dealExplosionDamage(player: Player, amount: Int)
 
@@ -38,7 +39,7 @@ abstract class NMSInvoker : Listener {
 
     abstract fun getVillagerAfraidGoal(villager: LivingEntity, hasAbility: Predicate<Player>): Goal<Villager>
 
-    abstract fun getNearestVisiblePlayer(piglin: Piglin): Player
+    abstract fun getNearestVisiblePlayer(piglin: Piglin): Player?
 
     abstract fun throwItem(piglin: Piglin, itemStack: ItemStack, pos: Location)
 
@@ -117,15 +118,21 @@ abstract class NMSInvoker : Listener {
         legacyCustomModelData: Int
     ): ItemMeta = setCustomModelData(meta, legacyCustomModelData)
 
+    private val packInfos = java.util.concurrent.ConcurrentHashMap<String, java.util.concurrent.CompletableFuture<ResourcePackInfo>>()
+
     open fun sendResourcePacks(
         player: Player,
         pack: String,
         extraPacks: MutableMap<*, OriginsReforgedResourcePackInfo>
     ) {
         try {
-            val packInfo = ResourcePackInfo.resourcePackInfo()
-                .uri(URI.create(pack))
-                .computeHashAndBuild().get()
+            val pending = packInfos.computeIfAbsent(pack) {
+                ResourcePackInfo.resourcePackInfo().uri(URI.create(it)).computeHashAndBuild()
+            }
+            val packInfo = try { pending.get() } catch (ex: ExecutionException) {
+                packInfos.remove(pack, pending)
+                throw ex
+            }
             val packs: MutableList<ResourcePackInfo?> = ArrayList<ResourcePackInfo?>()
             packs.add(packInfo)
             for (originsReforgedResourcePackInfo in extraPacks.values) {
@@ -306,6 +313,7 @@ abstract class NMSInvoker : Listener {
 
     @EventHandler
     fun onEntityDismount(event: EntityDismountEvent) {
+        if (event.isCancelled) return
         event.isCancelled = !FantasyEntityDismountEvent(
             event.entity,
             event.dismounted,
@@ -315,6 +323,7 @@ abstract class NMSInvoker : Listener {
 
     @EventHandler
     fun onEntityMount(event: EntityMountEvent) {
+        if (event.isCancelled) return
         event.isCancelled = !FantasyEntityMountEvent(event.entity, event.mount).callEvent()
     }
 

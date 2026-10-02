@@ -1,7 +1,6 @@
 package ru.turbovadim.commands
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import org.endera.enderalib.utils.async.coroutines
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Bukkit
@@ -11,7 +10,7 @@ import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
 import ru.turbovadim.OrbOfOrigin
-import ru.turbovadim.OriginsReforged.Companion.bukkitDispatcher
+import org.endera.enderalib.utils.async.EntityScheduler
 import ru.turbovadim.OriginsReforged.Companion.mainConfig
 import ru.turbovadim.OriginsReforged.Companion.v2Container
 import ru.turbovadim.ShortcutUtils
@@ -101,7 +100,7 @@ class OriginCommand : CommandExecutor, TabCompleter {
             else -> container.originLoader.layers.firstOrNull() ?: "origin"
         }
 
-        CoroutineScope(bukkitDispatcher).launch {
+        ru.turbovadim.OriginsReforged.instance.coroutines.launchIo {
             OriginSelectorUI.open(
                 player = sender,
                 layer = layer,
@@ -139,7 +138,7 @@ class OriginCommand : CommandExecutor, TabCompleter {
         }
 
         val orbStack = OrbOfOrigin.orb.clone().apply { this.amount = amount }
-        target.inventory.addItem(orbStack)
+        EntityScheduler.execute(ru.turbovadim.OriginsReforged.instance, target, { target.inventory.addItem(orbStack) })
 
         val orbText = if (amount == 1) "an Orb of Origin" else "$amount Orbs of Origin"
         sender.sendMessage(Component.text("Gave $orbText to ${target.name}.", NamedTextColor.GREEN))
@@ -175,8 +174,10 @@ class OriginCommand : CommandExecutor, TabCompleter {
 
         val layer = if (args.size >= 4) args[3] else origin.layer
 
-        container.playerStateManager.setOrigin(target, layer, origin, OriginChangeReason.COMMAND)
-        sender.sendMessage(Component.text("Set ${target.name}'s origin to ${origin.getNameForDisplay()} in layer '$layer'.", NamedTextColor.GREEN))
+        EntityScheduler.execute(container.plugin, target, {
+            val result = container.playerStateManager.setOrigin(target, layer, origin, OriginChangeReason.ADMIN_COMMAND)
+            if (!result.cancelled) sender.sendMessage(Component.text("Set ${target.name}'s origin to ${result.newOrigin?.getNameForDisplay()} in layer '${result.layer}'.", NamedTextColor.GREEN))
+        })
         return true
     }
 
@@ -290,7 +291,7 @@ class OriginCommand : CommandExecutor, TabCompleter {
             }
             3 -> {
                 when (args[0].lowercase()) {
-                    "set" -> container.originRegistry.getAll().map { it.name }.filter { it.lowercase().startsWith(args[2].lowercase()) }
+                    "set" -> container.originRegistry.getAll().map { it.key.asString() }.filter { it.lowercase().startsWith(args[2].lowercase()) }
                     "orb" -> listOf("1", "16", "32", "64").filter { it.startsWith(args[2]) }
                     else -> emptyList()
                 }

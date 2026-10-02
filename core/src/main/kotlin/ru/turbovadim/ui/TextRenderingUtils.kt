@@ -24,22 +24,31 @@ object TextRenderingUtils {
     /**
      * Get character width - exact replica of original WidthGetter.getWidth()
      */
-    fun getCharWidth(character: Char): Int {
-        if (character == '\uF00A') {
+    @Volatile private var widthSource: Map<Int, String>? = null
+    @Volatile private var widthCache: Map<Int, Int> = emptyMap()
+
+    fun getCharWidth(character: Char): Int = getCodePointWidth(character.code)
+
+    private fun getCodePointWidth(character: Int): Int {
+        if (character == '\uF00A'.code) {
             return 2
         }
-        if (character == ' ') {
+        if (character == ' '.code) {
             return 4
         }
-        for (i in 2..16) {
-            if (OriginsReforged.charactersConfig.characterWidths[i]?.contains(character) == true) {
-                return i
+        val source = OriginsReforged.charactersConfig.characterWidths
+        if (widthSource !== source) synchronized(this) {
+            if (widthSource !== source) {
+                widthCache = buildMap {
+                    for (width in 2..16) source[width]?.codePoints()?.forEach { putIfAbsent(it, width) }
+                }
+                widthSource = source
             }
         }
-        return 0
+        return widthCache[character] ?: 0
     }
 
-    fun getStringWidth(text: String): Int = text.sumOf { getCharWidth(it) }
+    fun getStringWidth(text: String): Int = text.codePoints().map(::getCodePointWidth).sum()
 
     // ========== Inverse/Negative Space ==========
 
@@ -81,9 +90,7 @@ object TextRenderingUtils {
     }
 
     fun getInverseForString(text: String): String = buildString(text.length * 2) {
-        for (c in text) {
-            append(getInverseForChar(c))
-        }
+        text.codePoints().forEach { append(getInverseForWidth(getCodePointWidth(it))) }
     }
 
     const val CHAR_SPACER = '\uF000'
@@ -94,8 +101,8 @@ object TextRenderingUtils {
 
     fun compressText(text: String): String = buildString(text.length * 2 + 1) {
         append("\uF001")
-        for (c in text) {
-            append(c)
+        text.codePoints().forEach {
+            appendCodePoint(it)
             append(CHAR_SPACER)
         }
     }

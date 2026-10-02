@@ -11,13 +11,15 @@ import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Bee-related abilities for the Mobs module.
  */
 
-private val lastSneakTick = mutableMapOf<Player, Int>()
-private val lastStungTicks = mutableMapOf<Player, Int>()
+private val lastSneakTick = ConcurrentHashMap<UUID, Int>()
+private val lastStungTicks = ConcurrentHashMap<UUID, Int>()
 
 val beeWings = ability("bee_wings", "moborigins") {
     title = text("Bee Wings")
@@ -27,19 +29,21 @@ val beeWings = ability("bee_wings", "moborigins") {
     option("effect_duration", 100)
     option("double_tap_window", 10)
 
+    onDependencyDisabled { player, _ -> lastSneakTick.remove(player.uniqueId) }
+
     onSneak { player, sneaking, config ->
         if (!sneaking) return@onSneak
 
         val currentTick = Bukkit.getCurrentTick()
         val doubleTapWindow = config.getInt("double_tap_window", 10)
-        val lastTick = lastSneakTick.getOrDefault(player, currentTick - doubleTapWindow - 1)
+        val lastTick = lastSneakTick.getOrDefault(player.uniqueId, currentTick - doubleTapWindow - 1)
 
         if (currentTick - lastTick <= doubleTapWindow) {
             val duration = config.getInt("effect_duration", 100)
             player.addPotionEffect(PotionEffect(PotionEffectType.SLOW_FALLING, duration, 0, false, true))
-            lastSneakTick.remove(player)
+            lastSneakTick.remove(player.uniqueId)
         } else {
-            lastSneakTick[player] = currentTick
+            lastSneakTick[player.uniqueId] = currentTick
         }
     }
 }
@@ -52,16 +56,18 @@ val stinger = ability("stinger", "moborigins") {
     option("poison_amplifier", 0)
     option("sting_cooldown", 100)
 
+    onDependencyDisabled { player, _ -> lastStungTicks.remove(player.uniqueId) }
+
     onAttack { player, target, config ->
         if (target !is LivingEntity) return@onAttack
         if (!player.inventory.itemInMainHand.type.isAir) return@onAttack
 
         val currentTick = Bukkit.getCurrentTick()
         val stingCooldown = config.getInt("sting_cooldown", 100)
-        val lastStungTick = lastStungTicks.getOrDefault(player, currentTick - stingCooldown - 1)
+        val lastStungTick = lastStungTicks.getOrDefault(player.uniqueId, currentTick - stingCooldown - 1)
 
         if (currentTick - lastStungTick >= stingCooldown) {
-            lastStungTicks[player] = currentTick
+            lastStungTicks[player.uniqueId] = currentTick
             val duration = config.getInt("poison_duration", 60)
             val amplifier = config.getInt("poison_amplifier", 0)
             target.addPotionEffect(PotionEffect(PotionEffectType.POISON, duration, amplifier, false, true))

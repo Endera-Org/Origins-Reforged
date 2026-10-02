@@ -1,5 +1,7 @@
 package ru.turbovadim.v2.abilities.main
 
+import ru.turbovadim.v2.util.refreshPotionEffects
+
 import com.destroystokyo.paper.MaterialTags
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.text.Component
@@ -147,14 +149,23 @@ val claustrophobia = ability("claustrophobia") {
     description("A low ceiling will weaken you and make you slower.")
 
     option("check_interval", 5)
+    val buildup = intState("buildup", -200)
+
+    listener<PlayerItemConsumeEvent>(playerFrom = { it.player }) { player, event, _ ->
+        if (event.item.type == Material.MILK_BUCKET) buildup[player] = buildup[player].coerceAtMost(0)
+    }
+    onDependencyDisabled { player, _ -> buildup.reset(player) }
 
     onTick(interval = 5) { player, _ ->
         val blockAbove = player.location.block.getRelative(BlockFace.UP, 2)
-        if (blockAbove.isSolid) {
-            player.addPotionEffects(
+        val duration = if (blockAbove.isSolid) (buildup[player] + 1).coerceAtMost(3600)
+            else (buildup[player] - 1).coerceAtLeast(-200)
+        buildup[player] = duration
+        if (duration > 0) {
+            player.refreshPotionEffects(
                 listOf(
-                    PotionEffect(PotionEffectType.WEAKNESS, 10, 0, true, true, true),
-                    PotionEffect(NMSInvoker.slownessEffect, 10, 0, true, true, true)
+                    PotionEffect(PotionEffectType.WEAKNESS, duration, 0, true, true, true),
+                    PotionEffect(NMSInvoker.slownessEffect, duration, 0, true, true, true)
                 )
             )
         }

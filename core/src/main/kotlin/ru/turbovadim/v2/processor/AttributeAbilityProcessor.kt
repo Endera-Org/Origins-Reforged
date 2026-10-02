@@ -7,7 +7,7 @@ import org.bukkit.NamespacedKey
 import org.bukkit.attribute.Attribute
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.Player
-import org.endera.enderalib.utils.async.runTask
+import org.endera.enderalib.utils.async.EntityScheduler
 import ru.turbovadim.v2.ability.AbilityConfigAccessor
 import ru.turbovadim.v2.ability.AttributeEffect
 import ru.turbovadim.v2.ability.AttributeType
@@ -46,10 +46,6 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
     // Tick interval -> tasks that run at this interval
     private val tickBuckets = ConcurrentHashMap<Int, MutableSet<ConditionalTask>>()
 
-    // State tracking for conditional modifiers: playerId -> (attributeType -> currentValue)
-    // Used to avoid unnecessary modifier updates
-    private val conditionalState = ConcurrentHashMap<UUID, MutableMap<AttributeType, Double>>()
-
     // Scheduled task handle
     private var scheduledTask: ScheduledTask? = null
 
@@ -82,7 +78,6 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
         scheduledTask = null
         playerTasks.clear()
         tickBuckets.clear()
-        conditionalState.clear()
     }
 
     /**
@@ -99,7 +94,7 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
             val ability = container.abilityRegistry.get(abilityKey) ?: continue
             val accessor = container.configLoader.getAccessor(abilityKey, ability.defaultOptions)
 
-            for (modifierDef in staticEffect.modifiers) {
+            for ((index, modifierDef) in staticEffect.modifiers.withIndex()) {
                 val attribute = modifierDef.attributeType.resolve(container.nmsInvoker) ?: continue
 
                 // Get value from config if configKey is set, otherwise use default
@@ -117,7 +112,8 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
                     attributeType = modifierDef.attributeType,
                     value = value,
                     operation = modifierDef.operation,
-                    namespace = MODIFIER_NAMESPACE
+                    namespace = MODIFIER_NAMESPACE,
+                    index = index
                 )
             }
         }
@@ -155,7 +151,6 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
 
         if (newTasks.isNotEmpty()) {
             playerTasks[playerId] = newTasks
-            conditionalState[playerId] = ConcurrentHashMap()
         }
     }
 
@@ -164,7 +159,7 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
      * Also removes any active conditional modifiers.
      */
     fun removePlayer(playerId: UUID) {
-        val tasks = playerTasks.remove(playerId) ?: return
+        val tasks = playerTasks.remove(playerId).orEmpty()
 
         for (task in tasks) {
             tickBuckets[task.effect.intervalTicks]?.remove(task)
@@ -176,7 +171,6 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
             clearModifiersByNamespace(player, CONDITIONAL_NAMESPACE)
         }
 
-        conditionalState.remove(playerId)
     }
 
     /**
@@ -185,11 +179,7 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
     private fun onServerTick() {
         val tick = tickCounter.incrementAndGet()
 
-        for ((interval, tasks) in tickBuckets) {
-            if (tick % interval == 0L && tasks.isNotEmpty()) {
-                processBatch(tasks.toSet())
-            }
-        }
+        processBatch(tickBuckets.entries.filter { tick % it.key == 0L }.flatMap { it.value }.toSet())
     }
 
     /**
@@ -203,24 +193,25 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
 
         for ((playerId, playerTasks) in byPlayer) {
             val player = Bukkit.getPlayer(playerId) ?: continue
-            val playerState = conditionalState[playerId] ?: continue
 
-            player.runTask(container.plugin) {
+            EntityScheduler.execute(container.plugin, player, {
+                if (!player.isOnline) return@execute
                 for (task in playerTasks) {
+                    if (task !in this.playerTasks[playerId].orEmpty()) continue
                     if (!isAbilityActive(player, task.abilityKey)) {
                         // Ability is disabled - remove any active conditional modifiers for it
-                        removeConditionalModifiersForAbility(player, task.abilityKey, task.effect, playerState)
+                        removeConditionalModifiersForAbility(player, task.abilityKey, task.effect)
                         continue
                     }
 
                     val ability = container.abilityRegistry.get(task.abilityKey) ?: continue
                     val accessor = container.configLoader.getAccessor(task.abilityKey, ability.defaultOptions)
 
-                    for (modifierDef in task.effect.modifiers) {
-                        processConditionalModifier(player, task.abilityKey, modifierDef, accessor, playerState)
+                    task.effect.modifiers.forEachIndexed { index, modifierDef ->
+                        processConditionalModifier(player, task.abilityKey, index, modifierDef, accessor)
                     }
                 }
-            }
+            })
         }
     }
 
@@ -230,23 +221,24 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
     private fun processConditionalModifier(
         player: Player,
         abilityKey: Key,
+        index: Int,
         modifierDef: ConditionalModifierDef,
-        accessor: AbilityConfigAccessor,
-        playerState: MutableMap<AttributeType, Double>
+        accessor: AbilityConfigAccessor
     ) {
         val attribute = modifierDef.attributeType.resolve(container.nmsInvoker) ?: return
 
         val isConditionMet = modifierDef.condition(player, accessor)
         val newValue = if (isConditionMet) modifierDef.valueProvider(player, accessor) else 0.0
-        val currentValue = playerState[modifierDef.attributeType] ?: 0.0
+        val instance = player.getAttribute(attribute) ?: return
+        val key = modifierKey(abilityKey, modifierDef.attributeType, CONDITIONAL_NAMESPACE, index)
+        val currentValue = container.nmsInvoker.getAttributeModifier(instance, key)?.amount ?: 0.0
 
         // Only update if value changed
         if (newValue != currentValue) {
-            playerState[modifierDef.attributeType] = newValue
 
             if (newValue == 0.0) {
                 // Remove modifier
-                removeModifier(player, abilityKey, attribute, modifierDef.attributeType, CONDITIONAL_NAMESPACE)
+                removeModifier(player, abilityKey, attribute, modifierDef.attributeType, CONDITIONAL_NAMESPACE, index)
             } else {
                 // Apply or update modifier
                 applyModifier(
@@ -256,7 +248,8 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
                     attributeType = modifierDef.attributeType,
                     value = newValue,
                     operation = modifierDef.operation,
-                    namespace = CONDITIONAL_NAMESPACE
+                    namespace = CONDITIONAL_NAMESPACE,
+                    index = index
                 )
             }
         }
@@ -268,17 +261,11 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
     private fun removeConditionalModifiersForAbility(
         player: Player,
         abilityKey: Key,
-        effect: AttributeEffect.Conditional,
-        playerState: MutableMap<AttributeType, Double>
+        effect: AttributeEffect.Conditional
     ) {
-        for (modifierDef in effect.modifiers) {
-            val attribute = modifierDef.attributeType.resolve(container.nmsInvoker) ?: continue
-            val currentValue = playerState[modifierDef.attributeType] ?: 0.0
-
-            if (currentValue != 0.0) {
-                playerState[modifierDef.attributeType] = 0.0
-                removeModifier(player, abilityKey, attribute, modifierDef.attributeType, CONDITIONAL_NAMESPACE)
-            }
+        effect.modifiers.forEachIndexed { index, modifierDef ->
+            val attribute = modifierDef.attributeType.resolve(container.nmsInvoker) ?: return@forEachIndexed
+            removeModifier(player, abilityKey, attribute, modifierDef.attributeType, CONDITIONAL_NAMESPACE, index)
         }
     }
 
@@ -292,16 +279,14 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
         attributeType: AttributeType,
         value: Double,
         operation: AttributeModifier.Operation,
-        namespace: String
+        namespace: String,
+        index: Int = 0
     ) {
         val playerAttribute = player.getAttribute(attribute) ?: return
 
-        val modifierKey = NamespacedKey(
-            container.plugin,
-            "${namespace}_${abilityKey.value()}_${attributeType.name.lowercase()}"
-        )
+        val modifierKey = modifierKey(abilityKey, attributeType, namespace, index)
 
-        val modifierName = "${namespace}_${abilityKey.value()}_${attributeType.name.lowercase()}"
+        val modifierName = modifierKey.key
 
         // Remove existing modifier with same key (if any)
         val existing = container.nmsInvoker.getAttributeModifier(playerAttribute, modifierKey)
@@ -327,14 +312,12 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
         abilityKey: Key,
         attribute: Attribute,
         attributeType: AttributeType,
-        namespace: String
+        namespace: String,
+        index: Int = 0
     ) {
         val playerAttribute = player.getAttribute(attribute) ?: return
 
-        val modifierKey = NamespacedKey(
-            container.plugin,
-            "${namespace}_${abilityKey.value()}_${attributeType.name.lowercase()}"
-        )
+        val modifierKey = modifierKey(abilityKey, attributeType, namespace, index)
 
         val existing = container.nmsInvoker.getAttributeModifier(playerAttribute, modifierKey)
         if (existing != null) {
@@ -345,6 +328,9 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
     /**
      * Clear all attribute modifiers with a given namespace prefix.
      */
+    private fun modifierKey(abilityKey: Key, type: AttributeType, namespace: String, index: Int) =
+        NamespacedKey(container.plugin, "${namespace}_${abilityKey.namespace()}_${abilityKey.value()}_${type.name.lowercase()}_$index")
+
     private fun clearModifiersByNamespace(player: Player, namespace: String) {
         val nms = container.nmsInvoker
         val attributes = listOfNotNull(

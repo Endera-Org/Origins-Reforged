@@ -1,5 +1,7 @@
 package ru.turbovadim.v2.abilities.main
 
+import ru.turbovadim.v2.util.refreshPotionEffect
+
 import com.destroystokyo.paper.event.player.PlayerJumpEvent
 import org.bukkit.GameMode
 import org.bukkit.attribute.AttributeModifier
@@ -58,6 +60,7 @@ val climbing = ability("climbing") {
 
     flight {
         speed = 0.05f
+        fallDamage = ru.turbovadim.v2.ability.FallDamageMode.NORMAL
         condition { player, _ -> hasAdjacentSolidBlock(player) }
     }
 
@@ -150,7 +153,7 @@ val swimSpeed = ability("swim_speed") {
     // This ensures the effect naturally expires when the ability is removed (e.g., origin change)
     onTick(interval = 6) { player, _ ->
         if (player.isUnderWater) {
-            player.addPotionEffect(
+            player.refreshPotionEffect(
                 PotionEffect(
                     PotionEffectType.DOLPHINS_GRACE,
                     100, // Refreshed every 6 ticks, expires on ability removal
@@ -269,7 +272,7 @@ val sprintJump = ability("sprint_jump") {
         if (player.isSprinting) {
             val amplifier = config.getInt("jump_boost_amplifier", 1)
             val duration = config.getInt("effect_duration", 5)
-            player.addPotionEffect(
+            player.refreshPotionEffect(
                 PotionEffect(
                     PotionEffectType.JUMP_BOOST,
                     duration,

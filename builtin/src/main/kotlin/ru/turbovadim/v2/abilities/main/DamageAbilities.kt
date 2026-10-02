@@ -101,7 +101,7 @@ val waterVulnerability = ability("water_vulnerability") {
 
     onTick(interval = 20) { player, config ->
         val damage = config.getInt("damage_amount", 1)
-        if (player.isInWater || player.isInBubbleColumn || NMSInvoker.wasTouchingWater(player)) {
+        if (player.isInWaterOrRainOrBubbleColumn || NMSInvoker.wasTouchingWater(player)) {
             NMSInvoker.dealFreezeDamage(player, damage)
         }
         true

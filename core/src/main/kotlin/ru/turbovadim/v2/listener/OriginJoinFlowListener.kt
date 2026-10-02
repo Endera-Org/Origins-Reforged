@@ -1,7 +1,6 @@
 package ru.turbovadim.v2.listener
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import org.endera.enderalib.utils.async.coroutines
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.entity.Player
@@ -12,7 +11,6 @@ import org.bukkit.event.player.PlayerJoinEvent
 import org.endera.enderalib.utils.async.runTask
 import org.endera.enderalib.utils.async.runTaskLater
 import ru.turbovadim.OriginsReforged
-import ru.turbovadim.OriginsReforged.Companion.bukkitDispatcher
 import ru.turbovadim.OriginsReforged.Companion.mainConfig
 import ru.turbovadim.ShortcutUtils
 import ru.turbovadim.v2.di.OriginsContainer
@@ -69,10 +67,14 @@ class OriginJoinFlowListener(
                     scheduleFlow(player, 1L, remainingPolls - 1)
                 } else {
                     plugin.logger.warning(
-                        "DB origin load for ${player.name} didn't complete in time; running join flow anyway."
+                        "DB origin load for ${player.name} didn't complete in time; leaving saved origins unchanged."
                     )
-                    runJoinFlow(player)
+                    player.sendMessage(Component.text("Your origins are still loading. Please reconnect shortly.", NamedTextColor.RED))
                 }
+                return@runTaskLater
+            }
+            if (state.dbLoadFailed) {
+                player.sendMessage(Component.text("Your saved origins could not be loaded. Please reconnect shortly.", NamedTextColor.RED))
                 return@runTaskLater
             }
             runJoinFlow(player)
@@ -123,7 +125,7 @@ class OriginJoinFlowListener(
             // 3. open GUI (only the first missing layer gets one; stop after that)
             if (!openedGui) {
                 openedGui = true
-                CoroutineScope(bukkitDispatcher).launch {
+                plugin.coroutines.launchIo {
                     OriginSelectorUI.open(
                         player = player,
                         layer = layer,

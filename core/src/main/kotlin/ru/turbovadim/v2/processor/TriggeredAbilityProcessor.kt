@@ -201,6 +201,8 @@ class TriggeredAbilityProcessor(private val container: OriginsContainer) : Liste
     fun onBlockBreak(event: BlockBreakEvent) {
         val player = event.player
         val block = event.block
+        val keys = container.playerStateManager.getStateOrNull(player)?.getAbilityKeys().orEmpty()
+        if (keys.none { key -> container.abilityRegistry.getTriggeredEffects(key).any { it is AbilityEffect.Triggered.OnBlockBreak } }) return
         val drops = event.block.getDrops(player.inventory.itemInMainHand).toMutableList()
 
         processTriggeredEffects<AbilityEffect.Triggered.OnBlockBreak>(player) { effect, accessor ->

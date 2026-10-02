@@ -15,6 +15,8 @@ import ru.turbovadim.v2.ability.DamageResult
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
+import ru.turbovadim.v2.util.PlayerVisibility
+import net.kyori.adventure.key.Key
 import kotlin.math.max
 
 /**
@@ -53,10 +55,17 @@ val invisibleInDarkness = ability("invisible_in_darkness", "magicorigins") {
         val plugin = OriginsReforged.instance as Plugin
         Bukkit.getOnlinePlayers().forEach { viewer ->
             if (viewer.uniqueId == player.uniqueId) return@forEach
-            if (!hideFromOp && viewer.isOp) return@forEach
-            if (inShadow) viewer.hidePlayer(plugin, player) else viewer.showPlayer(plugin, player)
+            PlayerVisibility.setHidden(viewer, player, plugin, Key.key("magicorigins:invisible_in_darkness")) {
+                inShadow && (hideFromOp || !viewer.isOp)
+            }
         }
         inShadow
+    }
+
+    onDependencyDisabled { player, _ ->
+        Bukkit.getOnlinePlayers().filter { it != player }.forEach { viewer ->
+            PlayerVisibility.setHidden(viewer, player, OriginsReforged.instance, Key.key("magicorigins:invisible_in_darkness")) { false }
+        }
     }
 
     // If a mob is already targeting the player and the player re-enters darkness, drop the target.

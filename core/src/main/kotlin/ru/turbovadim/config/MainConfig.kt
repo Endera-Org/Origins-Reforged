@@ -218,7 +218,9 @@ data class ResourcePack(
         If this is set to false you should send the pack to players either in server.properties or in another plugin
         You can find the packs for each version on the GitHub at https://github.com/cometcake575/Origins-Reborn/tree/main/packs/
     """)
-    val enabled: Boolean
+    val enabled: Boolean,
+    @Comment("URL of the matching resource pack. Defaults to the pack bundled with this release.")
+    val url: String = "https://raw.githubusercontent.com/Endera-Org/Origins-Reforged/1d2d05bc8764602f133629248e349e5f6657adf8/OriginsPack.zip"
 )
 
 @Serializable

@@ -1,20 +1,19 @@
 package ru.turbovadim.v2.origin
 
 import net.kyori.adventure.key.Key
-import ru.turbovadim.v2.di.OriginsContainer
 
 /**
  * Registry for all available Origins.
  *
  * Provides O(1) lookups by key, name, and layer.
  */
-class OriginRegistry(private val container: OriginsContainer) {
+class OriginRegistry(private val defaultOriginName: (String) -> String? = { null }) {
 
     // Primary storage
     private val byKey = mutableMapOf<Key, Origin>()
 
     // Secondary indexes for fast lookups
-    private val byName = mutableMapOf<String, Origin>()
+    private val byName = mutableMapOf<String, MutableSet<Origin>>()
     private val byLayer = mutableMapOf<String, MutableList<Origin>>()
 
     // Available layers in order
@@ -44,7 +43,7 @@ class OriginRegistry(private val container: OriginsContainer) {
         byKey[origin.key] = origin
 
         // Add to indexes
-        byName[origin.name.lowercase()] = origin
+        byName.getOrPut(origin.name.lowercase()) { mutableSetOf() }.add(origin)
 
         byLayer.getOrPut(origin.layer) { mutableListOf() }.add(origin)
 
@@ -63,7 +62,7 @@ class OriginRegistry(private val container: OriginsContainer) {
     fun unregister(key: Key): Origin? {
         val origin = byKey.remove(key) ?: return null
 
-        byName.remove(origin.name.lowercase())
+        byName[origin.name.lowercase()]?.remove(origin)
         byLayer[origin.layer]?.remove(origin)
 
         return origin
@@ -72,12 +71,16 @@ class OriginRegistry(private val container: OriginsContainer) {
     /**
      * Get origin by key.
      */
-    fun get(key: Key): Origin? = byKey[key]
+    fun get(key: Key): Origin? = byKey[key] ?: byKey[Key.key(key.namespace(), key.value().replace("_", "-"))]
 
     /**
      * Get origin by name (case-insensitive).
      */
-    fun getByName(name: String): Origin? = byName[name.lowercase()]
+    fun getByName(name: String): Origin? {
+        if (':' in name) return runCatching { get(Key.key(name.lowercase())) }.getOrNull()
+        val matches = byName[name.lowercase()].orEmpty()
+        return matches.singleOrNull() ?: matches.sortedWith(compareByDescending<Origin> { it.priority }.thenBy { it.key.asString() }).firstOrNull()
+    }
 
     /**
      * Get all origins for a layer, sorted by position.
@@ -102,7 +105,7 @@ class OriginRegistry(private val container: OriginsContainer) {
      * Get the default origin for a layer (if configured).
      */
     fun getDefaultOrigin(layer: String): Origin? {
-        val defaultOriginName = container.originLoader.getDefaultOriginName(layer)
+        val defaultOriginName = defaultOriginName(layer)
         return if (defaultOriginName != null) {
             getByName(defaultOriginName)
         } else {

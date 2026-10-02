@@ -7,16 +7,13 @@ import com.github.retrooper.packetevents.util.Vector3d
 import com.github.retrooper.packetevents.util.Vector3f
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerParticle
 import io.papermc.paper.threadedregions.scheduler.ScheduledTask
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
-import org.bukkit.GameMode
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
-import org.endera.enderalib.utils.async.runTask
+import org.endera.enderalib.utils.async.EntityScheduler
+import ru.turbovadim.v2.util.refreshPotionEffect
 import ru.turbovadim.v2.ability.AbilityEffect
 import ru.turbovadim.v2.di.OriginsContainer
 import java.util.*
@@ -33,11 +30,10 @@ import java.util.concurrent.atomic.AtomicLong
  * - Single tick listener instead of 78+
  * - Effects grouped by interval (process once per interval, not every tick)
  * - Players grouped for single iteration
- * - Async processing for expensive operations (block lookups)
+ * - Player work stays on the owning region
  */
 class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listener {
 
-    private val scope = CoroutineScope(container.dispatchers.compute + SupervisorJob())
 
     // Current tick counter
     private val tickCounter = AtomicLong(0)
@@ -145,200 +141,56 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
     private fun onServerTick() {
         val tick = tickCounter.incrementAndGet()
 
-        // Process each tick bucket that should fire this tick
-        for ((interval, tasks) in tickBuckets) {
-            if (tick % interval == 0L && tasks.isNotEmpty()) {
-                processBatch(tasks.toSet()) // Copy to avoid concurrent modification
-            }
-        }
+        processBatch(tickBuckets.entries.filter { tick % it.key == 0L }.flatMap { it.value }.toSet())
     }
 
     /**
      * Process a batch of tasks efficiently.
      */
     private fun processBatch(tasks: Set<PeriodicTask>) {
-        val flightPlayers = mutableSetOf<UUID>()
-        val potionTasks = mutableListOf<PeriodicTask>()
-        val envCheckTasks = mutableListOf<PeriodicTask>()
-        val particleTasks = mutableListOf<PeriodicTask>()
-        val customParticleTasks = mutableListOf<PeriodicTask>()
-
-        for (task in tasks) {
-            when (task.effect) {
-                is AbilityEffect.Passive.Flight -> flightPlayers.add(task.playerId)
-                is AbilityEffect.Periodic.ApplyPotion -> potionTasks.add(task)
-                is AbilityEffect.Periodic.EnvironmentCheck -> envCheckTasks.add(task)
-                is AbilityEffect.Periodic.Particles -> particleTasks.add(task)
-                is AbilityEffect.Periodic.CustomParticles -> customParticleTasks.add(task)
-                is AbilityEffect.Periodic.TickEnd -> {} // Handled by ServerTickEndEvent, not here
-            }
-        }
-
-        if (flightPlayers.isNotEmpty()) {
-            processFlightEffects(flightPlayers)
-        }
-
-        if (potionTasks.isNotEmpty()) {
-            processPotionEffects(potionTasks)
-        }
-
-        if (particleTasks.isNotEmpty()) {
-            scope.launch {
-                processParticlesAsync(particleTasks)
-            }
-        }
-
-        if (customParticleTasks.isNotEmpty()) {
-            processCustomParticles(customParticleTasks)
-        }
-
-        if (envCheckTasks.isNotEmpty()) {
-            processEnvironmentChecks(envCheckTasks)
-        }
-    }
-
-    private fun processFlightEffects(playerIds: Set<UUID>) {
-        for (playerId in playerIds) {
+        for ((playerId, due) in tasks.groupBy { it.playerId }) {
             val player = Bukkit.getPlayer(playerId) ?: continue
-            player.runTask(container.plugin) {
-                container.passiveEffectProcessor.refreshFlight(player)
-            }
-        }
-    }
-
-    /**
-     * Process potion effects - grouped by player for single iteration.
-     *
-     * Folia: each player's mutation hops onto the player's entity scheduler so
-     * it runs on the region that owns them, not the global region we tick from.
-     */
-    private fun processPotionEffects(tasks: List<PeriodicTask>) {
-        val byPlayer = tasks.groupBy { it.playerId }
-
-        for ((playerId, playerTasks) in byPlayer) {
-            val player = Bukkit.getPlayer(playerId) ?: continue
-
-            player.runTask(container.plugin) {
-                val effects = playerTasks.mapNotNull { task ->
-                    val effect = task.effect as AbilityEffect.Periodic.ApplyPotion
-                    if (!isAbilityActive(player, task.abilityKey)) null else effect.effect
-                }
-
-                if (effects.isNotEmpty()) {
-                    player.addPotionEffects(effects)
-                }
-            }
-        }
-    }
-
-    /**
-     * Process particle effects asynchronously using PacketEvents.
-     * Sends particles to nearby players efficiently.
-     */
-    private fun processParticlesAsync(tasks: List<PeriodicTask>) {
-        val onlinePlayers = Bukkit.getOnlinePlayers()
-            .filter { it.gameMode != GameMode.SPECTATOR }
-            .toList()
-
-        val byPlayer = tasks.groupBy { it.playerId }
-
-        for ((playerId, playerTasks) in byPlayer) {
-            val player = onlinePlayers.find { it.uniqueId == playerId } ?: continue
-
-            for (task in playerTasks) {
-                val effect = task.effect as AbilityEffect.Periodic.Particles
-
-                if (!isAbilityActive(player, task.abilityKey)) continue
-
-                val packet = WrapperPlayServerParticle(
-                    Particle(effect.particleType),
-                    false,
-                    Vector3d(player.location.x, player.location.y + 1.0, player.location.z),
-                    Vector3f(effect.offsetX, effect.offsetY, effect.offsetZ),
-                    0f,
-                    effect.count
-                )
-
-                val nearbyPlayers = getNearbyPlayers(player, onlinePlayers, effect.visibilityRadius)
-                val recipients = nearbyPlayers + player
-
-                for (recipient in recipients) {
-                    PacketEvents.getAPI().playerManager.sendPacket(recipient, packet)
-                }
-            }
-        }
-    }
-
-    /**
-     * Get players within range of the source player.
-     */
-    private fun getNearbyPlayers(
-        source: Player,
-        allPlayers: List<Player>,
-        range: Double
-    ): List<Player> {
-        val location = source.location
-        val rangeSquared = range * range
-
-        return allPlayers.filter { other ->
-            other != source &&
-            other.world == location.world &&
-            location.distanceSquared(other.location) <= rangeSquared
-        }
-    }
-
-    /**
-     * Process custom particle effects with spawner logic.
-     *
-     * Folia: spawner.spawn may touch the player / read nearby blocks, so hop
-     * to the player's entity scheduler.
-     */
-    private fun processCustomParticles(tasks: List<PeriodicTask>) {
-        val byPlayer = tasks.groupBy { it.playerId }
-
-        for ((playerId, playerTasks) in byPlayer) {
-            val player = Bukkit.getPlayer(playerId) ?: continue
-
-            player.runTask(container.plugin) {
-                for (task in playerTasks) {
-                    val effect = task.effect as AbilityEffect.Periodic.CustomParticles
-
-                    if (!isAbilityActive(player, task.abilityKey)) continue
-
+            EntityScheduler.execute(container.plugin, player, {
+                if (!player.isOnline) return@execute
+                var flightRefreshed = false
+                var visibilityRefreshed = false
+                for (task in due) {
+                    if (task !in playerTasks[playerId].orEmpty() || !isAbilityActive(player, task.abilityKey)) continue
                     val ability = container.abilityRegistry.get(task.abilityKey) ?: continue
-                    val accessor = container.configLoader.getAccessor(task.abilityKey, ability.defaultOptions)
-
-                    effect.spawner.spawn(player, accessor)
+                    val config = container.configLoader.getAccessor(task.abilityKey, ability.defaultOptions)
+                    when (val effect = task.effect) {
+                        is AbilityEffect.Passive.Flight -> if (!flightRefreshed) {
+                            container.passiveEffectProcessor.refreshFlight(player)
+                            flightRefreshed = true
+                        }
+                        is AbilityEffect.Passive.Invisibility -> if (!visibilityRefreshed) {
+                            container.passiveEffectProcessor.refreshVisibility(player)
+                            visibilityRefreshed = true
+                        }
+                        is AbilityEffect.Periodic.ApplyPotion -> player.refreshPotionEffect(effect.effect)
+                        is AbilityEffect.Periodic.EnvironmentCheck -> effect.check.check(player, config)
+                        is AbilityEffect.Periodic.CustomParticles -> effect.spawner.spawn(player, config)
+                        is AbilityEffect.Periodic.TickEnd -> effect.handler.check(player, config)
+                        is AbilityEffect.Periodic.Particles -> {
+                            val location = player.location
+                            val packet = WrapperPlayServerParticle(
+                                Particle(effect.particleType), false,
+                                Vector3d(location.x, location.y + 1.0, location.z),
+                                Vector3f(effect.offsetX, effect.offsetY, effect.offsetZ), 0f, effect.count
+                            )
+                            // Tracking is maintained by the server, avoiding a scan of every online player.
+                            (player.trackedBy + player).forEach { viewer ->
+                                EntityScheduler.execute(container.plugin, viewer, {
+                                    val target = viewer.location
+                                    if (target.world == location.world && target.distanceSquared(location) <= effect.visibilityRadius * effect.visibilityRadius) {
+                                        PacketEvents.getAPI().playerManager.sendPacket(viewer, packet)
+                                    }
+                                })
+                            }
+                        }
+                    }
                 }
-            }
-        }
-    }
-
-    /**
-     * Process environment checks - runs per-player on the owning region thread.
-     *
-     * Folia: env checks read blocks around the player and may toggle flight /
-     * velocity / potion effects, so they must run on the player's region.
-     */
-    private fun processEnvironmentChecks(tasks: List<PeriodicTask>) {
-        val byPlayer = tasks.groupBy { it.playerId }
-
-        for ((playerId, playerTasks) in byPlayer) {
-            val player = Bukkit.getPlayer(playerId) ?: continue
-
-            player.runTask(container.plugin) {
-                for (task in playerTasks) {
-                    val effect = task.effect as AbilityEffect.Periodic.EnvironmentCheck
-
-                    if (!isAbilityActive(player, task.abilityKey)) continue
-
-                    val ability = container.abilityRegistry.get(task.abilityKey) ?: continue
-                    val accessor = container.configLoader.getAccessor(task.abilityKey, ability.defaultOptions)
-
-                    // Run the check
-                    effect.check.check(player, accessor)
-                }
-            }
+            })
         }
     }
 
@@ -376,40 +228,7 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
     fun onServerTickEnd(event: ServerTickEndEvent) {
         val tick = tickEndCounter.incrementAndGet()
 
-        // Process each tick-end bucket that should fire this tick
-        for ((interval, tasks) in tickEndBuckets) {
-            if (tick % interval == 0L && tasks.isNotEmpty()) {
-                processTickEndTasks(tasks.toSet())
-            }
-        }
-    }
-
-    /**
-     * Process tick-end tasks (run at end of each server tick).
-     *
-     * Folia: ServerTickEndEvent fires on the global region; hop per-player
-     * work onto each player's own region scheduler before touching them.
-     */
-    private fun processTickEndTasks(tasks: Set<PeriodicTask>) {
-        val byPlayer = tasks.groupBy { it.playerId }
-
-        for ((playerId, playerTasks) in byPlayer) {
-            val player = Bukkit.getPlayer(playerId) ?: continue
-
-            player.runTask(container.plugin) {
-                for (task in playerTasks) {
-                    val effect = task.effect as AbilityEffect.Periodic.TickEnd
-
-                    if (!isAbilityActive(player, task.abilityKey)) continue
-
-                    val ability = container.abilityRegistry.get(task.abilityKey) ?: continue
-                    val accessor = container.configLoader.getAccessor(task.abilityKey, ability.defaultOptions)
-
-                    // Run the handler
-                    effect.handler.check(player, accessor)
-                }
-            }
-        }
+        processBatch(tickEndBuckets.entries.filter { tick % it.key == 0L }.flatMap { it.value }.toSet())
     }
 
     /**

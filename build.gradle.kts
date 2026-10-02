@@ -21,6 +21,7 @@ dependencies {
 }
 
 tasks.shadowJar {
+    manifest.attributes["paperweight-mappings-namespace"] = "mojang"
     archiveFileName.set("${rootProject.name}-${rootProject.version}.jar")
     dependencies {
         // Provided at runtime by EnderaLib (Kotlin) and Paper (slf4j); the rest are compile-time annotations

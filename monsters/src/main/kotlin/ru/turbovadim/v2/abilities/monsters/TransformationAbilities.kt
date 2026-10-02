@@ -19,6 +19,7 @@ import ru.turbovadim.v2.api.OriginsApi
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
+import ru.turbovadim.v2.event.OriginChangeReason
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.max
@@ -80,8 +81,11 @@ val metamorphosisTemperature = ability("metamorphosis_temperature", "monsterorig
         true
     }
 
-    onOriginChanged { player, _, _ ->
-        setMetamorphosisTemperature(player, 50)
+    onOriginChanged { player, event, _ ->
+        if (event.reason != OriginChangeReason.PLUGIN &&
+            event.reason != OriginChangeReason.DATABASE_LOAD) {
+            setMetamorphosisTemperature(player, 50)
+        }
     }
 }
 
@@ -90,13 +94,13 @@ val drownedTransformIntoZombie = ability("drowned_transform_into_zombie", "monst
     description("You transform into a Zombie if you're in a warm area for too long.")
 
     option("warm_threshold", 30)
-    option("target_origin", "zombie")
+    option("target_origin", "monsterorigins:zombie")
 
     onTick(interval = 20) { player, config ->
         if (getMetamorphosisTemperature(player) >= config.getInt("warm_threshold", 30)) {
             switchTo(
                 player,
-                config.getString("target_origin", "zombie"),
+                config.getString("target_origin", "monsterorigins:zombie"),
                 Sound.ENTITY_ZOMBIE_CONVERTED_TO_DROWNED,
                 "You have transformed into a zombie!"
             )
@@ -149,7 +153,7 @@ val transformIntoHuskAndDrowned = ability("transform_into_husk_and_drowned", "mo
     option("husk_temp_threshold", 75)
     option("water_duration_ticks", 300)
     option("husk_origin", "husk")
-    option("drowned_origin", "drowned")
+    option("drowned_origin", "monsterorigins:drowned")
     option("drowned_temperature_cap", 20)
 
     onTick(interval = 20) { player, config ->
@@ -182,7 +186,7 @@ val transformIntoHuskAndDrowned = ability("transform_into_husk_and_drowned", "mo
             setMetamorphosisTemperature(player, min(cap, getMetamorphosisTemperature(player)))
             switchTo(
                 player,
-                config.getString("drowned_origin", "drowned"),
+                config.getString("drowned_origin", "monsterorigins:drowned"),
                 Sound.ENTITY_ZOMBIE_CONVERTED_TO_DROWNED,
                 "You have transformed into a drowned!"
             )

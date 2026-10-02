@@ -42,7 +42,7 @@ object DatabaseManager {
 
                 val parentId = row[UsedOrigins.parent].value
                 val uuid = idToUuid[parentId] ?: return@forEach
-                usedOriginsByUuid.getOrPut(uuid) { mutableListOf() }.add(used)
+                usedOriginsByUuid.getOrPut(uuid) { Collections.synchronizedList(mutableListOf()) }.add(used)
             }
     }
 
@@ -50,19 +50,20 @@ object DatabaseManager {
      * Synchronous accessor for all used origins (uses cache).
      * Safe to call from the main thread.
      */
-    fun getAllUsedOriginsSync(): List<String> = allUsedOriginsCache.toList()
+    fun getAllUsedOriginsSync(): List<String> = synchronized(allUsedOriginsCache) { allUsedOriginsCache.toList() }
 
     /**
      * Synchronous accessor for a player's used origins (uses cache).
      * Safe to call from the main thread.
      */
     fun getUsedOriginsSync(uuid: String): List<String> {
-        return usedOriginsByUuid[uuid]?.toList() ?: emptyList()
+        val used = usedOriginsByUuid[uuid] ?: return emptyList()
+        return synchronized(used) { used.toList() }
     }
 
     /**
      * Record an origin in this player's history (cache-first).
-     * Called from the main thread; schedules an async DB insert.
+     * Persisted with the selected origin by [updateOrigin].
      */
     fun recordUsedOriginSync(uuid: String, origin: String) {
         val list = usedOriginsByUuid.getOrPut(uuid) { java.util.Collections.synchronizedList(mutableListOf()) }
@@ -177,7 +178,16 @@ object DatabaseManager {
             }
         }
 
-        // Update cache
+        if (newOrigin != null && UsedOrigins.selectAll()
+                .where { (UsedOrigins.parent eq parentId) and (UsedOrigins.usedOrigin eq newOrigin) }
+                .firstOrNull() == null) {
+            UsedOrigins.insert {
+                it[parent] = parentId
+                it[usedOrigin] = newOrigin
+            }
+        }
+
+        // Selected origin and history are committed together.
         originCache[uuid to layer] = newOrigin
     }
 

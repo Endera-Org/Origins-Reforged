@@ -10,6 +10,7 @@ import org.bukkit.Bukkit
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.endera.enderalib.utils.async.ioDispatcher
+import org.endera.enderalib.utils.async.EntityScheduler
 import org.intellij.lang.annotations.Subst
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
@@ -30,6 +31,8 @@ class CooldownManager {
     private val playerCooldowns = ConcurrentHashMap<UUID, MutableMap<Key, CooldownData>>()
     private val iconDataMap = ConcurrentHashMap<String, CooldownIconData>()
     private var tickJob: Job? = null
+    private val lastDisplays = ConcurrentHashMap<UUID, Component>()
+    private val missingIcons = ConcurrentHashMap.newKeySet<String>()
     private lateinit var emptyBarPieces: List<Component>
 
     data class CooldownData(
@@ -54,12 +57,18 @@ class CooldownManager {
         val barPieces: List<Component>,
         val icon: Component
     ) {
+        private val renderedBars = ConcurrentHashMap<Pair<Int, Int>, Component>()
+
         fun assemble(completion: Float, height: Int): Component {
-            val filledCount = floor(barPieces.size * completion).toInt()
+            val filledCount = floor(barPieces.size * completion).toInt().coerceIn(0, barPieces.size)
+            return renderedBars.computeIfAbsent(filledCount to height) { assemble(filledCount, height) }
+        }
+
+        private fun assemble(filledCount: Int, height: Int): Component {
             var result = icon.append(Component.text("\uF002"))
 
             for (i in barPieces.indices) {
-                val piece = if (i <= filledCount) barPieces[i] else emptyBarPieces[i]
+                val piece = if (i < filledCount) barPieces[i] else emptyBarPieces[i]
                 result = result.append(piece)
                 result = result.append(Component.text("\uF001"))
             }
@@ -88,6 +97,8 @@ class CooldownManager {
     fun stop() {
         tickJob?.cancel()
         tickJob = null
+        playerCooldowns.clear()
+        lastDisplays.clear()
     }
 
     private fun loadEmptyBar() {
@@ -96,7 +107,7 @@ class CooldownManager {
 
         if (!iconFile.exists()) {
             iconFile.parentFile.mkdirs()
-            plugin.saveResource("icons/empty_bar.png", false)
+            if (plugin.getResource("icons/empty_bar.png")?.use { true } == true) plugin.saveResource("icons/empty_bar.png", false)
         }
 
         if (iconFile.exists()) {
@@ -111,13 +122,17 @@ class CooldownManager {
     }
 
     fun registerIcon(icon: String) {
-        if (iconDataMap.containsKey(icon)) return
+        if (iconDataMap.containsKey(icon) || icon in missingIcons) return
 
         val plugin = OriginsReforged.instance
         val iconFile = File(plugin.dataFolder, "icons/$icon.png")
 
         if (!iconFile.exists()) {
             iconFile.parentFile.mkdirs()
+            if (plugin.getResource("icons/$icon.png")?.use { true } != true) {
+                missingIcons.add(icon)
+                return
+            }
             plugin.saveResource("icons/$icon.png", false)
         }
 
@@ -131,7 +146,7 @@ class CooldownManager {
     }
 
     fun setCooldown(player: Player, abilityKey: Key, durationTicks: Int, icon: String? = null) {
-        if (OriginsReforged.mainConfig.cooldowns.disableAllCooldowns) return
+        if (OriginsReforged.mainConfig.cooldowns.disableAllCooldowns || durationTicks <= 0) return
 
         icon?.let { registerIcon(it) }
 
@@ -141,6 +156,11 @@ class CooldownManager {
             durationTicks = durationTicks,
             icon = icon
         )
+    }
+
+    fun removePlayer(playerId: UUID) {
+        playerCooldowns.remove(playerId)
+        lastDisplays.remove(playerId)
     }
 
     fun hasCooldown(player: Player, abilityKey: Key): Boolean {
@@ -162,36 +182,29 @@ class CooldownManager {
     }
 
     fun clearCooldowns(player: Player) {
-        playerCooldowns.remove(player.uniqueId)
+        playerCooldowns[player.uniqueId]?.clear()
     }
 
-    private suspend fun updateCooldownDisplays() {
+    private fun updateCooldownDisplays() {
         if (!OriginsReforged.mainConfig.cooldowns.showCooldownIcons) return
 
-        val updates = mutableListOf<Pair<Player, Component>>()
+        for ((playerId, cooldowns) in playerCooldowns) {
+            val player = Bukkit.getPlayer(playerId) ?: continue
+            EntityScheduler.execute(OriginsReforged.instance, player, {
+                if (!player.isOnline || playerCooldowns[playerId] !== cooldowns) return@execute
+                cooldowns.entries.removeIf { it.value.isExpired() }
 
-        for (player in Bukkit.getOnlinePlayers().toList()) {
-            val cooldowns = playerCooldowns[player.uniqueId] ?: continue
-
-            // Remove expired cooldowns
-            cooldowns.entries.removeIf { it.value.isExpired() }
-
-            if (cooldowns.isEmpty()) continue
-
-            val message = if (isBedrockPlayer(player.uniqueId)) {
-                buildBedrockMessage(cooldowns.values)
-            } else {
-                buildJavaMessage(player, cooldowns.values)
-            }
-
-            updates.add(player to message)
-        }
-
-        for ((player, message) in updates) {
-            PacketEvents.getAPI().playerManager.sendPacket(
-                player,
-                WrapperPlayServerActionBar(message)
-            )
+                val message = if (cooldowns.isEmpty()) {
+                    if (lastDisplays.remove(playerId) == null) return@execute
+                    Component.empty()
+                } else {
+                    val rendered = if (isBedrockPlayer(playerId)) buildBedrockMessage(cooldowns.values)
+                        else buildJavaMessage(player, cooldowns.values)
+                    if (lastDisplays.put(playerId, rendered) == rendered) return@execute
+                    rendered
+                }
+                PacketEvents.getAPI().playerManager.sendPacket(player, WrapperPlayServerActionBar(message))
+            })
         }
     }
 
@@ -221,6 +234,8 @@ class CooldownManager {
                     .append(Component.text("\uF004"))
                     .append(iconData.assemble(1f - ratio, heightOffset))
                 heightOffset++
+            } else {
+                msg = msg.append(Component.text("${cooldown.getRemainingTicks() / 20 + 1}s "))
             }
         }
 

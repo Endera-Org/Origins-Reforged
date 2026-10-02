@@ -53,6 +53,7 @@ class PassiveEffectProcessor(private val container: OriginsContainer) {
      */
     fun removePassiveEffects(player: Player) {
         clearOriginAttributes(player)
+        container.attributeAbilityProcessor.clearStaticAttributes(player)
         releaseFlight(player)
         player.isInvisible = false
     }
@@ -142,7 +143,8 @@ class PassiveEffectProcessor(private val container: OriginsContainer) {
             // Remove all modifiers that match our naming pattern
             // We iterate through a copy to avoid concurrent modification
             val toRemove = playerAttr.modifiers.filter { modifier ->
-                modifier.name.startsWith(REMOVED_CONFIG_ATTRIBUTE_NAMESPACE)
+                modifier.name.startsWith(REMOVED_CONFIG_ATTRIBUTE_NAMESPACE) &&
+                    !modifier.name.startsWith("origins_dsl") && !modifier.name.startsWith("origins_cond")
             }
 
             for (modifier in toRemove) {
@@ -180,8 +182,9 @@ class PassiveEffectProcessor(private val container: OriginsContainer) {
             )
         }
 
-        player.allowFlight = true
-        player.flySpeed = activeFlightEffects.minOf { it.speed }.coerceIn(0.0001f, 1.0f)
+        if (!player.allowFlight) player.allowFlight = true
+        val speed = activeFlightEffects.minOf { it.speed }.coerceIn(0.0001f, 1.0f)
+        if (player.flySpeed != speed) player.flySpeed = speed
 
         val fallDamageMode = when {
             activeFlightEffects.any { it.fallDamage == FallDamageMode.NONE } -> FallDamageMode.NONE
@@ -209,6 +212,10 @@ class PassiveEffectProcessor(private val container: OriginsContainer) {
     /**
      * Apply visibility effects.
      */
+    fun refreshVisibility(player: Player) {
+        container.playerStateManager.getStateOrNull(player)?.let { applyVisibility(player, it) }
+    }
+
     private fun applyVisibility(player: Player, state: PlayerOriginState) {
         val invisAbilityKeys = container.abilityRegistry.getInvisibilityAbilities()
         val playerAbilities = state.getAbilityKeys()

@@ -110,9 +110,8 @@ val infiniteArrows = ability("infinite_arrows", "monsterorigins") {
         ignoreCancelled = false,
         playerFrom = { it.entity as? Player }
     ) { player, event, _ ->
-        val arrow = event.consumable ?: return@listener
-        if (arrow.type != Material.ARROW) return@listener
-        player.inventory.addItem(arrow)
+        if (event.isCancelled || event.consumable?.type != Material.ARROW) return@listener
+        event.setConsumeItem(false)
     }
 }
 
@@ -158,7 +157,7 @@ val betterAim = ability("better_aim", "monsterorigins") {
     }
 }
 
-val tridentExpert = ability("trident_expert", "moborigins") {
+val tridentExpert = ability("trident_expert", "monsterorigins") {
     title = text("Trident Expert")
     description(
         "You're a master of the trident, dealing +2 damage when you throw it,",
@@ -192,7 +191,7 @@ val tridentExpert = ability("trident_expert", "moborigins") {
     }
 }
 
-val waterCombatant = ability("water_combatant", "moborigins") {
+val waterCombatant = ability("water_combatant", "monsterorigins") {
     title = text("Water Combatant")
     description("You deal more damage while in water.")
 

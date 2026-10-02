@@ -23,12 +23,12 @@ import kotlin.math.min
  * Snow and temperature-related abilities for the Mobs module.
  */
 
-private val playerTemperatureMap = mutableMapOf<Player, Int>()
+private val playerTemperatureMap = java.util.concurrent.ConcurrentHashMap<java.util.UUID, Int>()
 
-fun getTemperature(player: Player): Int = playerTemperatureMap.getOrDefault(player, 0)
+fun getTemperature(player: Player): Int = playerTemperatureMap.getOrDefault(player.uniqueId, 0)
 
 fun setTemperature(player: Player, amount: Int) {
-    playerTemperatureMap[player] = max(0, min(amount, 100))
+    playerTemperatureMap[player.uniqueId] = max(0, min(amount, 100))
 }
 
 private val snowballMarkKey: NamespacedKey by lazy {
@@ -37,6 +37,7 @@ private val snowballMarkKey: NamespacedKey by lazy {
 
 val snowTrail = ability("snow_trail", "moborigins") {
     title = text("Snow Trail")
+    onDependencyDisabled { player, _ -> playerTemperatureMap.remove(player.uniqueId) }
     description("You leave a trail of snow.")
 
     onTick(interval = 1) { player, _ ->

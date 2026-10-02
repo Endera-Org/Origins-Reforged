@@ -5,6 +5,12 @@ plugins {
 
 dependencies {
     api(project(":api"))
+    testImplementation(kotlin("test-junit5"))
+    testImplementation(libs.paper.api)
+    testImplementation("org.mockito:mockito-core:5.23.0")
+    testImplementation("com.h2database:h2:2.5.252")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.1.0")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:6.1.0")
     compileOnly(libs.jetbrains.annotations)
     compileOnly(libs.viaversion.api)
     compileOnly(libs.paper.api)
@@ -30,3 +36,5 @@ dependencies {
     // EnderaLib provides Kotlin, coroutines, serialization, Exposed, Hikari and H2 at runtime
     compileOnly(libs.enderalib)
 }
+
+tasks.test { useJUnitPlatform() }

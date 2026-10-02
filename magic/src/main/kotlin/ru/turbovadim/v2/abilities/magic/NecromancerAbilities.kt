@@ -144,7 +144,7 @@ val bringBackDead = ability("bring_back_dead", "magicorigins") {
                 }
             }
             other.runTaskLater(OriginsReforged.instance, 5L) {
-                if (!other.isDead) other.teleport(revive)
+                if (!other.isDead) other.teleportAsync(revive)
             }
             if (useTotem) {
                 other.runTaskLater(OriginsReforged.instance, 3L) {

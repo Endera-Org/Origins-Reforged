@@ -1,5 +1,7 @@
 package ru.turbovadim.v2.abilities.mobs
 
+import ru.turbovadim.v2.util.refreshPotionEffect
+
 import com.destroystokyo.paper.MaterialTags
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
@@ -163,6 +165,7 @@ val itemCollector = ability("item_collector", "moborigins") {
     option("pickup_radius", 2.5)
 
     onTick(interval = 1) { player, config ->
+        if (player.isDead) return@onTick false
         val radius = config.getDouble("pickup_radius", 2.5)
         player.getNearbyEntities(radius, radius, radius)
             .filterIsInstance<Item>()
@@ -308,7 +311,7 @@ val flowerPower = ability("flower_power", "moborigins") {
         }
 
         if (flowerCount >= required) {
-            player.addPotionEffect(PotionEffect(PotionEffectType.REGENERATION, duration, 0, false, true))
+            player.refreshPotionEffect(PotionEffect(PotionEffectType.REGENERATION, duration, 0, false, true))
         }
         true
     }
@@ -346,15 +349,14 @@ val lavaWalk = ability("lava_walk", "moborigins") {
 
     option("flight_speed", 0.1f)
 
-    onTick(interval = 1) { player, config ->
-        val inLava = player.isInLava
-        if (inLava && !player.isSneaking) {
-            player.allowFlight = true
-            player.isFlying = true
-            player.flySpeed = config.getFloat("flight_speed", 0.1f)
-        } else if (!inLava && player.isFlying && player.gameMode.name == "SURVIVAL") {
-            player.isFlying = false
-        }
+    flight {
+        speed = 0.1f
+        condition { player, _ -> player.isInLava && !player.isSneaking }
+    }
+
+    onTick(interval = 1) { player, _ ->
+        if (player.isInLava && !player.isSneaking && player.allowFlight &&
+            player.gameMode == org.bukkit.GameMode.SURVIVAL) player.isFlying = true
         true
     }
 

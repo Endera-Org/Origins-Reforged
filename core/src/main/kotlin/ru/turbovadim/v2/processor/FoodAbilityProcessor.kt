@@ -12,6 +12,12 @@ import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.PotionMeta
 import org.bukkit.potion.PotionEffect
+import org.bukkit.potion.PotionEffectType
+import org.bukkit.event.entity.EntityPotionEffectEvent
+import org.bukkit.event.player.PlayerQuitEvent
+import org.endera.enderalib.utils.async.runTaskLater
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import ru.turbovadim.v2.ability.AbilityEffect
 import ru.turbovadim.v2.ability.PotionReactionResult
 import ru.turbovadim.v2.di.OriginsContainer
@@ -21,6 +27,26 @@ import ru.turbovadim.v2.di.OriginsContainer
  * Handles food restrictions and potion consumption reactions.
  */
 class FoodAbilityProcessor(private val container: OriginsContainer) : Listener {
+    private val pending = ConcurrentHashMap<UUID, MutableMap<PotionEffectType, PotionReactionResult>>()
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    fun onPotionApplied(event: EntityPotionEffectEvent) {
+        if (event.cause != EntityPotionEffectEvent.Cause.POTION_DRINK) return
+        val player = event.entity as? Player ?: return
+        val effect = event.newEffect ?: return
+        when (val result = pending[player.uniqueId]?.remove(effect.type)) {
+            PotionReactionResult.Cancel -> event.isCancelled = true
+            is PotionReactionResult.Modify -> {
+                event.isCancelled = true
+                player.runTaskLater(container.plugin, 1L) { player.addPotionEffect(result.newEffect) }
+            }
+            else -> {}
+        }
+    }
+
+    @EventHandler
+    fun onQuit(event: PlayerQuitEvent) { pending.remove(event.player.uniqueId) }
+
 
     /**
      * Register this processor as a Bukkit listener.
@@ -93,6 +119,9 @@ class FoodAbilityProcessor(private val container: OriginsContainer) : Listener {
         abilityKeys: Set<Key>
     ) {
         val potionMeta = item.itemMeta as? PotionMeta ?: return
+        val reactions = ConcurrentHashMap<PotionEffectType, PotionReactionResult>()
+        pending[player.uniqueId] = reactions
+        player.runTaskLater(container.plugin, 1L) { pending.remove(player.uniqueId, reactions) }
 
         // Get all potion effects from this potion (version-compatible)
         val effects = mutableListOf<PotionEffect>()
@@ -120,13 +149,10 @@ class FoodAbilityProcessor(private val container: OriginsContainer) : Listener {
 
                     when (val result = effect.handler.onConsume(player, potionEffect, accessor)) {
                         is PotionReactionResult.Cancel -> {
-                            // Remove the effect if it was applied
-                            player.removePotionEffect(potionEffect.type)
+                            reactions[potionEffect.type] = result
                         }
                         is PotionReactionResult.Modify -> {
-                            // Replace with modified effect
-                            player.removePotionEffect(potionEffect.type)
-                            player.addPotionEffect(result.newEffect)
+                            reactions[potionEffect.type] = result
                         }
                         is PotionReactionResult.Damage -> {
                             // Deal damage to the player

@@ -101,7 +101,7 @@ class ReactiveAbilityProcessor(private val container: OriginsContainer) : Listen
 
         // Handle outgoing damage (player is the attacker)
         (attacker as? Player)?.let { player ->
-            processOutgoingDamage(player, event)
+            if (event.damager is Player) processOutgoingDamage(player, event)
         }
 
         // Handle incoming damage from entity (player is the victim)

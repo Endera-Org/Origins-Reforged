@@ -15,6 +15,7 @@ import ru.turbovadim.v2.ability.PotionReactionResult
 import ru.turbovadim.v2.api.OriginsApi
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.text
+import ru.turbovadim.v2.dsl.listener
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.min
@@ -75,6 +76,12 @@ val magicResistance = ability("magic_resistance", "fantasyorigins") {
             if (cause == DamageCause.MAGIC) DamageResult.Cancel else DamageResult.Allow
         }
     )
+
+    listener<org.bukkit.event.entity.EntityPotionEffectEvent>(
+        playerFrom = { it.entity as? Player }
+    ) { _, event, _ ->
+        if (event.newEffect?.type == PotionEffectType.POISON) event.isCancelled = true
+    }
 
     onPotionConsume { _, effect, _ ->
         if (effect.type == PotionEffectType.POISON) {

@@ -135,21 +135,22 @@ val lowerTotemChance = ability("lower_totem_chance", "moborigins") {
     option("save_chance", 0.1)
 
     listener<EntityResurrectEvent>(
-        ignoreCancelled = false,
+        priority = org.bukkit.event.EventPriority.MONITOR,
+        ignoreCancelled = true,
         playerFrom = { it.entity as? Player }
-    ) { player, _, config ->
+    ) { player, event, config ->
+        val hand = event.hand ?: return@listener
         val chance = config.getDouble("save_chance", 0.1)
         if (random.nextDouble() >= chance) return@listener
 
-        val newTotem = ItemStack(Material.TOTEM_OF_UNDYING)
-        val equipment = player.equipment
-
-        // Entity-tied: replacing totem is on the player's own region thread.
         player.runTaskLater(OriginsReforged.instance, 1L) {
-            if (equipment.itemInMainHand.type == Material.TOTEM_OF_UNDYING) {
-                equipment.setItemInMainHand(newTotem)
-            } else {
-                equipment.setItemInOffHand(newTotem)
+            val newTotem = ItemStack(Material.TOTEM_OF_UNDYING)
+            val current = player.inventory.getItem(hand)
+            if (current.type.isAir) player.inventory.setItem(hand, newTotem)
+            else {
+                player.inventory.addItem(newTotem).values.forEach {
+                    player.world.dropItemNaturally(player.location, it)
+                }
             }
         }
     }

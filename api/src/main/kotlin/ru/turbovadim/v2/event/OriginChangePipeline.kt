@@ -11,6 +11,7 @@ import ru.turbovadim.v2.origin.Origin
  */
 enum class OriginChangeReason {
     COMMAND,
+    ADMIN_COMMAND,
     ORB,
     UI,
     DATABASE_LOAD,

@@ -7,6 +7,8 @@ import org.bukkit.potion.PotionEffectType
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.text
+import ru.turbovadim.v2.util.PlayerVisibility
+import net.kyori.adventure.key.Key
 
 // ============================================
 // FOOD RESTRICTION ABILITIES
@@ -137,18 +139,11 @@ val pumpkinHate = ability("pumpkin_hate") {
 
     // Periodic check for players wearing carved pumpkins - hide them
     onTick(interval = 10) { player, _ ->
-        val onlinePlayers = Bukkit.getOnlinePlayers()
-        val pumpkinWearers = onlinePlayers.filter { it.inventory.helmet?.type == Material.CARVED_PUMPKIN }
-        val nonPumpkinWearers = onlinePlayers.filter { it !in pumpkinWearers }
-
-        // Hide players wearing carved pumpkins from this player
-        pumpkinWearers.filter { it != player }.forEach { pumpkinWearer ->
-            player.hidePlayer(OriginsReforged.instance, pumpkinWearer)
-        }
-
-        // Show players not wearing pumpkins
-        nonPumpkinWearers.filter { it != player }.forEach { other ->
-            player.showPlayer(OriginsReforged.instance, other)
+        Bukkit.getOnlinePlayers().filter { it != player }.forEach { other ->
+            org.endera.enderalib.utils.async.EntityScheduler.execute(OriginsReforged.instance, other, {
+                val wearingPumpkin = other.inventory.helmet?.type == Material.CARVED_PUMPKIN
+                PlayerVisibility.setHidden(player, other, OriginsReforged.instance, Key.key("origins:pumpkin_hate")) { wearingPumpkin }
+            })
         }
         true
     }
@@ -156,7 +151,7 @@ val pumpkinHate = ability("pumpkin_hate") {
     onDependencyDisabled { player, _ ->
         Bukkit.getOnlinePlayers()
             .filter { it != player }
-            .forEach { player.showPlayer(OriginsReforged.instance, it) }
+            .forEach { PlayerVisibility.setHidden(player, it, OriginsReforged.instance, Key.key("origins:pumpkin_hate")) { false } }
     }
 }
 

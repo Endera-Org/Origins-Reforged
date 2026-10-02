@@ -97,6 +97,7 @@ object MainAbilities {
         velvetPaws,
 
         // Physical abilities
+        noShield,
         weakArms,
         strongArms,
         unwieldy,

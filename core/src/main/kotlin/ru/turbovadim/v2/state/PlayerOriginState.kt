@@ -37,6 +37,8 @@ class PlayerOriginState(
     /** Whether this player's origins have finished loading from the database. */
     @Volatile var dbLoadComplete: Boolean = false
         internal set
+    @Volatile var dbLoadFailed: Boolean = false
+        internal set
 
     // Ability-specific state storage (legacy - uses ability key)
     // Each ability can store its own state here using its key

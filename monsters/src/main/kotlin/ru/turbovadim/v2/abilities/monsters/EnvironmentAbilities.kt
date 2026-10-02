@@ -1,5 +1,7 @@
 package ru.turbovadim.v2.abilities.monsters
 
+import ru.turbovadim.v2.util.refreshPotionEffect
+
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
@@ -111,18 +113,18 @@ val swimSpeedMonsters = ability("swim_speed", "monsterorigins") {
             val effect = player.getPotionEffect(PotionEffectType.DOLPHINS_GRACE)
             val ambient = effect?.isAmbient ?: false
             val showParticles = effect?.hasParticles() ?: false
-            player.addPotionEffect(
+            player.refreshPotionEffect(
                 PotionEffect(
                     PotionEffectType.DOLPHINS_GRACE,
-                    Int.MAX_VALUE,
-                    -1,
+                    100,
+                    0,
                     ambient,
                     showParticles
                 )
             )
         } else {
             val effect = player.getPotionEffect(PotionEffectType.DOLPHINS_GRACE)
-            if (effect != null && effect.amplifier == -1) {
+            if (effect != null && effect.amplifier == 0) {
                 player.removePotionEffect(PotionEffectType.DOLPHINS_GRACE)
             }
         }
