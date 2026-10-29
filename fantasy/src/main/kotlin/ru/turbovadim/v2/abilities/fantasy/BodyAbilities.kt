@@ -1,6 +1,8 @@
 package ru.turbovadim.v2.abilities.fantasy
 
 import org.bukkit.attribute.AttributeModifier
+import org.bukkit.event.entity.EntityDamageEvent.DamageCause
+import ru.turbovadim.v2.ability.DamageResult
 import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.text
@@ -20,11 +22,19 @@ val doubleHealthFantasy = ability("double_health", "fantasyorigins") {
 
 val strongSkin = ability("strong_skin", "fantasyorigins") {
     title = text("Strong Skin")
-    description(
-        "Your skin is much stronger than that of a regular human, providing natural protection."
-    )
+    description("Your scales are much tougher than human skin, so arrows deal less damage to you.")
 
-    attribute(AttributeType.ARMOR_TOUGHNESS, 2.0, configKey = "armor_toughness")
+    option("projectile_damage_multiplier", 0.5)
+
+    modifyDamage(
+        incoming = { _, damage, cause, config ->
+            if (cause == DamageCause.PROJECTILE) {
+                DamageResult.Modify(damage * config.getDouble("projectile_damage_multiplier", 0.5))
+            } else {
+                DamageResult.Allow
+            }
+        }
+    )
 }
 
 val largeBody = ability("large_body", "fantasyorigins") {
@@ -33,7 +43,7 @@ val largeBody = ability("large_body", "fantasyorigins") {
 
     attribute(
         AttributeType.SCALE,
-        0.5,
+        0.67,
         operation = AttributeModifier.Operation.ADD_SCALAR,
         configKey = "scale_modifier"
     )

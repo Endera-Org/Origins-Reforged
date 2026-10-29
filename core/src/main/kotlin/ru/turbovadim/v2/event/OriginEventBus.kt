@@ -178,6 +178,7 @@ class OriginEventBus(private val container: OriginsContainer) : Listener {
 
         // Register periodic work before applying the new effects.
         container.periodicAbilityProcessor.updatePlayer(player.uniqueId, state.getAbilityKeys())
+        container.triggeredAbilityProcessor.updatePlayer(player, state.getAbilityKeys())
 
         // The change pipeline already runs on the player's owning thread.
         triggerRemovedAbilityLifecycles(player, oldOrigin, newOrigin)

@@ -14,7 +14,7 @@ import org.bukkit.event.block.NotePlayEvent
 import org.bukkit.event.entity.EntityDeathEvent
 import org.bukkit.event.entity.EntityShootBowEvent
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent
-import org.bukkit.event.player.PlayerInteractAtEntityEvent
+import org.bukkit.event.player.PlayerInteractEntityEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerToggleSneakEvent
 import org.bukkit.inventory.EquipmentSlot
@@ -22,12 +22,28 @@ import ru.turbovadim.v2.ability.AbilityConfigAccessor
 import ru.turbovadim.v2.ability.AbilityEffect
 import ru.turbovadim.v2.ability.KeyBindType
 import ru.turbovadim.v2.di.OriginsContainer
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Processor for triggered ability effects.
  * Handles player actions like jumping, sneaking, attacking, clicking, etc.
  */
 class TriggeredAbilityProcessor(private val container: OriginsContainer) : Listener {
+
+    /** Players holding an OnNoteBlockPlay ability, so note events skip everyone else. */
+    private val noteBlockListeners: MutableSet<Player> = ConcurrentHashMap.newKeySet()
+
+    /** Re-indexes [player] after their abilities changed. */
+    fun updatePlayer(player: Player, abilityKeys: Set<Key>) {
+        val listensToNotes = abilityKeys.any { key ->
+            container.abilityRegistry.getTriggeredEffects(key).any { it is AbilityEffect.Triggered.OnNoteBlockPlay }
+        }
+        if (listensToNotes) noteBlockListeners += player else noteBlockListeners -= player
+    }
+
+    fun removePlayer(player: Player) {
+        noteBlockListeners -= player
+    }
 
     /**
      * Register this processor as a Bukkit listener.
@@ -163,7 +179,7 @@ class TriggeredAbilityProcessor(private val container: OriginsContainer) : Liste
     // ============================================
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
-    fun onEntityInteract(event: PlayerInteractAtEntityEvent) {
+    fun onEntityInteract(event: PlayerInteractEntityEvent) {
         val player = event.player
         val entity = event.rightClicked
         val hand = event.hand
@@ -181,12 +197,12 @@ class TriggeredAbilityProcessor(private val container: OriginsContainer) : Liste
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun onNoteBlockPlay(event: NotePlayEvent) {
+        if (noteBlockListeners.isEmpty()) return
         val block = event.block
-        val location = block.location
 
-        // Find nearby players with OnNoteBlockPlay abilities
-        val nearbyPlayers = location.world.getNearbyPlayers(location, 16.0)
-        for (player in nearbyPlayers) {
+        // Handlers apply their own (configurable) range.
+        for (player in noteBlockListeners) {
+            if (player.world != block.world) continue
             processTriggeredEffects<AbilityEffect.Triggered.OnNoteBlockPlay>(player) { effect, accessor ->
                 effect.handler.onNotePlay(player, block, accessor)
             }
@@ -197,17 +213,24 @@ class TriggeredAbilityProcessor(private val container: OriginsContainer) : Liste
     // BLOCK BREAK HANDLING
     // ============================================
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    // HIGH rather than MONITOR because handlers may replace the block's drops.
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     fun onBlockBreak(event: BlockBreakEvent) {
         val player = event.player
         val block = event.block
         val keys = container.playerStateManager.getStateOrNull(player)?.getAbilityKeys().orEmpty()
         if (keys.none { key -> container.abilityRegistry.getTriggeredEffects(key).any { it is AbilityEffect.Triggered.OnBlockBreak } }) return
-        val drops = event.block.getDrops(player.inventory.itemInMainHand).toMutableList()
+        val originalDrops = block.getDrops(player.inventory.itemInMainHand, player).toList()
+        val drops = originalDrops.toMutableList()
 
         processTriggeredEffects<AbilityEffect.Triggered.OnBlockBreak>(player) { effect, accessor ->
             effect.handler.onBreak(player, block, drops, accessor)
         }
+
+        if (drops == originalDrops || !event.isDropItems) return
+        event.isDropItems = false
+        val dropLocation = block.location.toCenterLocation()
+        drops.forEach { block.world.dropItemNaturally(dropLocation, it) }
     }
 
     // ============================================

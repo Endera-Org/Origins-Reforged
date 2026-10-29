@@ -1,6 +1,7 @@
 package ru.turbovadim.v2.abilities.fantasy
 
 import com.destroystokyo.paper.MaterialTags
+import org.bukkit.GameMode
 import org.bukkit.Material
 import org.bukkit.entity.DragonFireball
 import org.bukkit.inventory.ItemStack
@@ -53,18 +54,6 @@ val dragonFireball = ability("dragon_fireball", "fantasyorigins") {
     }
 }
 
-/**
- * Half Horse - Marker ability. Horse spawning/mounting logic is handled by a
- * dedicated PermanentHorse listener system (out of DSL scope). The tick here
- * keeps the ability registered and visible.
- */
-val permanentHorse = ability("permanent_horse", "fantasyorigins") {
-    title = text("Half Horse")
-    description("You are half horse, half human.")
-
-    onTick(interval = 20) { _, _ -> true }
-}
-
 val fortuneIncreaser = ability("fortune_increaser", "fantasyorigins") {
     title = text("Careful Miner")
     description(
@@ -75,6 +64,7 @@ val fortuneIncreaser = ability("fortune_increaser", "fantasyorigins") {
     option("fortune_bonus", 2)
 
     onBlockBreak { player, block, drops, config ->
+        if (!MaterialTags.ORES.isTagged(block) || player.gameMode == GameMode.CREATIVE) return@onBlockBreak
         val fortuneBonus = config.getInt("fortune_bonus", 2)
 
         val tool = player.inventory.itemInMainHand.clone()
@@ -113,7 +103,6 @@ val breathStorer = ability("breath_storer", "fantasyorigins") {
 
 val specialAbilities = listOf(
     dragonFireball,
-    permanentHorse,
     fortuneIncreaser,
     breathStorer
 )

@@ -94,25 +94,22 @@ val chime = ability("chime", "fantasyorigins") {
 
 val noteBlockPower = ability("note_block_power", "fantasyorigins") {
     title = text("Musically Attuned")
-    description("You gain strength and speed when a nearby Note Block is played.")
+    description("You regenerate health when a nearby Note Block is played.")
 
-    option("effect_duration", 600)
-    option("effect_amplifier", 1)
+    option("effect_duration", 200)
+    option("effect_amplifier", 0)
     option("detection_radius", 32.0)
 
     onNoteBlockPlay { player, block, config ->
         val radius = config.getDouble("detection_radius", 32.0)
-        val duration = config.getInt("effect_duration", 600)
-        val amplifier = config.getInt("effect_amplifier", 1)
+        if (player.location.distanceSquared(block.location.toCenterLocation()) > radius * radius) return@onNoteBlockPlay
+        val duration = config.getInt("effect_duration", 200)
+        val amplifier = config.getInt("effect_amplifier", 0)
 
-        // NotePlayEvent fires on the note block's region in Folia; distance and
-        // location reads are snapshot-safe, but potion effect mutations must
-        // happen on the player's own region.
-        if (player.location.distance(block.location) > radius) return@onNoteBlockPlay
-
+        // NotePlayEvent fires on the note block's region in Folia; potion effect
+        // mutations must happen on the player's own region.
         player.runTask(OriginsReforged.instance) {
-            player.addPotionEffect(PotionEffect(PotionEffectType.SPEED, duration, amplifier))
-            player.addPotionEffect(PotionEffect(PotionEffectType.STRENGTH, duration, amplifier))
+            player.addPotionEffect(PotionEffect(PotionEffectType.REGENERATION, duration, amplifier))
         }
     }
 }
@@ -124,13 +121,8 @@ val elegy = ability("elegy", "fantasyorigins") {
     option("health_threshold", 6.0)
     option("damage_multiplier", 2.0)
 
-    conditionalAttributeWhen(
-        type = AttributeType.ATTACK_DAMAGE,
-        value = 2.0,
-        operation = AttributeModifier.Operation.MULTIPLY_SCALAR_1,
-        checkInterval = 20
-    ) { player, config ->
-        player.health <= config.getDouble("health_threshold", 6.0)
+    conditionalAttribute(AttributeType.ATTACK_DAMAGE, AttributeModifier.Operation.MULTIPLY_SCALAR_1, checkInterval = 10) { player, config ->
+        if (player.health <= config.getDouble("health_threshold", 6.0)) config.getDouble("damage_multiplier", 2.0) else 0.0
     }
 }
 

@@ -518,14 +518,15 @@ fun interface EntityInteractHandler {
 }
 
 /**
- * Handler for note block play events.
+ * Handler for note block play events. Called for every player with the ability in the block's
+ * world, on the note block's thread, so handlers must check distance and hop to the player themselves.
  */
 fun interface NoteBlockHandler {
     fun onNotePlay(player: Player, block: Block, config: AbilityConfigAccessor)
 }
 
 /**
- * Handler for block break events.
+ * Handler for block break events. Mutating [drops] replaces what the block drops.
  */
 fun interface BlockBreakHandler {
     fun onBreak(player: Player, block: Block, drops: MutableList<ItemStack>, config: AbilityConfigAccessor)

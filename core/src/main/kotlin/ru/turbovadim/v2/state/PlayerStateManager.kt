@@ -149,6 +149,7 @@ class PlayerStateManager(
 
         // Notify periodic processor to remove player's tasks
         container.periodicAbilityProcessor.removePlayer(player.uniqueId)
+        container.triggeredAbilityProcessor.removePlayer(player)
     }
 
     /**

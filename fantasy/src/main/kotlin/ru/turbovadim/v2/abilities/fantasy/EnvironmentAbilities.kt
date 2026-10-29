@@ -4,9 +4,11 @@ import io.papermc.paper.world.MoonPhase
 import org.bukkit.World
 import org.bukkit.attribute.AttributeModifier
 import org.bukkit.entity.EnderCrystal
+import org.bukkit.entity.Player
 import org.endera.enderalib.utils.async.runTask
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.ability.AttributeType
+import ru.turbovadim.v2.dsl.AbilityBuilder
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.text
 import kotlin.math.min
@@ -15,6 +17,26 @@ import kotlin.math.min
  * Environment and dimension-related abilities for the Fantasy Origins module.
  */
 
+/**
+ * Applies the configurable modifier [configKey] (defaulting to [default]) while [active] holds.
+ */
+internal fun AbilityBuilder.attributeWhile(
+    type: AttributeType,
+    configKey: String,
+    default: Double,
+    operation: AttributeModifier.Operation = AttributeModifier.Operation.ADD_NUMBER,
+    checkInterval: Int = 20,
+    active: (Player) -> Boolean
+) {
+    option(configKey, default)
+    conditionalAttribute(type, operation, checkInterval) { player, config ->
+        if (active(player)) config.getDouble(configKey, default) else 0.0
+    }
+}
+
+private val isInEnd: (Player) -> Boolean = { it.world.environment == World.Environment.THE_END }
+private val isWet: (Player) -> Boolean = { it.isInWaterOrRainOrBubbleColumn }
+
 val endBoost = ability("end_boost", "fantasyorigins") {
     title = text("End Inhabitant")
     description(
@@ -22,26 +44,8 @@ val endBoost = ability("end_boost", "fantasyorigins") {
         "and are stronger when you are there."
     )
 
-    option("damage_multiplier", 1.6)
-    option("health_bonus", 20.0)
-
-    conditionalAttributeWhen(
-        type = AttributeType.ATTACK_DAMAGE,
-        value = 1.6,
-        operation = AttributeModifier.Operation.MULTIPLY_SCALAR_1,
-        checkInterval = 20
-    ) { player, config ->
-        player.world.environment == World.Environment.THE_END
-    }
-
-    conditionalAttributeWhen(
-        type = AttributeType.MAX_HEALTH,
-        value = 20.0,
-        operation = AttributeModifier.Operation.ADD_NUMBER,
-        checkInterval = 20
-    ) { player, config ->
-        player.world.environment == World.Environment.THE_END
-    }
+    attributeWhile(AttributeType.ATTACK_DAMAGE, "damage_multiplier", 1.6, AttributeModifier.Operation.MULTIPLY_SCALAR_1, active = isInEnd)
+    attributeWhile(AttributeType.MAX_HEALTH, "health_bonus", 20.0, active = isInEnd)
 }
 
 val endCrystalHealing = ability("end_crystal_healing", "fantasyorigins") {
@@ -94,36 +98,10 @@ val oceanWish = ability("ocean_wish", "fantasyorigins") {
         "when you're not in the water."
     )
 
-    option("land_damage_multiplier", -0.4)
-    option("land_health_penalty", -12.0)
-    option("land_speed_multiplier", -0.4)
-
-    conditionalAttributeWhen(
-        type = AttributeType.ATTACK_DAMAGE,
-        value = -0.4,
-        operation = AttributeModifier.Operation.MULTIPLY_SCALAR_1,
-        checkInterval = 20
-    ) { player, _ ->
-        !player.isInWaterOrRainOrBubbleColumn
-    }
-
-    conditionalAttributeWhen(
-        type = AttributeType.MAX_HEALTH,
-        value = -12.0,
-        operation = AttributeModifier.Operation.ADD_NUMBER,
-        checkInterval = 20
-    ) { player, _ ->
-        !player.isInWaterOrRainOrBubbleColumn
-    }
-
-    conditionalAttributeWhen(
-        type = AttributeType.MOVEMENT_SPEED,
-        value = -0.4,
-        operation = AttributeModifier.Operation.MULTIPLY_SCALAR_1,
-        checkInterval = 20
-    ) { player, _ ->
-        !player.isInWaterOrRainOrBubbleColumn
-    }
+    val onLand: (Player) -> Boolean = { !isWet(it) }
+    attributeWhile(AttributeType.ATTACK_DAMAGE, "land_damage_multiplier", -0.4, AttributeModifier.Operation.MULTIPLY_SCALAR_1, active = onLand)
+    attributeWhile(AttributeType.MAX_HEALTH, "land_health_penalty", -12.0, active = onLand)
+    attributeWhile(AttributeType.MOVEMENT_SPEED, "land_speed_multiplier", -0.4, AttributeModifier.Operation.MULTIPLY_SCALAR_1, active = onLand)
 }
 
 val oceansGrace = ability("oceans_grace", "fantasyorigins") {
@@ -133,26 +111,8 @@ val oceansGrace = ability("oceans_grace", "fantasyorigins") {
         "and deal extra damage when in water or rain."
     )
 
-    option("water_damage_multiplier", 1.4)
-    option("water_health_bonus", 4.0)
-
-    conditionalAttributeWhen(
-        type = AttributeType.ATTACK_DAMAGE,
-        value = 1.4,
-        operation = AttributeModifier.Operation.MULTIPLY_SCALAR_1,
-        checkInterval = 20
-    ) { player, _ ->
-        player.isInWaterOrRainOrBubbleColumn
-    }
-
-    conditionalAttributeWhen(
-        type = AttributeType.MAX_HEALTH,
-        value = 4.0,
-        operation = AttributeModifier.Operation.ADD_NUMBER,
-        checkInterval = 20
-    ) { player, _ ->
-        player.isInWaterOrRainOrBubbleColumn
-    }
+    attributeWhile(AttributeType.ATTACK_DAMAGE, "water_damage_multiplier", 1.4, AttributeModifier.Operation.MULTIPLY_SCALAR_1, active = isWet)
+    attributeWhile(AttributeType.MAX_HEALTH, "water_health_bonus", 4.0, active = isWet)
 }
 
 val moonStrength = ability("moon_strength", "fantasyorigins") {
@@ -162,16 +122,13 @@ val moonStrength = ability("moon_strength", "fantasyorigins") {
         "you're stronger than normal."
     )
 
-    option("damage_multiplier", 2.4)
-
-    conditionalAttributeWhen(
-        type = AttributeType.ATTACK_DAMAGE,
-        value = 2.4,
-        operation = AttributeModifier.Operation.MULTIPLY_SCALAR_1,
+    attributeWhile(
+        AttributeType.ATTACK_DAMAGE,
+        "damage_multiplier",
+        2.4,
+        AttributeModifier.Operation.MULTIPLY_SCALAR_1,
         checkInterval = 40
-    ) { player, _ ->
-        !player.world.isDayTime && player.world.moonPhase == MoonPhase.FULL_MOON
-    }
+    ) { player -> !player.world.isDayTime && player.world.moonPhase == MoonPhase.FULL_MOON }
 }
 
 val environmentAbilities = listOf(

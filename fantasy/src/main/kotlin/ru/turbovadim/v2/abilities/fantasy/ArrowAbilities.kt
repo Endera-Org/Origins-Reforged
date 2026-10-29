@@ -7,6 +7,9 @@ import org.bukkit.entity.Arrow
 import org.bukkit.entity.Player
 import org.bukkit.entity.Projectile
 import org.bukkit.event.entity.EntityDamageByEntityEvent
+import org.bukkit.event.entity.EntityShootBowEvent
+import org.bukkit.inventory.EquipmentSlot
+import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataType
 import org.bukkit.util.Vector
 import ru.turbovadim.OriginsReforged
@@ -21,6 +24,8 @@ import kotlin.random.Random
 
 internal val INCREASED_DAMAGE_KEY: NamespacedKey =
     NamespacedKey.fromString("originsreforged:increased_arrow_damage")!!
+
+private val BOW_BURST_KEY = NamespacedKey("fantasyorigins", "bow_burst")
 
 /**
  * Piercing Shot - All arrows deal increased damage.
@@ -88,13 +93,14 @@ val arrowEffectBooster = ability("arrow_effect_booster", "fantasyorigins") {
 }
 
 /**
- * Perfect Shot - Arrows always fly straight (zero velocity spread).
+ * Perfect Shot - Arrows always fly straight (zero velocity spread). Bow burst keeps its intentional spread.
  */
 val perfectShot = ability("perfect_shot", "fantasyorigins") {
     title = text("Perfect Shot")
     description("Your arrows always fly perfectly straight and true.")
 
     onBowShoot { player, projectile, _ ->
+        if (projectile.persistentDataContainer.has(BOW_BURST_KEY)) return@onBowShoot
         val speed = projectile.velocity.length()
         projectile.velocity = player.location.direction.normalize().multiply(speed)
     }
@@ -120,6 +126,7 @@ val poorShot = ability("poor_shot", "fantasyorigins") {
 
 /**
  * Bow Burst - Fire 3 arrows with one shot and apply a 7 second bow cooldown.
+ * Each arrow fires an [EntityShootBowEvent] so other bow abilities (damage, speed, effects) apply to it.
  */
 val bowBurst = ability("bow_burst", "fantasyorigins") {
     title = text("Bow Burst")
@@ -150,9 +157,13 @@ val bowBurst = ability("bow_burst", "fantasyorigins") {
         val divergence = config.getDouble("arrow_divergence", 1.0).toFloat()
 
         repeat(count) {
-            val arrow: Projectile = player.launchProjectile(Arrow::class.java)
+            val arrow = player.launchProjectile(Arrow::class.java)
             OriginsReforged.NMSInvoker.launchArrow(arrow, player, 0f, force, divergence)
-            (arrow as? AbstractArrow)?.pickupStatus = AbstractArrow.PickupStatus.CREATIVE_ONLY
+            arrow.pickupStatus = AbstractArrow.PickupStatus.CREATIVE_ONLY
+            arrow.persistentDataContainer.set(BOW_BURST_KEY, PersistentDataType.BOOLEAN, true)
+
+            val shot = EntityShootBowEvent(player, item, ItemStack(Material.ARROW), arrow, EquipmentSlot.HAND, 1f, false)
+            if (!shot.callEvent()) arrow.remove()
         }
 
         true
