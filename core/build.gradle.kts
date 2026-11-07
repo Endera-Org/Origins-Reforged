@@ -7,6 +7,7 @@ dependencies {
     api(project(":api"))
     testImplementation(kotlin("test-junit5"))
     testImplementation(libs.paper.api)
+    testImplementation(libs.placeholderapi)
     testImplementation("org.mockito:mockito-core:5.23.0")
     testImplementation("com.h2database:h2:2.5.252")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:6.1.0")

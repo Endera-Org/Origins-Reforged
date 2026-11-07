@@ -1,5 +1,6 @@
 package ru.turbovadim.v2.abilities.mobs
 
+import org.bukkit.GameMode
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.Tag
@@ -8,12 +9,14 @@ import org.bukkit.block.BlockFace
 import org.bukkit.entity.LivingEntity
 import org.bukkit.entity.Player
 import org.bukkit.entity.Snowball
+import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.entity.ProjectileHitEvent
 import org.bukkit.event.entity.ProjectileLaunchEvent
 import org.bukkit.persistence.PersistentDataType
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.dsl.ability
+import ru.turbovadim.v2.event.OriginChangeReason
 import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
 import kotlin.math.max
@@ -23,12 +26,14 @@ import kotlin.math.min
  * Snow and temperature-related abilities for the Mobs module.
  */
 
-private val playerTemperatureMap = java.util.concurrent.ConcurrentHashMap<java.util.UUID, Int>()
+// Stored on the player so relogging doesn't cool a snow golem down.
+private val TEMPERATURE_KEY = NamespacedKey("moborigins", "snow_golem_temperature")
 
-fun getTemperature(player: Player): Int = playerTemperatureMap.getOrDefault(player.uniqueId, 0)
+private fun getTemperature(player: Player): Int =
+    player.persistentDataContainer.getOrDefault(TEMPERATURE_KEY, PersistentDataType.INTEGER, 0)
 
-fun setTemperature(player: Player, amount: Int) {
-    playerTemperatureMap[player.uniqueId] = max(0, min(amount, 100))
+private fun setTemperature(player: Player, amount: Int) {
+    player.persistentDataContainer.set(TEMPERATURE_KEY, PersistentDataType.INTEGER, max(0, min(amount, 100)))
 }
 
 private val snowballMarkKey: NamespacedKey by lazy {
@@ -37,10 +42,10 @@ private val snowballMarkKey: NamespacedKey by lazy {
 
 val snowTrail = ability("snow_trail", "moborigins") {
     title = text("Snow Trail")
-    onDependencyDisabled { player, _ -> playerTemperatureMap.remove(player.uniqueId) }
     description("You leave a trail of snow.")
 
     onTick(interval = 1) { player, _ ->
+        if (player.gameMode == GameMode.SPECTATOR) return@onTick false
         val block = player.location.block
         if (block.type == Material.AIR) {
             val snowData = Material.SNOW.createBlockData()
@@ -125,7 +130,7 @@ val temperature = ability("temperature", "moborigins") {
 
 val overheat = ability("overheat", "moborigins") {
     title = text("Overheat")
-    description("You have a temperature bar that slowly begins to fill in hot biomes, and cool in other biomes.")
+    description("You slowly heat up in hot biomes, and cool down in other biomes.")
 
     option("check_interval", 20)
     option("hot_threshold", 1.0)
@@ -143,6 +148,12 @@ val overheat = ability("overheat", "moborigins") {
         }
         setTemperature(player, newTemp)
         true
+    }
+
+    listener<PlayerDeathEvent>(playerFrom = { it.player }) { player, _, _ -> setTemperature(player, 0) }
+
+    onOriginChanged { player, event, _ ->
+        if (event.reason != OriginChangeReason.DATABASE_LOAD) setTemperature(player, 0)
     }
 }
 

@@ -3,6 +3,25 @@ package ru.turbovadim.v2.abilities.mobs
 import ru.turbovadim.v2.util.refreshPotionEffect
 
 import com.destroystokyo.paper.MaterialTags
+import net.kyori.adventure.key.Key
+import org.bukkit.Bukkit
+import org.bukkit.GameMode
+import org.bukkit.Sound
+import org.bukkit.SoundCategory
+import org.bukkit.World
+import org.bukkit.enchantments.Enchantment
+import org.bukkit.entity.Entity
+import org.bukkit.entity.LivingEntity
+import org.bukkit.entity.Trident
+import org.bukkit.event.entity.EntityTargetLivingEntityEvent
+import org.bukkit.event.entity.ProjectileHitEvent
+import org.bukkit.event.entity.SlimeSplitEvent
+import org.bukkit.event.player.PlayerQuitEvent
+import org.bukkit.inventory.EquipmentSlot
+import ru.turbovadim.v2.ability.AbilityConfigAccessor
+import ru.turbovadim.v2.api.OriginsApi
+import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.Tag
@@ -55,11 +74,7 @@ val warpedFungusEater = ability("warped_fungus_eater", "moborigins") {
         if (item?.type != Material.WARPED_FUNGUS) return@onRightClick false
 
         item.amount--
-        if (player.inventory.itemInMainHand === item) {
-            player.swingMainHand()
-        } else {
-            player.swingOffHand()
-        }
+        player.swingMainHand()
 
         val speedDuration = config.getInt("speed_duration", 200)
         player.addPotionEffect(PotionEffect(PotionEffectType.SPEED, speedDuration, 0))
@@ -85,6 +100,7 @@ val undead = ability("undead", "moborigins") {
     onTick(interval = 20) { player, _ ->
         val location = player.location
         val world = player.world
+        if (world.environment != World.Environment.NORMAL) return@onTick true
 
         var block = world.getHighestBlockAt(location)
         while ((MaterialTags.GLASS.isTagged(block) || MaterialTags.GLASS_PANES.isTagged(block)) && block.y >= location.y) {
@@ -121,7 +137,7 @@ val sly = ability("sly", "moborigins") {
 
 val timidCreature = ability("timid_creature", "moborigins") {
     title = text("Timid Creature")
-    description("Your speed increases when you are around more than 3 other players.")
+    description("Your speed increases when 3 or more other players are around you.")
 
     option("required_players", 3)
     option("search_radius", 8.0)
@@ -165,7 +181,7 @@ val itemCollector = ability("item_collector", "moborigins") {
     option("pickup_radius", 2.5)
 
     onTick(interval = 1) { player, config ->
-        if (player.isDead) return@onTick false
+        if (player.isDead || player.gameMode == GameMode.SPECTATOR) return@onTick false
         val radius = config.getDouble("pickup_radius", 2.5)
         player.getNearbyEntities(radius, radius, radius)
             .filterIsInstance<Item>()
@@ -247,38 +263,89 @@ val zombieHunger = ability("zombie_hunger", "moborigins") {
     }
 }
 
+private val TRIDENT_EXPERT_KEY = Key.key("moborigins", "trident_expert")
+
+/** Trident mode is the first `active_ticks` of the cooldown started by activating it. */
+private fun isTridentModeActive(player: Player, config: AbilityConfigAccessor): Boolean {
+    val api = OriginsApi.getOrNull() ?: return false
+    val cooldown = config.getInt("cooldown_ticks", 1200)
+    return api.getCooldownTicks(player, TRIDENT_EXPERT_KEY) > cooldown - config.getInt("active_ticks", 400)
+}
+
+private fun riptideSound(level: Int) = when {
+    level >= 3 -> Sound.ITEM_TRIDENT_RIPTIDE_3
+    level == 2 -> Sound.ITEM_TRIDENT_RIPTIDE_2
+    else -> Sound.ITEM_TRIDENT_RIPTIDE_1
+}
+
 /**
- * Trident Expert - +2 damage when throwing and wielding tridents.
- * Simplified: flat damage bonus for trident melee and trident projectile.
+ * Trident Expert - left click with an empty hand or a trident for 20 seconds of +2 trident damage,
+ * Channeling without a thunderstorm and Riptide without rain (at extra durability).
  */
 val tridentExpert = ability("trident_expert", "moborigins") {
     title = text("Trident Expert")
-    description("You're a master of the trident, dealing +2 damage when you throw it, and +2 melee damage with it.")
+    description(
+        "Left click with an empty hand or a trident to master your trident for 20 seconds:",
+        "+2 trident damage, Channeling without a thunderstorm and Riptide without rain."
+    )
 
+    option("cooldown_ticks", 1200)
+    option("active_ticks", 400)
     option("damage_bonus", 2.0)
+    option("riptide_durability_cost", 10)
+
+    onPrimaryAction { player, config ->
+        val held = player.inventory.itemInMainHand.type
+        if (!held.isAir && held != Material.TRIDENT) return@onPrimaryAction
+        val api = OriginsApi.getOrNull() ?: return@onPrimaryAction
+        if (api.hasCooldown(player, TRIDENT_EXPERT_KEY)) return@onPrimaryAction
+
+        api.setCooldown(player, TRIDENT_EXPERT_KEY, config.getInt("cooldown_ticks", 1200), "trident_expert")
+        player.world.playSound(player, Sound.ITEM_TRIDENT_RETURN, SoundCategory.PLAYERS, 1f, 1f)
+    }
 
     modifyDamage(
         outgoing = { player, damage, _, config ->
-            val item = player.inventory.itemInMainHand
-            if (item.type == Material.TRIDENT) {
-                val bonus = config.getDouble("damage_bonus", 2.0)
-                DamageResult.Modify(damage + bonus)
+            if (player.inventory.itemInMainHand.type == Material.TRIDENT && isTridentModeActive(player, config)) {
+                DamageResult.Modify(damage + config.getDouble("damage_bonus", 2.0))
             } else {
                 DamageResult.Allow
             }
         }
     )
 
-    // Thrown tridents: +2 damage via EntityDamageByEntityEvent where damager is a Trident owned by this player
     listener<EntityDamageByEntityEvent>(
-        playerFrom = { event ->
-            val projectile = event.damager as? Projectile ?: return@listener null
-            if (projectile.type != EntityType.TRIDENT) return@listener null
-            projectile.shooter as? Player
-        }
-    ) { _, event, config ->
-        val bonus = config.getDouble("damage_bonus", 2.0)
-        event.damage += bonus
+        playerFrom = { event -> (event.damager as? Trident)?.shooter as? Player }
+    ) { player, event, config ->
+        if (isTridentModeActive(player, config)) event.damage += config.getDouble("damage_bonus", 2.0)
+    }
+
+    // Channeling outside a thunderstorm; vanilla already handles it during one.
+    listener<ProjectileHitEvent>(
+        playerFrom = { event -> (event.entity as? Trident)?.shooter as? Player }
+    ) { player, event, config ->
+        val trident = event.entity as? Trident ?: return@listener
+        val hit = event.hitEntity ?: return@listener
+        if (trident.world.isThundering || !trident.itemStack.containsEnchantment(Enchantment.CHANNELING)) return@listener
+        if (!isTridentModeActive(player, config)) return@listener
+        hit.world.strikeLightning(hit.location)
+    }
+
+    // Riptide outside water/rain. The client refuses to charge such a trident, so the launch is instant.
+    onRightClick { player, item, _, config ->
+        if (item?.type != Material.TRIDENT) return@onRightClick false
+        val level = item.getEnchantmentLevel(Enchantment.RIPTIDE)
+        if (level <= 0 || player.isInWaterOrRainOrBubbleColumn) return@onRightClick false
+        if (player.hasCooldown(Material.TRIDENT) || !isTridentModeActive(player, config)) return@onRightClick false
+
+        @Suppress("DEPRECATION")
+        if (player.isOnGround) OriginsReforged.NMSInvoker.tridentMove(player)
+        player.velocity = player.velocity.add(player.location.direction.multiply(3.0 * (1 + level) / 4.0))
+        player.startRiptideAttack(20, 8f, item)
+        player.setCooldown(Material.TRIDENT, 20)
+        player.damageItemStack(EquipmentSlot.HAND, config.getInt("riptide_durability_cost", 10))
+        player.world.playSound(player, riptideSound(level), SoundCategory.PLAYERS, 1f, 1f)
+        true
     }
 }
 
@@ -372,12 +439,23 @@ val lavaWalk = ability("lava_walk", "moborigins") {
     }
 }
 
+private val SPLIT_KEY = Key.key("moborigins", "split")
+
+/** The last living entity each slime owner hit; their slimes go after it. */
+private val lastHitByOwner = ConcurrentHashMap<UUID, LivingEntity>()
+
+private val Entity.slimeOwner: UUID?
+    get() = persistentDataContainer.get(slimeOwnerKey, PersistentDataType.STRING)?.let(UUID::fromString)
+
+private fun lastVictim(owner: UUID, slime: Entity): LivingEntity? =
+    lastHitByOwner[owner]?.takeIf { it.isValid && it.world == slime.world && it.location.distanceSquared(slime.location) <= 256 }
+
 /**
- * Split - spawn a slime from food.
+ * Split - turn food into a slime that attacks whatever its owner last hit and never its owner.
  */
 val split = ability("split", "moborigins") {
     title = text("Split Ability")
-    description("Turn your food points into a small slime to defend you!")
+    description("Turn your food points into a small slime that fights for you!")
 
     option("cooldown_ticks", 600)
     option("food_cost", 8)
@@ -385,34 +463,70 @@ val split = ability("split", "moborigins") {
 
     onPrimaryAction { player, config ->
         if (!player.inventory.itemInMainHand.type.isAir) return@onPrimaryAction
-
-        val api = ru.turbovadim.v2.api.OriginsApi.getOrNull()
-        val abilityKey = net.kyori.adventure.key.Key.key("moborigins", "split")
-        if (api != null && api.hasCooldown(player, abilityKey)) return@onPrimaryAction
+        val api = OriginsApi.getOrNull() ?: return@onPrimaryAction
+        if (api.hasCooldown(player, SPLIT_KEY)) return@onPrimaryAction
 
         val foodCost = config.getInt("food_cost", 8)
         if (player.foodLevel < foodCost) return@onPrimaryAction
-
         player.foodLevel -= foodCost
-        val slimeSize = config.getInt("slime_size", 2)
 
-        val slime = player.world.spawnEntity(player.location, EntityType.SLIME) as Slime
-        slime.size = slimeSize
-        slime.persistentDataContainer.set(slimeOwnerKey, PersistentDataType.STRING, player.uniqueId.toString())
+        val owner = player.uniqueId
+        val slime = player.world.spawn(player.location, Slime::class.java) {
+            it.size = config.getInt("slime_size", 2)
+            it.persistentDataContainer.set(slimeOwnerKey, PersistentDataType.STRING, owner.toString())
+        }
+        // Slimes only hurt players and golems by touch, so hit the target directly. Runs on the slime's region.
+        slime.scheduler.runAtFixedRate(OriginsReforged.instance, { _ ->
+            val target = slime.target?.takeIf { it.isValid && it.uniqueId != owner } ?: lastVictim(owner, slime)
+            slime.target = target
+            if (target != null && target.location.distanceSquared(slime.location) <= 2.25) slime.attack(target)
+        }, null, 10L, 10L)
 
-        api?.setCooldown(player, abilityKey, config.getInt("cooldown_ticks", 600), "slime_ball")
+        api.setCooldown(player, SPLIT_KEY, config.getInt("cooldown_ticks", 600), "split")
     }
 
-    // Prevent owned slimes from damaging their owner
     listener<EntityDamageByEntityEvent>(
         playerFrom = { event ->
-            val slime = event.damager as? Slime ?: return@listener null
-            val victim = event.entity as? Player ?: return@listener null
-            val stored = slime.persistentDataContainer.get(slimeOwnerKey, PersistentDataType.STRING) ?: return@listener null
-            if (stored == victim.uniqueId.toString()) victim else null
+            when (val damager = event.damager) {
+                is Player -> damager
+                is Projectile -> damager.shooter as? Player
+                else -> null
+            }
+        }
+    ) { player, event, _ ->
+        val victim = event.entity as? LivingEntity ?: return@listener
+        if (victim.slimeOwner != player.uniqueId) lastHitByOwner[player.uniqueId] = victim
+    }
+
+    // Owned slimes never go after or hurt their owner.
+    listener<EntityTargetLivingEntityEvent>(
+        playerFrom = { event ->
+            val owner = event.entity.slimeOwner ?: return@listener null
+            (event.target as? Player)?.takeIf { it.uniqueId == owner }
+        }
+    ) { player, event, _ ->
+        val victim = lastVictim(player.uniqueId, event.entity)
+        if (victim != null) event.target = victim else event.isCancelled = true
+    }
+
+    listener<EntityDamageByEntityEvent>(
+        playerFrom = { event ->
+            val owner = event.damager.slimeOwner ?: return@listener null
+            (event.entity as? Player)?.takeIf { it.uniqueId == owner }
         }
     ) { _, event, _ ->
         event.isCancelled = true
+    }
+
+    // Splitting would leave ordinary hostile slimes behind.
+    listener<SlimeSplitEvent>(
+        playerFrom = { event -> event.entity.slimeOwner?.let(Bukkit::getPlayer) }
+    ) { _, event, _ ->
+        event.isCancelled = true
+    }
+
+    listener<PlayerQuitEvent>(playerFrom = { it.player }) { player, _, _ ->
+        lastHitByOwner.remove(player.uniqueId)
     }
 }
 

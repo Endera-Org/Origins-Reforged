@@ -78,7 +78,7 @@ val potionAction = ability("potion_action", "moborigins") {
         }
 
         player.addPotionEffect(PotionEffect(effectType, duration, 0))
-        api?.setCooldown(player, abilityKey, config.getInt("cooldown_ticks", 600), "potion")
+        api?.setCooldown(player, abilityKey, config.getInt("cooldown_ticks", 600), "potion_action")
     }
 }
 

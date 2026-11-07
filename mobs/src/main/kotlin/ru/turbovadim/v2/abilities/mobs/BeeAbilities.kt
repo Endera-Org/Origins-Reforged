@@ -1,5 +1,6 @@
 package ru.turbovadim.v2.abilities.mobs
 
+import net.kyori.adventure.key.Key
 import org.bukkit.Bukkit
 import org.bukkit.entity.EntityType
 import org.bukkit.entity.LivingEntity
@@ -8,6 +9,7 @@ import org.bukkit.event.entity.EntityTargetEvent
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
+import ru.turbovadim.v2.api.OriginsApi
 import ru.turbovadim.v2.dsl.ability
 import ru.turbovadim.v2.dsl.listener
 import ru.turbovadim.v2.dsl.text
@@ -20,6 +22,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 private val lastSneakTick = ConcurrentHashMap<UUID, Int>()
 private val lastStungTicks = ConcurrentHashMap<UUID, Int>()
+
+private val BEE_WINGS_KEY = Key.key("moborigins", "bee_wings")
 
 val beeWings = ability("bee_wings", "moborigins") {
     title = text("Bee Wings")
@@ -39,9 +43,13 @@ val beeWings = ability("bee_wings", "moborigins") {
         val lastTick = lastSneakTick.getOrDefault(player.uniqueId, currentTick - doubleTapWindow - 1)
 
         if (currentTick - lastTick <= doubleTapWindow) {
+            lastSneakTick.remove(player.uniqueId)
+            val api = OriginsApi.getOrNull() ?: return@onSneak
+            if (api.hasCooldown(player, BEE_WINGS_KEY)) return@onSneak
+
             val duration = config.getInt("effect_duration", 100)
             player.addPotionEffect(PotionEffect(PotionEffectType.SLOW_FALLING, duration, 0, false, true))
-            lastSneakTick.remove(player.uniqueId)
+            api.setCooldown(player, BEE_WINGS_KEY, config.getInt("cooldown_ticks", 300), "bee_wings")
         } else {
             lastSneakTick[player.uniqueId] = currentTick
         }
@@ -50,7 +58,7 @@ val beeWings = ability("bee_wings", "moborigins") {
 
 val stinger = ability("stinger", "moborigins") {
     title = text("Stinger")
-    description("When you punch someone with your fist, you poison them for a few seconds.")
+    description("Every 5 seconds, hitting something poisons it for a few seconds.")
 
     option("poison_duration", 60)
     option("poison_amplifier", 0)
@@ -60,7 +68,6 @@ val stinger = ability("stinger", "moborigins") {
 
     onAttack { player, target, config ->
         if (target !is LivingEntity) return@onAttack
-        if (!player.inventory.itemInMainHand.type.isAir) return@onAttack
 
         val currentTick = Bukkit.getCurrentTick()
         val stingCooldown = config.getInt("sting_cooldown", 100)

@@ -14,6 +14,7 @@ import ru.turbovadim.commands.OriginCommand
 import ru.turbovadim.config.*
 import ru.turbovadim.database.initDb
 import ru.turbovadim.packetsenders.*
+import ru.turbovadim.placeholder.OriginsPlaceholderExpansion
 import ru.turbovadim.v2.BuiltinModuleBootstrap
 import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.listener.OriginCommandDispatcher
@@ -73,6 +74,8 @@ class OriginsReforged : JavaPlugin() {
     var economy: Economy? = null
         private set
 
+    private var placeholderExpansion: OriginsPlaceholderExpansion? = null
+
     private fun setupEconomy(): Boolean {
         try {
             val economyProvider = server.servicesManager.getRegistration(Economy::class.java)
@@ -97,6 +100,8 @@ class OriginsReforged : JavaPlugin() {
     }
 
     override fun onDisable() {
+        placeholderExpansion?.unregister()
+        placeholderExpansion = null
         ShulkerInventoryUI.shutdown()
         OrbRecipe.unregister()
         v2Container?.shutdown()
@@ -179,6 +184,15 @@ class OriginsReforged : JavaPlugin() {
             Bukkit.getPluginManager().registerEvents(OriginJoinFlowListener(container), this)
             Bukkit.getPluginManager().registerEvents(OriginSelectionInvulnerabilityListener(container), this)
             Bukkit.getPluginManager().registerEvents(OriginDeathListener(container), this)
+
+            if (server.pluginManager.isPluginEnabled("PlaceholderAPI")) {
+                val expansion = OriginsPlaceholderExpansion(this, container.playerStateManager)
+                if (expansion.register()) {
+                    placeholderExpansion = expansion
+                } else {
+                    logger.warning("Failed to register Origins-Reforged placeholders with PlaceholderAPI")
+                }
+            }
         }
 
         PacketEvents.getAPI().init()

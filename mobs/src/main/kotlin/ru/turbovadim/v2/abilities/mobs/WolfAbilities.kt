@@ -13,6 +13,7 @@ import org.bukkit.event.entity.EntityTameEvent
 import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 import org.endera.enderalib.utils.async.runTask
+import org.endera.enderalib.utils.async.runTaskLater
 import ru.turbovadim.OriginsReforged
 import ru.turbovadim.v2.ability.AttributeType
 import ru.turbovadim.v2.dsl.ability
@@ -47,7 +48,9 @@ val alphaWolf = ability("alpha_wolf", "moborigins") {
             event.owner as? Player
         }
     ) { _, event, config ->
-        buffWolf(event.entity as? Wolf ?: return@listener, config)
+        val wolf = event.entity as? Wolf ?: return@listener
+        // The event fires before vanilla taming resets the wolf's max health, so buff afterwards.
+        wolf.runTaskLater(OriginsReforged.instance, 1L) { buffWolf(wolf, config) }
     }
 
     listener<EntityBreedEvent>(
@@ -157,7 +160,7 @@ val wolfHowl = ability("wolf_howl", "moborigins") {
                 }
             }
 
-        api?.setCooldown(player, abilityKey, config.getInt("cooldown_ticks", 900), "bone")
+        api?.setCooldown(player, abilityKey, config.getInt("cooldown_ticks", 900), "wolf_howl")
     }
 }
 

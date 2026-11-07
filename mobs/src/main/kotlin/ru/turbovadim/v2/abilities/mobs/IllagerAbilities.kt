@@ -107,7 +107,7 @@ val summonFangs = ability("summon_fangs", "moborigins") {
             )
         }
 
-        api?.setCooldown(player, abilityKey, config.getInt("cooldown_ticks", 600), "evoker_fangs")
+        api?.setCooldown(player, abilityKey, config.getInt("cooldown_ticks", 600), "summon_fangs")
     }
 
     // Prevent fangs from damaging their summoner
