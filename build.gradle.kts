@@ -1,77 +1,41 @@
 plugins {
-    id("java")
-    id("com.gradleup.shadow") version "9.2.2"
-    id("io.papermc.paperweight.userdev") version "2.0.0-beta.19" apply false
-    kotlin("jvm") version "2.2.21"
-}
-
-group = "ru.turbovadim"
-version = "3.0.0-beta7"
-
-repositories {
-    mavenCentral()
-
-    maven("https://repo.papermc.io/repository/maven-public/")
-
-    maven { url = uri("https://jitpack.io") }
-
-    maven("https://maven.noxcrew.com/public")
+    java
+    alias(libs.plugins.shadow)
 }
 
 dependencies {
-    implementation("org.json:json:20250517")
-    implementation("net.objecthunter:exp4j:0.4.8")
+    implementation(project(":api"))
     implementation(project(":core"))
+    implementation(project(":builtin"))
     implementation(project(":version"))
-    implementation(project(":1.20", "reobf"))
-    implementation(project(":1.20.1", "reobf"))
-    implementation(project(":1.20.2", "reobf"))
-    implementation(project(":1.20.3", "reobf"))
-    implementation(project(":1.20.4", "reobf"))
-    implementation(project(":1.20.6", "reobf"))
-//    implementation(project(":1.21", "reobf"))
-    implementation(project(":1.21.1", "reobf"))
-    implementation(project(":1.21.3", "reobf"))
-    implementation(project(":1.21.4", "reobf"))
-    implementation(project(":1.21.6", "reobf"))
-    implementation(project(":1.21.7", "reobf"))
-    implementation(project(":1.21.10", "reobf"))
-    implementation("net.kyori:adventure-platform-bukkit:4.3.4")
+    implementation(project(":1.21.1"))
+    implementation(project(":1.21.3"))
+    implementation(project(":1.21.4"))
+    implementation(project(":1.21.6"))
+    implementation(project(":1.21.7"))
+    implementation(project(":1.21.10"))
+    implementation(project(":1.21.11"))
+    implementation(project(":26.1"))
+    implementation(project(":26.2"))
+    implementation(project(":26.3"))
 }
 
-tasks {
-    compileJava {
-        options.release.set(21)
-    }
-}
-
-allprojects {
-    tasks.withType<ProcessResources> {
-        inputs.property("version", rootProject.version)
-        filesMatching("**plugin.yml") {
-            expand("version" to rootProject.version)
+tasks.shadowJar {
+    manifest.attributes["paperweight-mappings-namespace"] = "mojang"
+    archiveFileName.set("${rootProject.name}-${rootProject.version}.jar")
+    dependencies {
+        // Provided at runtime by EnderaLib (Kotlin) and Paper (slf4j); the rest are compile-time annotations
+        exclude {
+            it.moduleGroup in setOf(
+                "org.jetbrains.kotlin",
+                "org.jetbrains.kotlinx",
+                "org.slf4j",
+                "org.jetbrains",
+                "org.checkerframework",
+                "com.google.errorprone",
+            )
         }
     }
-}
-
-
-tasks {
-
-    shadowJar {
-        archiveFileName.set("${rootProject.name}-${rootProject.version}.jar")
-        from(sourceSets.main.get().output)
-        dependencies {
-            exclude(dependency("com.github.Endera-Org:EnderaLib"))
-            exclude {
-                it.moduleGroup == "org.jetbrains.kotlin" || it.moduleGroup == "org.jetbrains.kotlinx"
-            }
-        }
-    }
-
-    test {
-        useJUnitPlatform()
-    }
-
 }
 
 java {

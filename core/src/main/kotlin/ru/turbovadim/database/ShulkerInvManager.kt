@@ -43,6 +43,7 @@ object ShulkerInventoryManager {
     }
 
     data class SlotItem(val slot: Int, val item: ItemStack?)
+    data class StoredSlot(val slot: Int, val bytes: ByteArray)
 
     /**
      * Сохраняет весь инвентарь шалкера
@@ -50,6 +51,13 @@ object ShulkerInventoryManager {
      * @param items Список предметов для сохранения
      */
     suspend fun saveInventory(uuid: String, items: List<SlotItem>) {
+        saveSerializedInventory(uuid, items.mapNotNull { slot ->
+            slot.item?.takeUnless { it.type.isAir }?.let { StoredSlot(slot.slot, itemStackToBytes(it)) }
+        })
+    }
+
+    suspend fun saveSerializedInventory(uuid: String, items: List<StoredSlot>) {
+        require(items.all { it.slot in 0..8 })
         return dbQuery {
             // Получаем или создаем запись UUID
             val uuidEntity = UUIDOriginEntity.find { UUIDOrigins.uuid eq uuid }.firstOrNull()
@@ -62,12 +70,11 @@ object ShulkerInventoryManager {
 
             // Сохраняем все предметы
             items
-                .filter { it.item != null && it.item.type != Material.AIR }
                 .forEach { item ->
                     ShulkerItemEntity.new {
                         this.parent = uuidEntity
                         this.slot = item.slot
-                        this.itemStack = itemStackToBytes(item.item!!)
+                        this.itemStack = item.bytes
                     }
             }
         }

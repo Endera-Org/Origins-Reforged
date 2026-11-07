@@ -1,0 +1,23 @@
+# Fox Origin
+# Sly berry-loving thief
+
+display_name: Fox
+
+description: |
+  Sly and cunning, foxes are timid animals who enjoy
+  eating berries, and stealing items.
+
+icon: SWEET_BERRIES
+
+layer: origin
+impact: 1
+order: 2
+choosable: true
+
+abilities:
+  - moborigins:timid_creature
+  - moborigins:better_berries
+  - moborigins:careful_gatherer
+  - moborigins:item_collector
+  - moborigins:sly
+  - moborigins:small_fox

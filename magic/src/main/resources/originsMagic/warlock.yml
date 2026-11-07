@@ -1,0 +1,25 @@
+# Warlock Origin
+# Corrupted-magic sorcerer
+
+display_name: Warlock
+
+description: |
+  Evil sorcerers using corrupted magic, Warlocks cannot use
+  regular magic but have their own, stronger powers.
+
+icon: WITHER_SKELETON_SKULL
+
+layer: origin
+impact: 3
+order: 5000
+choosable: true
+
+abilities:
+  - magicorigins:kill_boost
+  - magicorigins:cursed_strikes
+  - magicorigins:undead_ally
+  - magicorigins:no_magic
+  - magicorigins:no_potions
+  - magicorigins:no_enchantments
+  - magicorigins:dark_aura
+  - magicorigins:weak_in_water

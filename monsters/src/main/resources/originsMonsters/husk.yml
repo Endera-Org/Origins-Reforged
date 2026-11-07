@@ -1,0 +1,28 @@
+# Husk Origin
+# Desert-dwelling dried zombie
+
+display_name: Husk
+
+description: |
+  The Husks are Zombies that have become used to the much harsher
+  heat of the deserts after staying there for a long period of time.
+
+icon: SAND
+
+layer: origin
+impact: 1
+order: 1
+choosable: false
+
+abilities:
+  - monsterorigins:land_night_vision
+  - monsterorigins:apply_hunger_effect
+  - monsterorigins:undead_ally
+  - monsterorigins:undead
+  - monsterorigins:slowness
+  - monsterorigins:cold_slowness
+  - monsterorigins:zombie_hunger
+  - monsterorigins:zombie_touch
+  - monsterorigins:scare_villagers
+  - monsterorigins:husk_transform_into_zombie
+  - origins:carnivore

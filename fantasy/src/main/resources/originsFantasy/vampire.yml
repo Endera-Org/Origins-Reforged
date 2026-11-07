@@ -1,0 +1,23 @@
+# Vampire Origin
+# Blood-thirsty creature of the night
+
+display_name: Vampire
+
+description: |
+  The vampire is a powerful creature of the night, with the
+  ability to transform those it kills into more of its kind.
+
+icon: IRON_SWORD
+
+layer: origin
+impact: 3
+order: 1
+choosable: true
+
+abilities:
+  - fantasyorigins:vampiric_transformation
+  - fantasyorigins:daylight_sensitive
+  - fantasyorigins:water_sensitive
+  - fantasyorigins:leeching
+  - fantasyorigins:stronger
+  - fantasyorigins:undead_ally

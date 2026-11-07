@@ -1,0 +1,542 @@
+package ru.turbovadim.v2.ui
+
+import com.noxcrew.interfaces.drawable.Drawable.Companion.drawable
+import com.noxcrew.interfaces.element.StaticElement
+import com.noxcrew.interfaces.interfaces.buildChestInterface
+import com.noxcrew.interfaces.properties.interfaceProperty
+import net.kyori.adventure.key.Key
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.NamedTextColor
+import net.kyori.adventure.text.format.TextDecoration
+import org.endera.enderalib.utils.async.coroutines
+import org.endera.enderalib.utils.async.withScheduler
+import org.bukkit.Material
+import org.bukkit.NamespacedKey
+import org.bukkit.Sound
+import org.bukkit.SoundCategory
+import org.bukkit.entity.Player
+import org.bukkit.inventory.ItemStack
+import ru.turbovadim.OrbOfOrigin
+import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
+import ru.turbovadim.OriginsReforged.Companion.mainConfig
+import ru.turbovadim.OriginsReforged.Companion.v2Container
+import ru.turbovadim.ResourcePackItemModels
+import ru.turbovadim.ShortcutUtils
+import ru.turbovadim.config.MainConfig
+import ru.turbovadim.database.DatabaseManager
+import ru.turbovadim.ui.TextRenderingUtils
+import ru.turbovadim.v2.event.OriginChangeReason
+import ru.turbovadim.v2.origin.Origin
+import ru.turbovadim.v2.util.PlayerResetter
+import java.util.Collections
+import java.util.UUID
+import kotlin.math.max
+import kotlin.math.min
+
+/**
+ * Origin selection UI using noxcrew interfaces library.
+ * Uses custom font rendering for texture pack compatibility.
+ */
+object OriginSelectorUI {
+    private const val DISABLED_MODEL_DATA_OFFSET = 6
+
+    /**
+     * Which settings drive the "reset player on confirm" and cost behavior.
+     */
+    enum class OpenReason {
+        /** Initial / default selection (e.g. on join) - no charge, no reset. */
+        INITIAL,
+        /** Orb of Origin - respects `orbOfOrigin.resetPlayer` and charges vault. */
+        ORB,
+        /** `/origin swap` - respects `swapCommand.resetPlayer` and charges vault. */
+        SWAP
+    }
+
+    /** Players currently viewing the selector UI. Used for invulnerable-mode-ON. */
+    private val openSelectors: MutableSet<UUID> = Collections.synchronizedSet(mutableSetOf())
+
+    /**
+     * Check whether a player currently has the origin selector open.
+     */
+    fun isSelectorOpen(playerId: UUID): Boolean = openSelectors.contains(playerId)
+
+    internal fun markClosed(playerId: UUID) {
+        openSelectors.remove(playerId)
+    }
+
+    /**
+     * Open the origin selection UI for a player.
+     *
+     * @param player The player to show the UI to
+     * @param layer The layer to select an origin for (default: "origin")
+     * @param consumeOrb Whether to consume an orb after selection
+     * @param orbSlot The slot containing the orb to consume (-1 if no orb)
+     * @param initialPage Starting page index
+     * @param initialScroll Starting scroll position
+     * @param displayOnly If true, shows info only without selection
+     * @param reason What initiated the open; drives reset/charge behavior.
+     */
+    suspend fun open(
+        player: Player,
+        layer: String = "origin",
+        consumeOrb: Boolean = false,
+        orbSlot: Int = -1,
+        initialPage: Int = 0,
+        initialScroll: Int = 0,
+        displayOnly: Boolean = false,
+        reason: OpenReason = OpenReason.ORB
+    ) {
+        val ui = player.withScheduler(ru.turbovadim.OriginsReforged.instance) {
+            val container = v2Container ?: return@withScheduler null
+            val config = mainConfig
+
+            val origins = if (displayOnly) {
+                container.originRegistry.getByLayer(layer).toMutableList()
+            } else {
+                container.originRegistry.getChoosableByLayer(layer).filter { origin ->
+                    !origin.requiresPermission || player.hasPermission(origin.permission!!)
+                }.toMutableList()
+            }
+
+            if (origins.isEmpty()) {
+                player.sendMessage(Component.text("No origins available.", NamedTextColor.RED))
+                return@withScheduler null
+            }
+
+            val enableRandom = config.originSelection.randomOption.enabled
+
+            val ui = buildChestInterface {
+                rows = 6
+                onlyCancelItemInteraction = false
+                prioritiseBlockInteractions = false
+
+                val pageProperty = interfaceProperty(normalizePageIndex(initialPage, origins.size, enableRandom))
+                val scrollProperty = interfaceProperty(initialScroll)
+
+                // Set initial title
+                val initialOriginData = getOriginData(
+                    normalizePageIndex(initialPage, origins.size, enableRandom),
+                    origins, config, player
+                )
+                titleSupplier = {
+                    buildTitle(
+                        initialOriginData.nameForDisplay,
+                        initialOriginData.impact,
+                        initialOriginData.data,
+                        initialScroll,
+                        config
+                    )
+                }
+
+                var confirmed = false
+                withTransform(pageProperty, scrollProperty) { pane, view ->
+                    var page by pageProperty
+                    var scroll by scrollProperty
+
+                    // Get current origin data
+                    val (icon, name, nameForDisplay, impact, data, originCost) = getOriginData(
+                        page, origins, config, player
+                    )
+
+                    // Build and set title
+                    val title = buildTitle(nameForDisplay, impact, data, scroll, config)
+                    view.title(title)
+
+                    // Place origin icon at slot (row 0, col 1)
+                    pane[0, 1] = StaticElement(drawable(icon.clone()))
+
+                    // Navigation buttons (only if not display-only)
+                    if (!displayOnly) {
+                        // Previous origin button (row 5, col 2)
+                        val leftArrow = createNavigationItem(
+                            "Previous origin",
+                            ResourcePackItemModels.SELECTOR_LEFT,
+                            1
+                        )
+                        pane[5, 2] = StaticElement(drawable(leftArrow)) {
+                            player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
+                            page = normalizePageIndex(page - 1, origins.size, enableRandom)
+                            scroll = 0
+                        }
+
+                        // Next origin button (row 5, col 6)
+                        val rightArrow = createNavigationItem(
+                            "Next origin",
+                            ResourcePackItemModels.SELECTOR_RIGHT,
+                            2
+                        )
+                        pane[5, 6] = StaticElement(drawable(rightArrow)) {
+                            player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
+                            page = normalizePageIndex(page + 1, origins.size, enableRandom)
+                            scroll = 0
+                        }
+                    }
+
+                    // Scroll buttons
+                    val scrollSize = config.originSelection.scrollAmount
+                    val canScrollUp = scroll > 0
+                    val remainingSize = data.size - scroll - 6
+                    val canScrollDown = remainingSize > 0
+
+                    // Up button (row 5, col 7)
+                    val upArrow = createScrollItem(
+                        name = "Up",
+                        itemModel = ResourcePackItemModels.SELECTOR_UP,
+                        disabledItemModel = ResourcePackItemModels.SELECTOR_UP_DISABLED,
+                        legacyCustomModelData = 3,
+                        disabled = !canScrollUp
+                    )
+                    pane[5, 7] = StaticElement(drawable(upArrow)) {
+                        if (canScrollUp) {
+                            player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
+                            scroll = max(scroll - scrollSize, 0)
+                        }
+                    }
+
+                    // Down button (row 5, col 8)
+                    val downArrow = createScrollItem(
+                        name = "Down",
+                        itemModel = ResourcePackItemModels.SELECTOR_DOWN,
+                        disabledItemModel = ResourcePackItemModels.SELECTOR_DOWN_DISABLED,
+                        legacyCustomModelData = 4,
+                        disabled = !canScrollDown
+                    )
+                    pane[5, 8] = StaticElement(drawable(downArrow)) {
+                        if (canScrollDown) {
+                            player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
+                            scroll = min(scroll + scrollSize, scroll + remainingSize)
+                        }
+                    }
+
+                    // Confirm buttons (row 5, cols 3, 4, 5)
+                    val confirmItem = createConfirmItem(displayOnly)
+                    val invisibleConfirmItem = createConfirmItem(displayOnly, invisible = true)
+
+                    val confirmHandler: () -> Unit = {
+                        if (!confirmed) {
+                            confirmed = true
+                            if (!displayOnly) {
+                                handleConfirmation(player, name, origins, layer, consumeOrb, orbSlot, originCost, config, reason)
+                            }
+                            view.close(ru.turbovadim.OriginsReforged.instance.coroutines, changingView = true)
+                            player.closeInventory()
+                        }
+                    }
+
+                    pane[5, 3] = StaticElement(drawable(confirmItem)) {
+                        player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
+                        confirmHandler()
+                    }
+
+                    pane[5, 4] = StaticElement(drawable(invisibleConfirmItem)) {
+                        player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
+                        confirmHandler()
+                    }
+
+                    pane[5, 5] = StaticElement(drawable(invisibleConfirmItem)) {
+                        player.playSound(player.location, Sound.UI_BUTTON_CLICK, SoundCategory.MASTER, 1f, 1f)
+                        confirmHandler()
+                    }
+                }
+            }
+
+            if (!displayOnly) {
+                openSelectors.add(player.uniqueId)
+            }
+            ui
+        } ?: return
+        ui.open(player, parent = null)
+    }
+
+    private data class OriginData(
+        val icon: ItemStack,
+        val name: String,
+        val nameForDisplay: String,
+        val impact: Char,
+        val data: LineData,
+        val cost: Int
+    )
+
+    private fun getOriginData(
+        page: Int,
+        origins: List<Origin>,
+        config: ru.turbovadim.config.MainConfig,
+        player: Player
+    ): OriginData {
+        val defaultCost = config.swapCommand.vault.defaultCost
+
+        return if (page >= origins.size) {
+            // Random option
+            val excludedOriginNames = config.originSelection.randomOption.exclude
+
+            val descriptionText = StringBuilder("You'll be assigned one of the following:\n\n")
+            origins.forEach { origin ->
+                if (origin.name.lowercase() !in excludedOriginNames.map { it.lowercase() }) {
+                    descriptionText.append(origin.getNameForDisplay()).append("\n")
+                }
+            }
+
+            OriginData(
+                icon = OrbOfOrigin.orb.clone(),
+                name = "Random",
+                nameForDisplay = "Random",
+                impact = '\uE002',
+                data = LineData(LineData.makeLineFor(descriptionText.toString(), LineData.LineComponent.LineType.DESCRIPTION)),
+                cost = defaultCost
+            )
+        } else {
+            val origin = origins[page]
+            OriginData(
+                icon = origin.icon,
+                name = origin.key.asString(),
+                nameForDisplay = origin.getNameForDisplay(),
+                impact = origin.impactChar,
+                data = origin.getLineData(),
+                cost = origin.cost ?: defaultCost
+            )
+        }
+    }
+
+    private fun buildTitle(
+        nameForDisplay: String,
+        impact: Char,
+        data: LineData,
+        scrollAmount: Int,
+        config: ru.turbovadim.config.MainConfig
+    ): Component {
+        // Compress name with spacer characters
+        val compressedName = buildString {
+            append("\uF001")
+            nameForDisplay.codePoints().forEach {
+                appendCodePoint(it)
+                append('\uF000')
+            }
+        }
+
+        val background = TextRenderingUtils.applyFont(
+            ShortcutUtils.getColored(config.originSelection.screenTitle.background),
+            Key.key("minecraft:default")
+        )
+
+        var component = TextRenderingUtils.applyFont(
+            Component.text("\uF000\uE000\uF001\uE001\uF002$impact"),
+            Key.key("minecraft:origin_selector")
+        )
+            .color(NamedTextColor.WHITE)
+            .append(background)
+            .append(
+                TextRenderingUtils.applyFont(
+                    Component.text(compressedName),
+                    Key.key("minecraft:origin_title_text")
+                ).color(NamedTextColor.WHITE)
+            )
+            .append(
+                TextRenderingUtils.applyFont(
+                    Component.text(TextRenderingUtils.getInverseForString(nameForDisplay) + "\uF000"),
+                    Key.key("minecraft:reverse_text")
+                ).color(NamedTextColor.WHITE)
+            )
+
+        // Add description lines
+        data.getLines(scrollAmount).forEach { line ->
+            component = component.append(line)
+        }
+
+        val prefix = TextRenderingUtils.applyFont(
+            ShortcutUtils.getColored(config.originSelection.screenTitle.prefix),
+            Key.key("minecraft:default")
+        )
+        val suffix = TextRenderingUtils.applyFont(
+            ShortcutUtils.getColored(config.originSelection.screenTitle.suffix),
+            Key.key("minecraft:default")
+        )
+
+        return prefix.append(component).append(suffix)
+    }
+
+    private fun createNavigationItem(
+        name: String,
+        itemModel: NamespacedKey,
+        legacyCustomModelData: Int
+    ): ItemStack {
+        val item = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
+        val meta = item.itemMeta
+        meta.displayName(
+            Component.text(name)
+                .color(NamedTextColor.WHITE)
+                .decoration(TextDecoration.ITALIC, false)
+        )
+        item.itemMeta = NMSInvoker.setResourcePackModel(meta, itemModel, legacyCustomModelData)
+        return item
+    }
+
+    private fun createScrollItem(
+        name: String,
+        itemModel: NamespacedKey,
+        disabledItemModel: NamespacedKey,
+        legacyCustomModelData: Int,
+        disabled: Boolean
+    ): ItemStack {
+        val item = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
+        val meta = item.itemMeta
+        meta.displayName(
+            Component.text(name)
+                .color(NamedTextColor.WHITE)
+                .decoration(TextDecoration.ITALIC, false)
+        )
+        val resolvedItemModel = if (disabled) disabledItemModel else itemModel
+        val resolvedLegacyCustomModelData =
+            if (disabled) legacyCustomModelData + DISABLED_MODEL_DATA_OFFSET else legacyCustomModelData
+        item.itemMeta = NMSInvoker.setResourcePackModel(
+            meta,
+            resolvedItemModel,
+            resolvedLegacyCustomModelData
+        )
+        return item
+    }
+
+    private fun createConfirmItem(displayOnly: Boolean, invisible: Boolean = false): ItemStack {
+        val item = ItemStack(Material.LIGHT_GRAY_STAINED_GLASS_PANE)
+        var meta = item.itemMeta
+
+        meta.displayName(
+            Component.text(if (displayOnly) "Close" else "Confirm")
+                .color(NamedTextColor.WHITE)
+                .decoration(TextDecoration.ITALIC, false)
+        )
+
+        meta = if (invisible) {
+            NMSInvoker.setResourcePackModel(meta, ResourcePackItemModels.SELECTOR_INVISIBLE, 6)
+        } else {
+            NMSInvoker.setResourcePackModel(meta, ResourcePackItemModels.SELECTOR_CONFIRM, 5)
+        }
+        item.itemMeta = meta
+        return item
+    }
+
+    private fun handleConfirmation(
+        player: Player,
+        originName: String,
+        origins: List<Origin>,
+        layer: String,
+        consumeOrb: Boolean,
+        orbSlot: Int,
+        costAmount: Int,
+        config: MainConfig,
+        reason: OpenReason
+    ) {
+        val container = v2Container ?: return
+
+        // Resolve the target origin up-front so we can check it for permanent purchases.
+        val origin = if (originName.equals("random", ignoreCase = true)) {
+            val excludedOrigins = config.originSelection.randomOption.exclude.map { it.lowercase() }
+            val availableOrigins = origins.filter { o ->
+                o.name.lowercase() !in excludedOrigins
+            }
+            if (availableOrigins.isEmpty()) {
+                origins.firstOrNull()
+            } else {
+                availableOrigins.random()
+            }
+        } else {
+            container.originRegistry.getByName(originName)
+        }
+
+        if (origin == null) {
+            player.sendMessage(Component.text("Origin not found.", NamedTextColor.RED))
+            return
+        }
+
+        val changeReason = when (reason) {
+            OpenReason.ORB -> OriginChangeReason.ORB
+            OpenReason.SWAP -> OriginChangeReason.COMMAND
+            OpenReason.INITIAL -> OriginChangeReason.UI
+        }
+        val result = container.playerStateManager.setOrigin(player, layer, origin, changeReason) { request ->
+            val selected = request.newOrigin ?: return@setOrigin false
+            val orb = if (consumeOrb && orbSlot in 0..40) player.inventory.getItem(orbSlot) else null
+            if (consumeOrb && (orbSlot !in 0..40 || !OrbOfOrigin.isOrb(orb))) {
+                player.sendMessage(Component.text("You no longer have the Orb of Origin.", NamedTextColor.RED))
+                return@setOrigin false
+            }
+            // Cost: only applied on ORB / SWAP opens (initial selection is always free).
+            val shouldCharge = reason != OpenReason.INITIAL
+            if (shouldCharge &&
+                ru.turbovadim.OriginsReforged.instance.isVaultEnabled &&
+                costAmount != 0 &&
+                !player.hasPermission(config.swapCommand.vault.bypassPermission)
+            ) {
+                // `permanentPurchases`: if the player has ever held this origin, it's free now.
+                val previouslyOwned = config.swapCommand.vault.permanentPurchases &&
+                    DatabaseManager.getUsedOriginsSync(player.uniqueId.toString())
+                        .any { it.equals(selected.key.asString(), ignoreCase = true) || it.equals(selected.name, ignoreCase = true) }
+
+                if (!previouslyOwned) {
+                    val economy = ru.turbovadim.OriginsReforged.instance.economy
+                    if (economy == null || !economy.has(player, costAmount.toDouble())) {
+                        val symbol = config.swapCommand.vault.currencySymbol
+                        player.sendMessage(
+                            Component.text(
+                                "You don't have enough money (need $symbol$costAmount).",
+                                NamedTextColor.RED
+                            )
+                        )
+                        return@setOrigin false
+                    }
+                    val payment = economy.withdrawPlayer(player, costAmount.toDouble())
+                    if (!payment.transactionSuccess()) {
+                        player.sendMessage(Component.text("Payment failed. Your origin was not changed.", NamedTextColor.RED))
+                        return@setOrigin false
+                    }
+                    val symbol = config.swapCommand.vault.currencySymbol
+                    player.sendMessage(
+                        Component.text("Charged $symbol$costAmount to switch origin.", NamedTextColor.YELLOW)
+                    )
+                }
+            }
+
+            if (consumeOrb && mainConfig.orbOfOrigin.consume) orb!!.amount -= 1
+
+            // Decide whether to reset the player based on the open reason.
+            val shouldReset = when (reason) {
+                OpenReason.ORB -> mainConfig.orbOfOrigin.resetPlayer
+                OpenReason.SWAP -> mainConfig.swapCommand.resetPlayer
+                OpenReason.INITIAL -> false
+            }
+            if (shouldReset) {
+                PlayerResetter.reset(player)
+            }
+
+            true
+        }
+        if (result.cancelled) return
+        val appliedOrigin = result.newOrigin ?: return
+
+        if (reason == OpenReason.INITIAL && mainConfig.originSelection.autoSpawnTeleport) {
+            val fallback = player.world.spawnLocation
+            player.teleportAsync(container.defaultSpawnAbilityProcessor.resolve(player, fallback))
+        }
+
+        player.sendMessage(
+            Component.text("You are now a ")
+                .color(NamedTextColor.GREEN)
+                .append(appliedOrigin.displayName.color(NamedTextColor.GOLD))
+                .append(Component.text("!").color(NamedTextColor.GREEN))
+        )
+
+    }
+
+    private fun normalizePageIndex(index: Int, originsSize: Int, enableRandom: Boolean): Int {
+        val maxIndex = originsSize + if (enableRandom) 1 else 0
+        if (maxIndex == 0) return 0
+
+        var normalized = index
+        while (normalized >= maxIndex) {
+            normalized -= maxIndex
+        }
+        while (normalized < 0) {
+            normalized += maxIndex
+        }
+        return normalized
+    }
+}

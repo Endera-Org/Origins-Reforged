@@ -1,0 +1,23 @@
+# Spirit Origin
+# Ghostly wandering soul
+
+display_name: Spirit
+
+description: |
+  Spirits are lost souls that continue to wander the earth,
+  rarely sighted and heard even less.
+
+icon: GLASS
+
+layer: origin
+impact: 2
+order: 5003
+choosable: true
+
+abilities:
+  - magicorigins:silent
+  - magicorigins:invisible_when_still
+  - magicorigins:spirit_strength
+  - magicorigins:nether_strong
+  - magicorigins:nether_health
+  - magicorigins:weak_in_water

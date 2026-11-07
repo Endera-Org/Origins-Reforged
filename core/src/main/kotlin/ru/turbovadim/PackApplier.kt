@@ -20,8 +20,8 @@ class PackApplier : Listener {
     }
 
     companion object {
-        private val addonPacks: MutableMap<Class<out OriginsAddon>, OriginsReforgedResourcePackInfo> =
-            HashMap<Class<out OriginsAddon>, OriginsReforgedResourcePackInfo>()
+        private val addonPacks: MutableMap<String, OriginsReforgedResourcePackInfo> =
+            java.util.concurrent.ConcurrentHashMap()
 
         fun sendPacks(player: Player) {
             CoroutineScope(ioDispatcher).launch {
@@ -30,11 +30,16 @@ class PackApplier : Listener {
         }
 
         fun getPackURL(): String {
-            return "https://github.com/Endera-Org/Origins-Reborn-Enhanced/raw/refs/heads/master/OriginsPack.zip"
+            return OriginsReforged.mainConfig.resourcePack.url
         }
 
-        fun addResourcePack(addon: OriginsAddon, info: OriginsReforgedResourcePackInfo) {
-            addonPacks.put(addon.javaClass, info)
+        /**
+         * Add a resource pack from an addon.
+         * @param namespace The addon's namespace (used as key)
+         * @param info The resource pack info wrapper
+         */
+        fun addResourcePack(namespace: String, info: OriginsReforgedResourcePackInfo) {
+            addonPacks[namespace] = info
         }
     }
 }

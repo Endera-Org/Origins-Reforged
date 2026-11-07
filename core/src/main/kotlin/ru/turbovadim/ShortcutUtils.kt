@@ -10,11 +10,7 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.potion.PotionEffect
 import org.geysermc.api.Geyser
 import org.geysermc.floodgate.api.FloodgateApi
-import org.json.JSONException
-import org.json.JSONObject
 import ru.turbovadim.OriginsReforged.Companion.NMSInvoker
-import java.io.File
-import java.io.IOException
 import java.util.*
 
 @Suppress("unused")
@@ -34,19 +30,6 @@ object ShortcutUtils {
             is Projectile -> damageDealer.shooter as? LivingEntity
             is LivingEntity -> damageDealer
             else -> null
-        }
-    }
-
-    fun openJSONFile(file: File): JSONObject {
-        return try {
-            val data = file.readText()
-            try {
-                JSONObject(data)
-            } catch (e: JSONException) {
-                JSONObject()
-            }
-        } catch (e: IOException) {
-            throw RuntimeException(e)
         }
     }
 

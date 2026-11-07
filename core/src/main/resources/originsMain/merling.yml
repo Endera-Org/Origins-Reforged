@@ -1,0 +1,26 @@
+# Merling Origin
+# Natural inhabitants of the ocean
+
+display_name: Merling
+
+description: |
+  These natural inhabitants of the ocean are
+  not used to being out of the water for too long.
+  They can breathe underwater but suffocate on land.
+
+icon: COD
+
+layer: origin
+impact: 3
+order: 7
+choosable: true
+priority: 1
+
+abilities:
+  - origins:water_breathing
+  - origins:water_vision
+  - origins:aqua_affinity
+  - origins:swim_speed
+  - origins:like_water
+  - origins:aquatic
+  - origins:air_from_potions

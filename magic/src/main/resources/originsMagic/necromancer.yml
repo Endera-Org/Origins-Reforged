@@ -1,0 +1,25 @@
+# Necromancer Origin
+# Dark mage of the undead
+
+display_name: Necromancer
+
+description: |
+  Dark mages who use spells to resurrect
+  and control the dead.
+
+icon: SKELETON_SKULL
+
+layer: origin
+impact: 2
+order: 5002
+choosable: true
+
+abilities:
+  - magicorigins:undead_commander
+  - magicorigins:bring_back_dead
+  - magicorigins:spirit_strength
+  - magicorigins:nether_strong
+  - magicorigins:nether_health
+  - magicorigins:undead_ally
+  - magicorigins:dark_aura
+  - magicorigins:weak_in_water

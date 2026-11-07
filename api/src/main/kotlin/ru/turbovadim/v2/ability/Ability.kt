@@ -1,0 +1,151 @@
+package ru.turbovadim.v2.ability
+
+import net.kyori.adventure.key.Key
+import net.kyori.adventure.text.Component
+import org.bukkit.entity.Player
+import ru.turbovadim.v2.api.OriginsApi
+
+/**
+ * Represents an ability in the Origins system.
+ *
+ * An ability is a unit of functionality that can be granted to a player
+ * through an Origin. Each ability has:
+ * - A unique key
+ * - Display information (title, description)
+ * - A list of effects that define its behavior
+ * - Configuration options with default values
+ */
+interface Ability {
+    /** Unique identifier for this ability */
+    val key: Key
+
+    /** Display title shown in the UI (as Adventure Component) */
+    val title: Component
+
+    /** Description lines shown in the UI (as Adventure Components) */
+    val description: List<Component>
+
+    /** Default visibility (before config override). Override this in implementations. */
+    val isVisibleDefault: Boolean get() = true
+
+    /** Effects this ability grants */
+    val effects: List<AbilityEffect>
+
+    /** Default configuration options */
+    val defaultOptions: Map<String, Any> get() = emptyMap()
+
+    /** Dependency ability key (if this ability depends on another) */
+    val dependencyKey: Key? get() = null
+
+    /** Whether the dependency must be enabled or disabled */
+    val dependencyInverse: Boolean get() = false
+}
+
+/**
+ * Simple implementation of Ability.
+ */
+data class AbilityImpl(
+    override val key: Key,
+    override val title: Component,
+    override val description: List<Component>,
+    override val effects: List<AbilityEffect>,
+    override val isVisibleDefault: Boolean = true,
+    override val defaultOptions: Map<String, Any> = emptyMap(),
+    override val dependencyKey: Key? = null,
+    override val dependencyInverse: Boolean = false
+) : Ability
+
+/**
+ * Marker interface for abilities that can be toggled on/off.
+ * Other abilities can depend on this via [Ability.dependencyKey].
+ */
+interface DependencyAbility : Ability {
+    /**
+     * Check if this ability is currently enabled for the player.
+     */
+    fun isEnabled(player: Player): Boolean
+
+    /**
+     * Enable this ability for the player.
+     * @return true if state changed, false if already enabled
+     */
+    fun enable(player: Player): Boolean
+
+    /**
+     * Disable this ability for the player.
+     * @return true if state changed, false if already disabled
+     */
+    fun disable(player: Player): Boolean
+
+    /**
+     * Toggle this ability for the player.
+     * @return true if now enabled, false if now disabled
+     */
+    fun toggle(player: Player): Boolean {
+        return if (isEnabled(player)) {
+            disable(player)
+            false
+        } else {
+            enable(player)
+            true
+        }
+    }
+}
+
+/**
+ * Implementation of DependencyAbility that tracks enabled state per player.
+ */
+class DependencyAbilityImpl(
+    override val key: Key,
+    override val title: Component,
+    override val description: List<Component>,
+    override val effects: List<AbilityEffect>,
+    override val isVisibleDefault: Boolean = true,
+    override val defaultOptions: Map<String, Any> = emptyMap(),
+    override val dependencyKey: Key? = null,
+    override val dependencyInverse: Boolean = false
+) : DependencyAbility {
+
+    private val enabledPlayers = java.util.concurrent.ConcurrentHashMap.newKeySet<java.util.UUID>()
+
+    override fun isEnabled(player: Player): Boolean {
+        return enabledPlayers.contains(player.uniqueId)
+    }
+
+    override fun enable(player: Player): Boolean {
+        val changed = enabledPlayers.add(player.uniqueId)
+        if (changed) {
+            val api = OriginsApi.getOrNull() ?: return changed
+            api.reapplyPassiveEffects(player)
+            api.triggerDependencyLifecycle(player, key, enabled = true)
+        }
+        return changed
+    }
+
+    override fun disable(player: Player): Boolean {
+        val changed = enabledPlayers.remove(player.uniqueId)
+        if (changed) {
+            val api = OriginsApi.getOrNull() ?: return changed
+            api.triggerDependencyLifecycle(player, key, enabled = false)
+            api.reapplyPassiveEffects(player)
+        }
+        return changed
+    }
+}
+
+/**
+ * Marker interface for abilities that group multiple sub-abilities.
+ */
+interface MultiAbility : Ability {
+    /** Sub-abilities contained in this multi-ability */
+    val subAbilities: List<Ability>
+}
+
+/**
+ * Result of checking ability availability.
+ */
+sealed interface AbilityCheckResult {
+    object Allowed : AbilityCheckResult
+    object Denied : AbilityCheckResult
+    data class DeniedWithReason(val reason: Component) : AbilityCheckResult
+}

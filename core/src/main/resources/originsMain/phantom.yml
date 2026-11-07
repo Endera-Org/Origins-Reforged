@@ -1,0 +1,26 @@
+# Phantom Origin
+# Half-human, half-phantom beings
+
+display_name: Phantom
+
+description: |
+  As half-human and half-phantom beings,
+  these creatures can switch between a
+  Phantom and a normal form.
+
+icon: PHANTOM_MEMBRANE
+
+layer: origin
+impact: 3
+order: 8
+choosable: true
+priority: 1
+
+abilities:
+  - origins:phantomize
+  - origins:phasing
+  - origins:invisibility
+  - origins:burn_in_daylight
+  - origins:hunger_over_time
+  - origins:fragile
+  - origins:phantomize_overlay

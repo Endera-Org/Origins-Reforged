@@ -1,0 +1,24 @@
+# Avian Origin
+# Peaceful bird-like creatures that glide through the air
+
+display_name: Avian
+
+description: |
+  The Avian race has lost their ability to fly
+  a long time ago. Now these peaceful creatures
+  can be seen gliding from one place to another.
+
+icon: FEATHER
+
+layer: origin
+impact: 1
+order: 3
+choosable: true
+priority: 1
+
+abilities:
+  - origins:slow_falling
+  - origins:fresh_air
+  - origins:tailwind
+  - origins:lay_eggs
+  - origins:vegetarian

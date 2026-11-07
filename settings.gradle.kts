@@ -1,4 +1,5 @@
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         gradlePluginPortal()
         maven("https://repo.papermc.io/repository/maven-public/")
@@ -6,20 +7,34 @@ pluginManagement {
 }
 
 plugins {
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0"
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven("https://repo.papermc.io/repository/maven-public/")
+        maven("https://jitpack.io")
+        maven("https://maven.noxcrew.com/public")
+        maven("https://repo.codemc.io/repository/maven-snapshots/")
+        maven("https://repo.codemc.io/repository/maven-releases/")
+        maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
+        maven("https://repo.opencollab.dev/main/")
+        maven("https://repo.viaversion.com")
+    }
+}
 
 rootProject.name = "Origins-Reforged"
+include("api")
 include("core")
+include("builtin")
+include("monsters")
+include("mobs")
+include("fantasy")
+include("magic")
 include("version")
-include("1.20")
-include("1.20.1")
-include("1.20.2")
-include("1.20.3")
-include("1.20.4")
-include("1.20.6")
-//include("1.21")
 include("1.21.1")
 include("1.21.3")
 include("1.21.4")
@@ -27,3 +42,6 @@ include("1.21.6")
 include("1.21.7")
 include("1.21.10")
 include("1.21.11")
+include("26.1")
+include("26.2")
+include("26.3")

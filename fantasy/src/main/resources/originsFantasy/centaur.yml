@@ -1,0 +1,23 @@
+# Centaur Origin
+# Moon-worshipping trained fighter
+
+display_name: Centaur
+
+description: |
+  Worshippers of the moon and trained fighters,
+  the Centaurs are much more powerful than regular horses,
+  and become stronger on a full moon.
+
+icon: SADDLE
+
+layer: origin
+impact: 3
+order: 0
+choosable: true
+
+abilities:
+  - fantasyorigins:permanent_horse
+  - fantasyorigins:super_jump
+  - fantasyorigins:increased_speed
+  - fantasyorigins:moon_strength
+  - fantasyorigins:perfect_shot

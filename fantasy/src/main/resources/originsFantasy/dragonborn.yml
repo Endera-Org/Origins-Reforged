@@ -1,0 +1,23 @@
+# Dragonborn Origin
+# Descendant of ancient dragons
+
+display_name: Dragonborn
+
+description: |
+  Children of ancient, long forgotten dragons,
+  the Dragonborn have the increased power of their ancestors
+  when in their homeland of the End.
+
+icon: DRAGON_BREATH
+
+layer: origin
+impact: 1
+order: 1
+choosable: true
+
+abilities:
+  - fantasyorigins:breath_storer
+  - fantasyorigins:end_boost
+  - fantasyorigins:end_crystal_healing
+  - fantasyorigins:dragon_fireball
+  - fantasyorigins:strong_skin

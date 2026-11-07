@@ -1,465 +1,308 @@
 package ru.turbovadim.commands
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import org.endera.enderalib.utils.async.coroutines
 import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.format.NamedTextColor
 import org.bukkit.Bukkit
-import org.bukkit.NamespacedKey
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
 import org.bukkit.entity.Player
-import org.bukkit.util.StringUtil
-import org.endera.enderalib.utils.async.ioDispatcher
-import ru.turbovadim.AddonLoader
-import ru.turbovadim.AddonLoader.allowOriginSwapCommand
-import ru.turbovadim.AddonLoader.getOrigin
-import ru.turbovadim.AddonLoader.getOrigins
-import ru.turbovadim.AddonLoader.reloadAddons
 import ru.turbovadim.OrbOfOrigin
-import ru.turbovadim.OriginSwapper.Companion.getOrigin
-import ru.turbovadim.OriginSwapper.Companion.openOriginSwapper
-import ru.turbovadim.OriginSwapper.Companion.setOrigin
-import ru.turbovadim.OriginsReforged
-import ru.turbovadim.OriginsReforged.Companion.getCooldowns
-import ru.turbovadim.PackApplier.Companion.sendPacks
-import ru.turbovadim.config.ConfigRegistry
-import ru.turbovadim.cooldowns.Cooldowns.CooldownInfo
-import ru.turbovadim.events.PlayerSwapOriginEvent
-import ru.turbovadim.util.CompressionUtils
-import ru.turbovadim.util.CompressionUtils.decompressFiles
-import ru.turbovadim.util.testBenchmarks
-import java.io.File
-import java.io.IOException
+import org.endera.enderalib.utils.async.EntityScheduler
+import ru.turbovadim.OriginsReforged.Companion.mainConfig
+import ru.turbovadim.OriginsReforged.Companion.v2Container
+import ru.turbovadim.ShortcutUtils
+import ru.turbovadim.v2.event.OriginChangeReason
+import ru.turbovadim.v2.ui.OriginSelectorUI
 
+/**
+ * Main command handler for /origin.
+ *
+ * Subcommands:
+ * - /origin help - Show help
+ * - /origin orb [player] [amount] - Give Orb(s) of Origin
+ * - /origin set <player> <origin> [layer] - Set a player's origin
+ * - /origin get [player] - Get a player's origin(s)
+ * - /origin list [layer] - List available origins
+ * - /origin swap [layer] - Open the origin selector to swap your origin
+ * - /origin reload - Reload configuration
+ */
 class OriginCommand : CommandExecutor, TabCompleter {
 
-    companion object {
-        @JvmField
-        var key: NamespacedKey = getCooldowns().registerCooldown(
-            OriginsReforged.instance,
-            NamespacedKey(OriginsReforged.instance, "swap-command-cooldown"),
-            CooldownInfo(0)
-        )
-
-        // Command names
-        private const val CMD_BENCH = "bench"
-        private const val CMD_SWAP = "swap"
-        private const val CMD_RELOAD = "reload"
-        private const val CMD_EXCHANGE = "exchange"
-        private const val CMD_SET = "set"
-        private const val CMD_ORB = "orb"
-        private const val CMD_CHECK = "check"
-        private const val CMD_PACK = "pack"
-        private const val CMD_EXPORT = "export"
-        private const val CMD_IMPORT = "import"
-
-        // Messages
-        private const val MSG_INVALID_COMMAND = "Invalid command. Usage: /origin <command>"
-        private const val MSG_NO_PERMISSION = "You don't have permission to do this!"
-        private const val MSG_PLAYER_ONLY = "This command can only be run by a player"
-        private const val MSG_ON_COOLDOWN = "You are on cooldown."
-        private const val MSG_COMMAND_DISABLED = "This command has been disabled in the configuration"
-    }
-
-    private val exchangeRequests: MutableMap<Player, MutableList<ExchangeRequest>> = HashMap()
-
-    data class ExchangeRequest(val p1: Player?, val p2: Player?, val expireTime: Int, val layer: String)
-
-    override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<String>): Boolean {
+    override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
         if (args.isEmpty()) {
-            sender.sendMessage(Component.text(MSG_INVALID_COMMAND).color(NamedTextColor.RED))
-            return true
+            return showHelp(sender)
         }
 
         return when (args[0].lowercase()) {
-            CMD_BENCH -> handleBenchCommand(sender)
-            CMD_SWAP -> handleSwapCommand(sender, args)
-            CMD_RELOAD -> handleReloadCommand(sender)
-            CMD_EXCHANGE -> handleExchangeCommand(sender, args)
-            CMD_SET -> handleSetCommand(sender, args)
-            CMD_ORB -> handleOrbCommand(sender, args)
-            CMD_CHECK -> handleCheckCommand(sender, args)
-            CMD_PACK -> handlePackCommand(sender)
-            CMD_EXPORT -> handleExportCommand(sender, args)
-            CMD_IMPORT -> handleImportCommand(sender, args)
+            "help" -> showHelp(sender)
+            "orb" -> giveOrb(sender, args)
+            "set" -> setOrigin(sender, args)
+            "get" -> getOrigin(sender, args)
+            "list" -> listOrigins(sender, args)
+            "swap" -> swapOrigin(sender, args)
+            "reload" -> reload(sender)
             else -> {
-                sender.sendMessage(Component.text(MSG_INVALID_COMMAND).color(NamedTextColor.RED))
+                sender.sendMessage(Component.text("Unknown subcommand. Use /origin help for a list of commands.", NamedTextColor.RED))
                 true
             }
         }
     }
 
-    private fun handleBenchCommand(sender: CommandSender): Boolean {
-        val player = sender as? Player ?: return true
-        testBenchmarks(player, player.location, 48.0)
-        sender.sendMessage(Component.text("finished"))
-        return true
-    }
-
-    private fun handleSwapCommand(sender: CommandSender, args: Array<String>): Boolean {
-        val player = sender as? Player ?: run {
-            sender.sendMessage(Component.text(MSG_PLAYER_ONLY).color(NamedTextColor.RED))
-            return true
+    private fun showHelp(sender: CommandSender): Boolean {
+        sender.sendMessage(Component.text("=== Origins Commands ===", NamedTextColor.GOLD))
+        sender.sendMessage(Component.text("/origin help", NamedTextColor.YELLOW).append(Component.text(" - Show this help", NamedTextColor.GRAY)))
+        sender.sendMessage(Component.text("/origin orb [player] [amount]", NamedTextColor.YELLOW).append(Component.text(" - Give Orb(s) of Origin", NamedTextColor.GRAY)))
+        sender.sendMessage(Component.text("/origin set <player> <origin> [layer]", NamedTextColor.YELLOW).append(Component.text(" - Set a player's origin", NamedTextColor.GRAY)))
+        sender.sendMessage(Component.text("/origin get [player]", NamedTextColor.YELLOW).append(Component.text(" - Get a player's origins", NamedTextColor.GRAY)))
+        sender.sendMessage(Component.text("/origin list [layer]", NamedTextColor.YELLOW).append(Component.text(" - List available origins", NamedTextColor.GRAY)))
+        if (mainConfig.swapCommand.enabled) {
+            sender.sendMessage(Component.text("/origin swap [layer]", NamedTextColor.YELLOW).append(Component.text(" - Swap your current origin", NamedTextColor.GRAY)))
         }
-
-        if (getCooldowns().hasCooldown(player, key)) {
-            player.sendMessage(Component.text(MSG_ON_COOLDOWN).color(NamedTextColor.RED))
-            return true
-        }
-
-        if (!OriginsReforged.mainConfig.swapCommand.enabled) {
-            player.sendMessage(Component.text(MSG_COMMAND_DISABLED).color(NamedTextColor.RED))
-            return true
-        }
-
-        if (!allowOriginSwapCommand(player)) {
-            player.sendMessage(Component.text(OriginsReforged.mainConfig.messages.noSwapCommandPermissions))
-            return true
-        }
-
-        val layer = if (args.size == 2) args[1] else "origin"
-        openOriginSwapper(
-            player,
-            PlayerSwapOriginEvent.SwapReason.COMMAND,
-            0,
-            0,
-            OriginsReforged.instance.isVaultEnabled,
-            layer
-        )
-        return true
-    }
-
-    private fun handleReloadCommand(sender: CommandSender): Boolean {
-        if (!hasAdminPermission(sender)) return true
-
-        reloadAddons()
-        OriginsReforged.multiConfigurationManager.loadAllConfigs().forEach { (clazz, config) ->
-            ConfigRegistry.register(clazz, config)
+        if (sender.hasPermission("originsreforged.admin")) {
+            sender.sendMessage(Component.text("/origin reload", NamedTextColor.YELLOW).append(Component.text(" - Reload configuration", NamedTextColor.GRAY)))
         }
         return true
     }
 
-    private fun handleExchangeCommand(sender: CommandSender, args: Array<String>): Boolean {
-        val player = sender as? Player ?: run {
-            sender.sendMessage(Component.text(MSG_PLAYER_ONLY).color(NamedTextColor.RED))
+    private fun swapOrigin(sender: CommandSender, args: Array<out String>): Boolean {
+        val config = mainConfig
+
+        if (!config.swapCommand.enabled) {
+            sender.sendMessage(Component.text("The /origin swap command is disabled on this server.", NamedTextColor.RED))
             return true
         }
 
-        if (!player.hasPermission("originsreforged.exchange")) {
-            player.sendMessage(Component.text(MSG_NO_PERMISSION).color(NamedTextColor.RED))
+        if (sender !is Player) {
+            sender.sendMessage(Component.text("Only players can use /origin swap.", NamedTextColor.RED))
             return true
         }
 
-        if (args.size < 2) {
-            player.sendMessage(Component.text("Usage: /origin exchange <player> [<layer>]").color(NamedTextColor.RED))
+        if (!sender.hasPermission(config.swapCommand.permission)) {
+            sender.sendMessage(ShortcutUtils.getColored(config.messages.noSwapCommandPermissions))
+            return true
+        }
+
+        val container = v2Container ?: run {
+            sender.sendMessage(Component.text("Origins system not initialized.", NamedTextColor.RED))
+            return true
+        }
+
+        val requestedLayer = args.getOrNull(1)
+        val layer = when {
+            requestedLayer != null && requestedLayer in container.originLoader.layers -> requestedLayer
+            requestedLayer != null -> {
+                sender.sendMessage(Component.text("Unknown layer: $requestedLayer", NamedTextColor.RED))
+                return true
+            }
+            else -> container.originLoader.layers.firstOrNull() ?: "origin"
+        }
+
+        ru.turbovadim.OriginsReforged.instance.coroutines.launchIo {
+            OriginSelectorUI.open(
+                player = sender,
+                layer = layer,
+                reason = OriginSelectorUI.OpenReason.SWAP
+            )
+        }
+        return true
+    }
+
+    private fun giveOrb(sender: CommandSender, args: Array<out String>): Boolean {
+        if (!sender.hasPermission("originsreforged.admin")) {
+            sender.sendMessage(Component.text("You don't have permission to use this command.", NamedTextColor.RED))
+            return true
+        }
+
+        val target: Player = if (args.size >= 2) {
+            Bukkit.getPlayer(args[1]) ?: run {
+                sender.sendMessage(Component.text("Player not found: ${args[1]}", NamedTextColor.RED))
+                return true
+            }
+        } else if (sender is Player) {
+            sender
+        } else {
+            sender.sendMessage(Component.text("Please specify a player.", NamedTextColor.RED))
+            return true
+        }
+
+        val amount = if (args.size >= 3) {
+            args[2].toIntOrNull()?.coerceIn(1, 64) ?: run {
+                sender.sendMessage(Component.text("Invalid amount: ${args[2]}", NamedTextColor.RED))
+                return true
+            }
+        } else {
+            1
+        }
+
+        val orbStack = OrbOfOrigin.orb.clone().apply { this.amount = amount }
+        EntityScheduler.execute(ru.turbovadim.OriginsReforged.instance, target, { target.inventory.addItem(orbStack) })
+
+        val orbText = if (amount == 1) "an Orb of Origin" else "$amount Orbs of Origin"
+        sender.sendMessage(Component.text("Gave $orbText to ${target.name}.", NamedTextColor.GREEN))
+        return true
+    }
+
+    private fun setOrigin(sender: CommandSender, args: Array<out String>): Boolean {
+        if (!sender.hasPermission("originsreforged.admin")) {
+            sender.sendMessage(Component.text("You don't have permission to use this command.", NamedTextColor.RED))
+            return true
+        }
+
+        if (args.size < 3) {
+            sender.sendMessage(Component.text("Usage: /origin set <player> <origin> [layer]", NamedTextColor.RED))
+            return true
+        }
+
+        val container = v2Container ?: run {
+            sender.sendMessage(Component.text("Origins system not initialized.", NamedTextColor.RED))
             return true
         }
 
         val target = Bukkit.getPlayer(args[1]) ?: run {
-            player.sendMessage(Component.text("Usage: /origin exchange <player> [<layer>]").color(NamedTextColor.RED))
+            sender.sendMessage(Component.text("Player not found: ${args[1]}", NamedTextColor.RED))
             return true
         }
 
-        if (target == player) {
-            player.sendMessage(Component.text("You must specify another player.").color(NamedTextColor.RED))
+        val originName = args[2]
+        val origin = container.originRegistry.getByName(originName) ?: run {
+            sender.sendMessage(Component.text("Origin not found: $originName", NamedTextColor.RED))
             return true
         }
 
-        return processExchangeRequest(player, target, args)
+        val layer = if (args.size >= 4) args[3] else origin.layer
+
+        EntityScheduler.execute(container.plugin, target, {
+            val result = container.playerStateManager.setOrigin(target, layer, origin, OriginChangeReason.ADMIN_COMMAND)
+            if (!result.cancelled) sender.sendMessage(Component.text("Set ${target.name}'s origin to ${result.newOrigin?.getNameForDisplay()} in layer '${result.layer}'.", NamedTextColor.GREEN))
+        })
+        return true
     }
 
-    private fun processExchangeRequest(player: Player, target: Player, args: Array<String>): Boolean {
-        val layer = if (args.size != 3) "origin" else args[2]
+    private fun getOrigin(sender: CommandSender, args: Array<out String>): Boolean {
+        val container = v2Container ?: run {
+            sender.sendMessage(Component.text("Origins system not initialized.", NamedTextColor.RED))
+            return true
+        }
 
-        // Check for existing requests
-        for (request in exchangeRequests.getOrDefault(player, mutableListOf())!!) {
-            if (request.expireTime <= Bukkit.getCurrentTick()) continue
-
-            if (request.p2 == player && request.p1 == target) {
-                executeExchange(player, target, request.layer)
+        val target: Player = if (args.size >= 2) {
+            Bukkit.getPlayer(args[1]) ?: run {
+                sender.sendMessage(Component.text("Player not found: ${args[1]}", NamedTextColor.RED))
                 return true
             }
-        }
-
-        // Create new request
-        if (target !in exchangeRequests) {
-            exchangeRequests[target] = mutableListOf()
-        }
-
-        exchangeRequests[target]!!.removeIf { request ->
-            request.p1 == player && request.p2 == player
-        }
-
-        exchangeRequests[target]!!.add(
-            ExchangeRequest(player, target, Bukkit.getCurrentTick() + 6000, layer)
-        )
-
-        sendExchangeMessages(player, target, layer)
-        return true
-    }
-
-    private fun executeExchange(player: Player, target: Player, layer: String) {
-        val layerCapitalized = layer.replaceFirstChar { it.uppercase() }
-
-        target.sendMessage(Component.text("$layerCapitalized swapped with ${player.name}.").color(NamedTextColor.AQUA))
-        player.sendMessage(Component.text("$layerCapitalized swapped with ${target.name}.").color(NamedTextColor.AQUA))
-
-        CoroutineScope(ioDispatcher).launch {
-            val pOrigin = getOrigin(player, layer)
-            val tOrigin = getOrigin(target, layer)
-
-            setOrigin(player, tOrigin, PlayerSwapOriginEvent.SwapReason.COMMAND, false, layer)
-            setOrigin(target, pOrigin, PlayerSwapOriginEvent.SwapReason.COMMAND, false, layer)
-        }
-    }
-
-    private fun sendExchangeMessages(player: Player, target: Player, layer: String) {
-        target.sendMessage(
-            Component.text(
-                "$layer is requesting to swap ${player.name} with you, type /origin exchange ${player.name} to accept. The request will expire in 5 minutes."
-            ).color(NamedTextColor.AQUA)
-        )
-        player.sendMessage(
-            Component.text(
-                "Requesting to swap $layer with ${target.name}. The request will expire in 5 minutes."
-            ).color(NamedTextColor.AQUA)
-        )
-    }
-
-    private fun handleSetCommand(sender: CommandSender, args: Array<String>): Boolean {
-        if (!hasAdminPermission(sender)) return true
-
-        if (args.size < 4) {
-            sender.sendMessage(
-                Component.text("Invalid command. Usage: /origin set <player> <layer> <origin>")
-                    .color(NamedTextColor.RED)
-            )
+        } else if (sender is Player) {
+            sender
+        } else {
+            sender.sendMessage(Component.text("Please specify a player.", NamedTextColor.RED))
             return true
         }
 
-        val player = Bukkit.getPlayer(args[1]) ?: run {
-            sender.sendMessage(
-                Component.text("Invalid command. Usage: /origin set <player> <layer> <origin>")
-                    .color(NamedTextColor.RED)
-            )
+        val state = container.playerStateManager.getStateOrNull(target)
+        if (state == null || state.origins.isEmpty()) {
+            sender.sendMessage(Component.text("${target.name} has no origins.", NamedTextColor.YELLOW))
             return true
         }
 
-        val layer = args[2]
-        val origin = getOrigin(args[3].replace("_", " ")) ?: run {
-            sender.sendMessage(
-                Component.text("Invalid command. Usage: /origin set <player> <layer> <origin>")
-                    .color(NamedTextColor.RED)
-            )
-            return true
-        }
-
-        if (origin.layer != layer) {
-            sender.sendMessage(
-                Component.text("Invalid command. Usage: /origin set <player> <layer> <origin>")
-                    .color(NamedTextColor.RED)
-            )
-            return true
-        }
-
-        CoroutineScope(ioDispatcher).launch {
-            setOrigin(player, origin, PlayerSwapOriginEvent.SwapReason.COMMAND, false, layer)
+        sender.sendMessage(Component.text("=== ${target.name}'s Origins ===", NamedTextColor.GOLD))
+        for ((layer, origin) in state.origins) {
+            sender.sendMessage(Component.text("$layer: ", NamedTextColor.YELLOW).append(Component.text(origin.getNameForDisplay(), NamedTextColor.WHITE)))
         }
         return true
     }
 
-    private fun handleOrbCommand(sender: CommandSender, args: Array<String>): Boolean {
-        val players: List<Player> = when {
-            args.size == 2 -> {
-                if (args[1] == "all") {
-                    sender.sendMessage(Component.text("Giving orb to all players...").color(NamedTextColor.AQUA))
-                    Bukkit.getOnlinePlayers().toList()
-                } else {
-                    val player = Bukkit.getPlayer(args[1]) ?: run {
-                        sender.sendMessage(Component.text(MSG_PLAYER_ONLY).color(NamedTextColor.RED))
-                        return true
-                    }
-                    listOf(player)
-                }
-            }
-            sender is Player -> {
-                if (!sender.hasPermission("originsreforged.admin")) {
-                    sender.sendMessage(Component.text(MSG_NO_PERMISSION).color(NamedTextColor.RED))
-                    return true
-                }
-                listOf(sender)
-            }
-            else -> {
-                sender.sendMessage(Component.text(MSG_PLAYER_ONLY).color(NamedTextColor.RED))
+    private fun listOrigins(sender: CommandSender, args: Array<out String>): Boolean {
+        val container = v2Container ?: run {
+            sender.sendMessage(Component.text("Origins system not initialized.", NamedTextColor.RED))
+            return true
+        }
+
+        val layer = if (args.size >= 2) args[1] else null
+
+        if (layer != null) {
+            val origins = container.originRegistry.getByLayer(layer)
+            if (origins.isEmpty()) {
+                sender.sendMessage(Component.text("No origins found in layer '$layer'.", NamedTextColor.YELLOW))
                 return true
             }
-        }
 
-        players.forEach { it.inventory.addItem(OrbOfOrigin.orb)}
-        return true
-    }
+            sender.sendMessage(Component.text("=== Origins in '$layer' ===", NamedTextColor.GOLD))
+            for (origin in origins) {
+                val choosable = if (origin.choosable) "" else " (not choosable)"
+                sender.sendMessage(Component.text("- ${origin.getNameForDisplay()}$choosable", NamedTextColor.WHITE))
+            }
+        } else {
+            val allOrigins = container.originRegistry.getAll()
+            if (allOrigins.isEmpty()) {
+                sender.sendMessage(Component.text("No origins registered.", NamedTextColor.YELLOW))
+                return true
+            }
 
-    private fun handleCheckCommand(sender: CommandSender, args: Array<String>): Boolean {
-        val player = sender as? Player ?: run {
-            sender.sendMessage(Component.text(MSG_PLAYER_ONLY).color(NamedTextColor.RED))
-            return true
-        }
-
-        val layer = if (args.size == 2) args[1] else "origin"
-        openOriginSwapper(
-            player = player,
-            reason = PlayerSwapOriginEvent.SwapReason.COMMAND,
-            getOrigins(layer).indexOf(runBlocking { getOrigin(player, layer) }),
-            scrollAmount = 0,
-            cost = false,
-            displayOnly = true,
-            layer = layer
-        )
-        return true
-    }
-
-    private fun handlePackCommand(sender: CommandSender): Boolean {
-        val player = sender as? Player ?: run {
-            sender.sendMessage(Component.text(MSG_PLAYER_ONLY).color(NamedTextColor.RED))
-            return true
-        }
-
-        sendPacks(player)
-        return true
-    }
-
-    private fun handleExportCommand(sender: CommandSender, args: Array<String>): Boolean {
-        if (args.size != 3) {
-            sender.sendMessage(
-                Component.text("Invalid command. Usage: /origin export <addon id> <path>")
-                    .color(NamedTextColor.RED)
-            )
-            return true
-        }
-        val output = File(OriginsReforged.instance.dataFolder, "export/${args[2]}.orbarch")
-        val files = AddonLoader.originFiles[args[1]]
-        if (files == null) {
-            sender.sendMessage(
-                Component.text("Invalid command. Usage: /origin export <addon id> <path>")
-                    .color(NamedTextColor.RED)
-            )
-            return true
-        }
-        // Фильтруем null-элементы
-        val nonNullFiles = files.toMutableList()
-        try {
-            CompressionUtils.compressFiles(nonNullFiles, output)
-            sender.sendMessage(
-                Component.text("Exported origins to '~/plugins/Origins-Reforged/export/${args[2]}.orbarch'")
-                    .color(NamedTextColor.AQUA)
-            )
-        } catch (e: IOException) {
-            throw RuntimeException(e)
+            sender.sendMessage(Component.text("=== All Origins (${allOrigins.size}) ===", NamedTextColor.GOLD))
+            val byLayer = allOrigins.groupBy { it.layer }
+            for ((layerName, origins) in byLayer) {
+                sender.sendMessage(Component.text("Layer '$layerName':", NamedTextColor.YELLOW))
+                for (origin in origins) {
+                    sender.sendMessage(Component.text("  - ${origin.getNameForDisplay()}", NamedTextColor.WHITE))
+                }
+            }
         }
         return true
     }
 
-    private fun handleImportCommand(sender: CommandSender, args: Array<String>): Boolean {
-        if (args.size != 2) {
-            sender.sendMessage(
-                Component.text("Invalid command. Usage: /origin import <path>").color(NamedTextColor.RED)
-            )
+    private fun reload(sender: CommandSender): Boolean {
+        if (!sender.hasPermission("originsreforged.admin")) {
+            sender.sendMessage(Component.text("You don't have permission to use this command.", NamedTextColor.RED))
             return true
         }
-        val input = File(OriginsReforged.instance.dataFolder, "import/" + args[1])
-        val output = File(OriginsReforged.instance.dataFolder, "originsMain")
-        if (!input.exists() || !output.exists()) {
-            sender.sendMessage(
-                Component.text("Invalid command. Usage: /origin import <path>").color(NamedTextColor.RED)
-            )
+
+        val container = v2Container ?: run {
+            sender.sendMessage(Component.text("Origins system not initialized.", NamedTextColor.RED))
             return true
         }
-        try {
-            decompressFiles(input, output)
-        } catch (e: IOException) {
-            throw RuntimeException(e)
-        }
+
+        // Reload origin files
+        container.originLoader.reloadAll()
+        sender.sendMessage(Component.text("Origins configuration reloaded.", NamedTextColor.GREEN))
         return true
     }
 
-    override fun onTabComplete(
-        sender: CommandSender,
-        command: Command,
-        label: String,
-        args: Array<String>
-    ): MutableList<String?> {
-        val result = ArrayList<String?>()
-        val data = getTabCompletionData(sender, args)
-        StringUtil.copyPartialMatches(args[args.size - 1], data, result)
-        return result
-    }
+    override fun onTabComplete(sender: CommandSender, command: Command, label: String, args: Array<out String>): List<String>? {
+        val container = v2Container ?: return emptyList()
 
-    private fun getTabCompletionData(sender: CommandSender, args: Array<String>): List<String?> {
         return when (args.size) {
-            1 -> getFirstArgumentCompletions(sender)
-            2 -> getSecondArgumentCompletions(args[0])
-            3 -> getThirdArgumentCompletions(args[0])
-            4 -> getFourthArgumentCompletions(args[0], args[2])
-            else -> emptyList()
-        }
-    }
-
-    private fun getFirstArgumentCompletions(sender: CommandSender): List<String?> {
-        val completions = mutableListOf<String?>()
-        completions.add(CMD_CHECK)
-
-        if (sender is Player && allowOriginSwapCommand(sender)) {
-            completions.add(CMD_SWAP)
-        }
-
-        if (sender.hasPermission("originsreforged.exchange")) {
-            completions.add(CMD_EXCHANGE)
-        }
-
-        if (sender.hasPermission("originsreforged.admin")) {
-            completions.addAll(listOf(CMD_RELOAD, CMD_SET, CMD_ORB, CMD_EXPORT, CMD_IMPORT, CMD_PACK))
-        }
-
-        return completions
-    }
-
-    private fun getSecondArgumentCompletions(firstArg: String): List<String?> {
-        return when (firstArg) {
-            CMD_SET, CMD_ORB, CMD_EXCHANGE -> listOf("all") + Bukkit.getOnlinePlayers().map { it.name }
-            CMD_EXPORT -> ArrayList(AddonLoader.originFiles.keys)
-            CMD_CHECK, CMD_SWAP -> ArrayList(AddonLoader.layers)
-            CMD_IMPORT -> getImportFileNames()
-            else -> emptyList()
-        }
-    }
-
-    private fun getThirdArgumentCompletions(firstArg: String): List<String?> {
-        return if (firstArg == CMD_SET) ArrayList(AddonLoader.layers) else emptyList()
-    }
-
-    private fun getFourthArgumentCompletions(firstArg: String, layer: String): List<String?> {
-        return if (firstArg == CMD_SET) {
-            getOrigins(layer).map { origin ->
-                origin.getName().lowercase().replace(" ", "_")
+            1 -> {
+                val subcommands = mutableListOf("help", "orb", "get", "list")
+                if (mainConfig.swapCommand.enabled && sender.hasPermission(mainConfig.swapCommand.permission)) {
+                    subcommands.add("swap")
+                }
+                if (sender.hasPermission("originsreforged.admin")) {
+                    subcommands.addAll(listOf("set", "reload"))
+                }
+                subcommands.filter { it.startsWith(args[0].lowercase()) }
             }
-        } else emptyList()
-    }
-
-    private fun getImportFileNames(): List<String?> {
-        val input = File(OriginsReforged.instance.dataFolder, "import")
-        val files = input.listFiles() ?: return emptyList()
-        return files.map { it.name }
-    }
-
-    private fun hasAdminPermission(sender: CommandSender): Boolean {
-        if (sender is Player && !sender.hasPermission("originsreforged.admin")) {
-            sender.sendMessage(Component.text(MSG_NO_PERMISSION).color(NamedTextColor.RED))
-            return false
+            2 -> {
+                when (args[0].lowercase()) {
+                    "orb", "set", "get" -> Bukkit.getOnlinePlayers().map { it.name }.filter { it.lowercase().startsWith(args[1].lowercase()) }
+                    "list", "swap" -> container.originRegistry.layers.filter { it.lowercase().startsWith(args[1].lowercase()) }
+                    else -> emptyList()
+                }
+            }
+            3 -> {
+                when (args[0].lowercase()) {
+                    "set" -> container.originRegistry.getAll().map { it.key.asString() }.filter { it.lowercase().startsWith(args[2].lowercase()) }
+                    "orb" -> listOf("1", "16", "32", "64").filter { it.startsWith(args[2]) }
+                    else -> emptyList()
+                }
+            }
+            4 -> {
+                when (args[0].lowercase()) {
+                    "set" -> container.originRegistry.layers.filter { it.lowercase().startsWith(args[3].lowercase()) }
+                    else -> emptyList()
+                }
+            }
+            else -> emptyList()
         }
-        return true
     }
 }

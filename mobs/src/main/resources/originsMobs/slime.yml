@@ -1,0 +1,21 @@
+# Slime Origin
+# Bouncy gelatinous blob
+
+display_name: Slime
+
+description: |
+  Green blobs of Jello, that bounce all around!
+
+icon: SLIME_BALL
+
+layer: origin
+impact: 1
+order: 3
+choosable: true
+
+abilities:
+  - moborigins:bouncy
+  - moborigins:split
+  - moborigins:small_weak
+  - moborigins:small_weak_knockback
+  - origins:fall_immunity

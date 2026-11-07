@@ -1,0 +1,34 @@
+# Drowned Origin
+# Undead dweller of the deep ocean
+
+display_name: Drowned
+
+description: |
+  The dwellers of the deep ocean, they wield their tridents
+  and attack the living that dare cross the ocean.
+
+icon: TRIDENT
+
+layer: origin
+impact: 1
+order: 2
+choosable: false
+priority: 2
+
+abilities:
+  - monsterorigins:trident_expert
+  - origins:water_vision
+  - monsterorigins:guardian_ally
+  - origins:water_breathing
+  - monsterorigins:swim_speed
+  - monsterorigins:water_combatant
+  - monsterorigins:undead
+  - monsterorigins:burn_in_day
+  - monsterorigins:zombie_hunger
+  - monsterorigins:zombie_touch
+  - monsterorigins:scare_villagers
+  - monsterorigins:slowness
+  - monsterorigins:land_slowness
+  - monsterorigins:drowned_transform_into_zombie
+  - monsterorigins:metamorphosis_temperature
+  - origins:carnivore

@@ -1,0 +1,29 @@
+# Arachnid Origin
+# Spider-like abilities
+
+display_name: Arachnid
+
+description: |
+  You have the abilities of a spider.
+  Climb walls, trap enemies in webs,
+  but beware of your fragile body.
+
+icon: COBWEB
+
+layer: origin
+impact: 2
+order: 1
+choosable: true
+priority: 1
+
+# Optional restrictions
+# permission: origins.arachnid
+# cost: 500
+# max_players: 5
+
+abilities:
+  - origins:climbing
+  - origins:master_of_webs
+  - origins:arthropod
+  - origins:fragile
+  - origins:carnivore

@@ -21,23 +21,34 @@ import ru.turbovadim.OriginsReforged
  */
 object TextRenderingUtils {
 
-    private val charWidthMap: Map<Char, Int> by lazy {
-        buildMap {
-            OriginsReforged.charactersConfig.characterWidths.forEach { (width, chars) ->
-                chars.forEach { char -> put(char, width) }
+    /**
+     * Get character width - exact replica of original WidthGetter.getWidth()
+     */
+    @Volatile private var widthSource: Map<Int, String>? = null
+    @Volatile private var widthCache: Map<Int, Int> = emptyMap()
+
+    fun getCharWidth(character: Char): Int = getCodePointWidth(character.code)
+
+    private fun getCodePointWidth(character: Int): Int {
+        if (character == '\uF00A'.code) {
+            return 2
+        }
+        if (character == ' '.code) {
+            return 4
+        }
+        val source = OriginsReforged.charactersConfig.characterWidths
+        if (widthSource !== source) synchronized(this) {
+            if (widthSource !== source) {
+                widthCache = buildMap {
+                    for (width in 2..16) source[width]?.codePoints()?.forEach { putIfAbsent(it, width) }
+                }
+                widthSource = source
             }
         }
+        return widthCache[character] ?: 0
     }
 
-    private const val DEFAULT_CHAR_WIDTH = 6
-
-    fun getCharWidth(character: Char): Int = when (character) {
-        '\uF00A' -> 2  // Special description prefix
-        ' ' -> 4       // Space
-        else -> charWidthMap[character] ?: DEFAULT_CHAR_WIDTH
-    }
-
-    fun getStringWidth(text: String): Int = text.sumOf { getCharWidth(it) }
+    fun getStringWidth(text: String): Int = text.codePoints().map(::getCodePointWidth).sum()
 
     // ========== Inverse/Negative Space ==========
 
@@ -79,9 +90,7 @@ object TextRenderingUtils {
     }
 
     fun getInverseForString(text: String): String = buildString(text.length * 2) {
-        for (c in text) {
-            append(getInverseForChar(c))
-        }
+        text.codePoints().forEach { append(getInverseForWidth(getCodePointWidth(it))) }
     }
 
     const val CHAR_SPACER = '\uF000'
@@ -92,8 +101,8 @@ object TextRenderingUtils {
 
     fun compressText(text: String): String = buildString(text.length * 2 + 1) {
         append("\uF001")
-        for (c in text) {
-            append(c)
+        text.codePoints().forEach {
+            appendCodePoint(it)
             append(CHAR_SPACER)
         }
     }

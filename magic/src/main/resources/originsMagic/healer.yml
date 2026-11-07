@@ -1,0 +1,22 @@
+# Healer Origin
+# Support-focused mage
+
+display_name: Healer
+
+description: |
+  Healers try to avoid fights and instead heal others,
+  working to keep their teammates safe.
+
+icon: GHAST_TEAR
+
+layer: origin
+impact: 2
+order: 5000
+choosable: true
+
+abilities:
+  - magicorigins:spare_life
+  - magicorigins:interact_regeneration
+  - magicorigins:regeneration_when_still
+  - magicorigins:unskilled_warrior
+  - magicorigins:weak_in_water

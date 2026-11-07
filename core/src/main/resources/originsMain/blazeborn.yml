@@ -1,0 +1,27 @@
+# Blazeborn Origin
+# Descendants of the Blaze, immune to fire and the Nether
+
+display_name: Blazeborn
+
+description: |
+  Late descendants of the Blaze, the Blazeborn
+  are naturally immune to the perils of the Nether.
+  Water and potions are harmful to you.
+
+icon: BLAZE_POWDER
+
+layer: origin
+impact: 3
+order: 2
+choosable: true
+priority: 1
+
+abilities:
+  - origins:fire_immunity
+  - origins:nether_spawn
+  - origins:burning_wrath
+  - origins:hotblooded
+  - origins:water_vulnerability
+  - origins:flame_particles
+  - origins:damage_from_snowballs
+  - origins:damage_from_potions

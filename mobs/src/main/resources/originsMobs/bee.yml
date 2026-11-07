@@ -1,0 +1,23 @@
+# Bee Origin
+# Flying pollinator
+
+display_name: Bee
+
+description: |
+  A flying insect that pollinates the world,
+  spreading flowers and honey all around.
+
+icon: HONEYCOMB
+
+layer: origin
+impact: 2
+order: 4
+choosable: true
+
+abilities:
+  - moborigins:stinger
+  - moborigins:flower_power
+  - moborigins:queen_bee
+  - moborigins:small_bug
+  - moborigins:bee_wings
+  - origins:vegetarian

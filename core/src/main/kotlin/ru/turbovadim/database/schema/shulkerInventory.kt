@@ -17,7 +17,7 @@ data class ShulkerItem(
 object ShulkerInventory : IntIdTable("shulker_inventory") {
     val parent = reference("parent_id", UUIDOrigins)
     val slot = integer("slot")
-    val itemStack = binary("item_stack", 16384)
+    val itemStack = binary("item_stack")
 }
 
 class ShulkerItemEntity(id: EntityID<Int>) : IntEntity(id) {

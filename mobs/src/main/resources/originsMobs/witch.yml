@@ -1,0 +1,22 @@
+# Witch Origin
+# Illager potion master
+
+display_name: Witch
+
+description: |
+  Cruel and cackling, Witches are masters of brewing,
+  and are great with magic.
+
+icon: BREWING_STAND
+
+layer: origin
+impact: 2
+order: 4
+choosable: true
+
+abilities:
+  - moborigins:better_potions
+  - moborigins:potion_action
+  - moborigins:witch_particles
+  - moborigins:pillager_aligned
+  - moborigins:illager

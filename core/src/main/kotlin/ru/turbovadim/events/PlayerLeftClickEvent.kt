@@ -13,7 +13,9 @@ import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.player.PlayerDropItemEvent
 import org.bukkit.event.player.PlayerEvent
 import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.inventory.ItemStack
+import org.endera.enderalib.utils.async.runTask
 import ru.turbovadim.OriginsReforged.Companion.instance
 
 @Suppress("unused")
@@ -43,32 +45,36 @@ class PlayerLeftClickEvent(private val playerInteractEvent: PlayerInteractEvent)
     }
 
     class PlayerLeftClickEventListener : Listener {
-        var lastInteractionTickMap: MutableMap<Player?, Int?> = HashMap<Player?, Int?>()
+        private val lastInteractionTickMap = java.util.concurrent.ConcurrentHashMap<java.util.UUID, Int>()
+
+        @EventHandler
+        fun onQuit(event: PlayerQuitEvent) { lastInteractionTickMap.remove(event.player.uniqueId) }
 
         @EventHandler
         fun onPlayerInteract(event: PlayerInteractEvent) {
             if (!event.getAction().isLeftClick) {
                 return
             }
-            Bukkit.getScheduler().scheduleSyncDelayedTask(instance, Runnable {
+            // Entity-tied: the rescheduled work dispatches an event about this player.
+            event.player.runTask(instance) {
                 if (lastInteractionTickMap.getOrDefault(
-                        event.getPlayer(),
+                        event.player.uniqueId,
                         -1
                     )!! >= Bukkit.getCurrentTick()
-                ) return@Runnable
-                lastInteractionTickMap.put(event.getPlayer(), Bukkit.getCurrentTick())
+                ) return@runTask
+                lastInteractionTickMap.put(event.player.uniqueId, Bukkit.getCurrentTick())
                 PlayerLeftClickEvent(event).callEvent()
-            })
+            }
         }
 
         @EventHandler
         fun onPlayerDropItem(event: PlayerDropItemEvent) {
-            lastInteractionTickMap.put(event.getPlayer(), Bukkit.getCurrentTick() + 1)
+            lastInteractionTickMap.put(event.player.uniqueId, Bukkit.getCurrentTick() + 1)
         }
 
         @EventHandler
         fun onBlockBreak(event: BlockBreakEvent) {
-            lastInteractionTickMap.put(event.player, Bukkit.getCurrentTick() + 1)
+            lastInteractionTickMap.put(event.player.uniqueId, Bukkit.getCurrentTick() + 1)
         }
     }
 

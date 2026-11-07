@@ -1,0 +1,22 @@
+# Dwarf Origin
+# Mineral expert of the deep caves
+
+display_name: Dwarf
+
+description: |
+  Known for their great skill in finding minerals,
+  the Dwarfs spend most of their time in caves deep underground.
+
+icon: IRON_PICKAXE
+
+layer: origin
+impact: 2
+order: 1
+choosable: true
+
+abilities:
+  - fantasyorigins:infinite_haste
+  - fantasyorigins:infinite_night_vision
+  - fantasyorigins:fortune_increaser
+  - fantasyorigins:magic_resistance
+  - fantasyorigins:small_body
