@@ -51,7 +51,7 @@ private val ARTIFICIAL_SPAWNS = setOf(
  */
 val becomesElderGuardian = ability("becomes_elder_guardian", "moborigins") {
     title = text("Become Elder Guardian")
-    description("Defeating an Elder Guardian will turn you into one!")
+    description("Defeating a naturally spawned Elder Guardian will turn you into one!")
 
     option("target_origin", "moborigins:elder-guardian")
     option("layer", "origin")
