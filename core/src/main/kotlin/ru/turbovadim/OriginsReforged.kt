@@ -18,6 +18,7 @@ import ru.turbovadim.placeholder.OriginsPlaceholderExpansion
 import ru.turbovadim.v2.BuiltinModuleBootstrap
 import ru.turbovadim.v2.di.OriginsContainer
 import ru.turbovadim.v2.listener.OriginCommandDispatcher
+import ru.turbovadim.v2.region.WorldGuardRegions
 import ru.turbovadim.v2.listener.OriginDeathListener
 import ru.turbovadim.v2.listener.OriginJoinFlowListener
 import ru.turbovadim.v2.listener.OriginSelectionInvulnerabilityListener
@@ -97,6 +98,7 @@ class OriginsReforged : JavaPlugin() {
         instance = this
         PacketEvents.setAPI(SpigotPacketEventsBuilder.build(this))
         PacketEvents.getAPI().load()
+        if (server.pluginManager.getPlugin("WorldGuard") != null) WorldGuardRegions.registerFlag(this)
     }
 
     override fun onDisable() {
@@ -184,6 +186,8 @@ class OriginsReforged : JavaPlugin() {
             Bukkit.getPluginManager().registerEvents(OriginJoinFlowListener(container), this)
             Bukkit.getPluginManager().registerEvents(OriginSelectionInvulnerabilityListener(container), this)
             Bukkit.getPluginManager().registerEvents(OriginDeathListener(container), this)
+
+            if (server.pluginManager.isPluginEnabled("WorldGuard")) WorldGuardRegions.registerListener(this, container)
 
             if (server.pluginManager.isPluginEnabled("PlaceholderAPI")) {
                 val expansion = OriginsPlaceholderExpansion(this, container.playerStateManager)

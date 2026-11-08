@@ -122,7 +122,7 @@ class GenericListenerProcessor(private val container: OriginsContainer) {
             for (player in typedEntry.effect.playersExtractor(event).distinctBy { it.uniqueId }) {
                 val state = container.playerStateManager.getState(player)
                 if (!state.hasAbility(entry.abilityKey)) continue
-                if (!isAbilityActive(player, entry.abilityKey)) continue
+                if (!container.abilityRegistry.isActive(player, entry.abilityKey)) continue
 
                 val accessor = container.configLoader.getAccessor(entry.abilityKey, ability.defaultOptions)
                 typedEntry.effect.handler(player, event, accessor)
@@ -137,37 +137,12 @@ class GenericListenerProcessor(private val container: OriginsContainer) {
 
         for (entry in originChangedHandlers) {
             if (!state.hasAbility(entry.abilityKey)) continue
-            if (!isAbilityActive(player, entry.abilityKey)) continue
+            if (!container.abilityRegistry.isActive(player, entry.abilityKey)) continue
 
             val ability = container.abilityRegistry.get(entry.abilityKey) ?: continue
             val accessor = container.configLoader.getAccessor(entry.abilityKey, ability.defaultOptions)
 
             entry.effect.handler(player, event, accessor)
         }
-    }
-
-    /**
-     * Check if an ability is currently active for a player.
-     * Handles dependency abilities.
-     */
-    private fun isAbilityActive(player: Player, abilityKey: Key): Boolean {
-        val ability = container.abilityRegistry.get(abilityKey) ?: return false
-
-        // Check dependency
-        val depKey = ability.dependencyKey
-        if (depKey != null) {
-            val depAbility = container.abilityRegistry.getDependencyAbility(depKey)
-            if (depAbility != null) {
-                val isEnabled = depAbility.isEnabled(player)
-                // If inverse dependency, ability is active when dependency is disabled
-                if (ability.dependencyInverse) {
-                    if (isEnabled) return false
-                } else {
-                    if (!isEnabled) return false
-                }
-            }
-        }
-
-        return true
     }
 }

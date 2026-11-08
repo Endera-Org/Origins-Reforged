@@ -34,7 +34,6 @@ import java.util.concurrent.atomic.AtomicLong
  */
 class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listener {
 
-
     // Current tick counter
     private val tickCounter = AtomicLong(0)
 
@@ -155,7 +154,7 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
                 var flightRefreshed = false
                 var visibilityRefreshed = false
                 for (task in due) {
-                    if (task !in playerTasks[playerId].orEmpty() || !isAbilityActive(player, task.abilityKey)) continue
+                    if (task !in playerTasks[playerId].orEmpty() || !container.abilityRegistry.isActive(player, task.abilityKey)) continue
                     val ability = container.abilityRegistry.get(task.abilityKey) ?: continue
                     val config = container.configLoader.getAccessor(task.abilityKey, ability.defaultOptions)
                     when (val effect = task.effect) {
@@ -192,31 +191,6 @@ class PeriodicAbilityProcessor(private val container: OriginsContainer) : Listen
                 }
             })
         }
-    }
-
-    /**
-     * Check if an ability is currently active for a player.
-     * Handles dependency abilities.
-     */
-    private fun isAbilityActive(player: Player, abilityKey: Key): Boolean {
-        val ability = container.abilityRegistry.get(abilityKey) ?: return false
-
-        // Check dependency
-        val depKey = ability.dependencyKey
-        if (depKey != null) {
-            val depAbility = container.abilityRegistry.getDependencyAbility(depKey)
-            if (depAbility != null) {
-                val isEnabled = depAbility.isEnabled(player)
-                // If inverse dependency, ability is active when dependency is disabled
-                if (ability.dependencyInverse) {
-                    if (isEnabled) return false
-                } else {
-                    if (!isEnabled) return false
-                }
-            }
-        }
-
-        return true
     }
 
     /**

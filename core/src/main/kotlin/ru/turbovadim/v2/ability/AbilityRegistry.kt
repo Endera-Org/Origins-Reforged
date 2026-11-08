@@ -1,6 +1,7 @@
 package ru.turbovadim.v2.ability
 
 import net.kyori.adventure.key.Key
+import org.bukkit.entity.Player
 import ru.turbovadim.v2.di.OriginsContainer
 
 /**
@@ -140,6 +141,14 @@ class AbilityRegistry(private val container: OriginsContainer) {
      * Get a dependency ability by key.
      */
     fun getDependencyAbility(key: Key): DependencyAbility? = dependencyAbilities[key]
+
+    /** Whether [key] currently works for [player]: no region blocks it and its dependency is satisfied. */
+    fun isActive(player: Player, key: Key): Boolean {
+        val ability = abilities[key] ?: return false
+        if (container.regionAbilityBlocks.isBlocked(player.uniqueId, key)) return false
+        val dependency = ability.dependencyKey?.let(dependencyAbilities::get) ?: return true
+        return dependency.isEnabled(player) != ability.dependencyInverse
+    }
 
     /**
      * Get parent multi-abilities for a sub-ability.

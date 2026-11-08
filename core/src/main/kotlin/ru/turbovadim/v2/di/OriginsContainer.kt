@@ -15,6 +15,7 @@ import ru.turbovadim.v2.event.OriginEventBus
 import ru.turbovadim.v2.origin.OriginLoader
 import ru.turbovadim.v2.origin.OriginRegistry
 import ru.turbovadim.v2.processor.*
+import ru.turbovadim.v2.region.RegionAbilityBlocks
 import ru.turbovadim.v2.state.PlayerStateManager
 
 /**
@@ -59,6 +60,9 @@ class OriginsContainer private constructor(
 
     // Cooldown management
     val cooldownManager: CooldownManager by lazy { CooldownManager() }
+
+    // Abilities blocked by the WorldGuard region each player stands in
+    val regionAbilityBlocks: RegionAbilityBlocks by lazy { RegionAbilityBlocks() }
 
     // Addon support
     val addonAbilityCheckRegistry: AddonAbilityCheckRegistry by lazy { AddonAbilityCheckRegistry() }

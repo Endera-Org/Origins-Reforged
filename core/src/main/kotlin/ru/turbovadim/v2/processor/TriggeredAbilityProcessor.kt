@@ -264,7 +264,7 @@ class TriggeredAbilityProcessor(private val container: OriginsContainer) : Liste
         val abilityKeys = state.getAbilityKeys()
 
         for (abilityKey in abilityKeys) {
-            if (!isAbilityActive(player, abilityKey)) continue
+            if (!container.abilityRegistry.isActive(player, abilityKey)) continue
 
             val triggeredEffects = container.abilityRegistry.getTriggeredEffects(abilityKey)
             for (effect in triggeredEffects) {
@@ -276,27 +276,5 @@ class TriggeredAbilityProcessor(private val container: OriginsContainer) : Liste
                 handler(effect, accessor)
             }
         }
-    }
-
-    /**
-     * Check if an ability is currently active for a player.
-     */
-    private fun isAbilityActive(player: Player, abilityKey: Key): Boolean {
-        val ability = container.abilityRegistry.get(abilityKey) ?: return false
-
-        val depKey = ability.dependencyKey
-        if (depKey != null) {
-            val depAbility = container.abilityRegistry.getDependencyAbility(depKey)
-            if (depAbility != null) {
-                val isEnabled = depAbility.isEnabled(player)
-                if (ability.dependencyInverse) {
-                    if (isEnabled) return false
-                } else {
-                    if (!isEnabled) return false
-                }
-            }
-        }
-
-        return true
     }
 }

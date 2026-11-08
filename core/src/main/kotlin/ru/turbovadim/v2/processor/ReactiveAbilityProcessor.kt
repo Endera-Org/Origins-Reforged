@@ -60,7 +60,7 @@ class ReactiveAbilityProcessor(private val container: OriginsContainer) : Listen
         val abilityKeys = state.getAbilityKeys()
 
         for (abilityKey in abilityKeys) {
-            if (!isAbilityActive(player, abilityKey)) continue
+            if (!container.abilityRegistry.isActive(player, abilityKey)) continue
 
             val reactiveEffects = container.abilityRegistry.getReactiveEffects(abilityKey)
             for (effect in reactiveEffects) {
@@ -117,7 +117,7 @@ class ReactiveAbilityProcessor(private val container: OriginsContainer) : Listen
         val abilityKeys = state.getAbilityKeys()
 
         for (abilityKey in abilityKeys) {
-            if (!isAbilityActive(player, abilityKey)) continue
+            if (!container.abilityRegistry.isActive(player, abilityKey)) continue
 
             val reactiveEffects = container.abilityRegistry.getReactiveEffects(abilityKey)
             for (effect in reactiveEffects) {
@@ -146,7 +146,7 @@ class ReactiveAbilityProcessor(private val container: OriginsContainer) : Listen
         val abilityKeys = state.getAbilityKeys()
 
         for (abilityKey in abilityKeys) {
-            if (!isAbilityActive(player, abilityKey)) continue
+            if (!container.abilityRegistry.isActive(player, abilityKey)) continue
 
             val reactiveEffects = container.abilityRegistry.getReactiveEffects(abilityKey)
             for (effect in reactiveEffects) {
@@ -197,7 +197,7 @@ class ReactiveAbilityProcessor(private val container: OriginsContainer) : Listen
 
         var speedMultiplier = 1.0f
         for (abilityKey in abilityKeys) {
-            if (!isAbilityActive(player, abilityKey)) continue
+            if (!container.abilityRegistry.isActive(player, abilityKey)) continue
 
             val reactiveEffects = container.abilityRegistry.getReactiveEffects(abilityKey)
             for (effect in reactiveEffects) {
@@ -264,29 +264,4 @@ class ReactiveAbilityProcessor(private val container: OriginsContainer) : Listen
     // ============================================
     // HELPER METHODS
     // ============================================
-
-    /**
-     * Check if an ability is currently active for a player.
-     * Handles dependency abilities.
-     */
-    private fun isAbilityActive(player: Player, abilityKey: Key): Boolean {
-        val ability = container.abilityRegistry.get(abilityKey) ?: return false
-
-        // Check dependency
-        val depKey = ability.dependencyKey
-        if (depKey != null) {
-            val depAbility = container.abilityRegistry.getDependencyAbility(depKey)
-            if (depAbility != null) {
-                val isEnabled = depAbility.isEnabled(player)
-                // If inverse dependency, ability is active when dependency is disabled
-                if (ability.dependencyInverse) {
-                    if (isEnabled) return false
-                } else {
-                    if (!isEnabled) return false
-                }
-            }
-        }
-
-        return true
-    }
 }

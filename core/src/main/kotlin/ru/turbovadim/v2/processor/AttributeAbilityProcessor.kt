@@ -90,6 +90,7 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
         for (abilityKey in abilityKeys) {
             val staticEffect = container.abilityRegistry.getStaticAttributeEffect(abilityKey)
                 ?: continue
+            if (container.regionAbilityBlocks.isBlocked(player.uniqueId, abilityKey)) continue
 
             val ability = container.abilityRegistry.get(abilityKey) ?: continue
             val accessor = container.configLoader.getAccessor(abilityKey, ability.defaultOptions)
@@ -198,7 +199,7 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
                 if (!player.isOnline) return@execute
                 for (task in playerTasks) {
                     if (task !in this.playerTasks[playerId].orEmpty()) continue
-                    if (!isAbilityActive(player, task.abilityKey)) {
+                    if (!container.abilityRegistry.isActive(player, task.abilityKey)) {
                         // Ability is disabled - remove any active conditional modifiers for it
                         removeConditionalModifiersForAbility(player, task.abilityKey, task.effect)
                         continue
@@ -377,29 +378,6 @@ class AttributeAbilityProcessor(private val container: OriginsContainer) {
                 playerAttr.removeModifier(modifier)
             }
         }
-    }
-
-    /**
-     * Check if an ability is currently active for a player.
-     * Handles dependency abilities.
-     */
-    private fun isAbilityActive(player: Player, abilityKey: Key): Boolean {
-        val ability = container.abilityRegistry.get(abilityKey) ?: return false
-
-        val depKey = ability.dependencyKey
-        if (depKey != null) {
-            val depAbility = container.abilityRegistry.getDependencyAbility(depKey)
-            if (depAbility != null) {
-                val isEnabled = depAbility.isEnabled(player)
-                if (ability.dependencyInverse) {
-                    if (isEnabled) return false
-                } else {
-                    if (!isEnabled) return false
-                }
-            }
-        }
-
-        return true
     }
 
     /**

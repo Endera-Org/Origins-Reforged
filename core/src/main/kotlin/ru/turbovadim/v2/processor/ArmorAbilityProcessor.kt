@@ -121,7 +121,7 @@ class ArmorAbilityProcessor(private val container: OriginsContainer) : Listener 
         val abilityKeys = playerState.getAbilityKeys()
 
         for (abilityKey in abilityKeys) {
-            if (!isAbilityActive(player, abilityKey)) continue
+            if (!container.abilityRegistry.isActive(player, abilityKey)) continue
 
             val reactiveEffects = container.abilityRegistry.getReactiveEffects(abilityKey)
             for (effect in reactiveEffects) {
@@ -167,25 +167,6 @@ class ArmorAbilityProcessor(private val container: OriginsContainer) : Listener 
         }
     }
 
-    private fun isAbilityActive(player: Player, abilityKey: Key): Boolean {
-        val ability = container.abilityRegistry.get(abilityKey) ?: return false
-
-        val depKey = ability.dependencyKey
-        if (depKey != null) {
-            val depAbility = container.abilityRegistry.getDependencyAbility(depKey)
-            if (depAbility != null) {
-                val isEnabled = depAbility.isEnabled(player)
-                if (ability.dependencyInverse) {
-                    if (isEnabled) return false
-                } else {
-                    if (!isEnabled) return false
-                }
-            }
-        }
-
-        return true
-    }
-
     private fun isArmor(material: Material): Boolean {
         return MaterialTags.HELMETS.isTagged(material) ||
                 MaterialTags.CHESTPLATES.isTagged(material) ||
@@ -217,5 +198,4 @@ class ArmorAbilityProcessor(private val container: OriginsContainer) : Listener 
             else -> true
         }
     }
-
 }

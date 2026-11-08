@@ -38,7 +38,7 @@ class DefaultSpawnAbilityProcessor(private val container: OriginsContainer) : Li
         val abilityKeys = container.playerStateManager.getState(player).getAbilityKeys()
         val candidates = abilityKeys
             .asSequence()
-            .filter { isAbilityActive(player, it) }
+            .filter { container.abilityRegistry.isActive(player, it) }
             .flatMap { abilityKey ->
                 container.abilityRegistry.get(abilityKey)
                     ?.effects
@@ -59,12 +59,5 @@ class DefaultSpawnAbilityProcessor(private val container: OriginsContainer) : Li
         }
 
         return fallback
-    }
-
-    private fun isAbilityActive(player: Player, abilityKey: Key): Boolean {
-        val ability = container.abilityRegistry.get(abilityKey) ?: return false
-        val dependencyKey = ability.dependencyKey ?: return true
-        val dependency = container.abilityRegistry.getDependencyAbility(dependencyKey) ?: return true
-        return dependency.isEnabled(player) != ability.dependencyInverse
     }
 }
